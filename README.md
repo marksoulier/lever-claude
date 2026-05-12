@@ -122,21 +122,19 @@ You can verify or override these in **Settings → Deploy**.
 
 Click **Deploy**. Railway runs `npm install`, then `npm run build`, then `npm start`.
 
-When the deploy completes, Railway assigns a public URL:
+When the deploy completes, go to **Settings → Networking → Generate Domain**. Railway creates a `*.up.railway.app` URL on demand — it is not created automatically.
+
+The Lever MCP server is live at:
 
 ```
-https://lever-mcp-server-production.up.railway.app
+https://lever-claude-production.up.railway.app/mcp
 ```
 
-Your MCP endpoint is that URL plus `/mcp`:
+**f. Auto-deploy on every merge to main**
 
-```
-https://lever-mcp-server-production.up.railway.app/mcp
-```
+Yes — Railway deploys automatically on every push to `main`, the same as Vercel. The trigger is configured under **Settings → Deploy → Branch**. It defaults to `main`. Every `git push` or merged pull request redeploys within about 60 seconds, with zero manual steps.
 
-**f. Every future deploy is automatic**
-
-Like Vercel, pushing to `main` triggers Railway to rebuild and redeploy the MCP server automatically.
+To redeploy without a code change (e.g. after updating an environment variable), click **Redeploy** from the deployment history in the Railway dashboard.
 
 ---
 
@@ -149,7 +147,7 @@ Custom connectors require a paid Claude plan (Pro, Max, or Team).
 1. Open Claude → click your profile picture → **Settings**
 2. Go to **Connectors**
 3. Click **Add custom connector**
-4. Paste your Railway MCP URL: `https://lever-mcp-server-production.up.railway.app/mcp`
+4. Paste your Railway MCP URL: `https://lever-claude-production.up.railway.app/mcp`
 5. Click **Save**
 
 Claude will now offer Lever tools in every conversation. Try:
