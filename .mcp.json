@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "lever": {
+      "url": "http://localhost:3001/mcp"
+    }
+  }
+}

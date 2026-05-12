@@ -1,0 +1,32 @@
+{
+  "name": "lever-mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build:plan": "INPUT=plan-app.html vite build",
+    "build:scenario": "INPUT=scenario-app.html vite build",
+    "build": "npm run build:plan && npm run build:scenario",
+    "serve": "npx tsx server.ts",
+    "dev": "npm run build && npm run serve"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "latest",
+    "@modelcontextprotocol/sdk": "latest",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.19.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vite-plugin-singlefile": "^2.0.4"
+  }
+}
