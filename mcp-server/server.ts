@@ -170,7 +170,8 @@ app.post("/mcp", async (req, res) => {
   await transport.handleRequest(req, res, req.body);
 });
 
-app.listen(3001, () => {
-  console.log("Lever MCP server running at http://localhost:3001/mcp");
-  console.log("Add as a custom connector in Claude: https://<tunnel>.trycloudflare.com/mcp");
+const PORT = Number(process.env.PORT) || 3001;
+
+app.listen(PORT, () => {
+  console.log(`Lever MCP server running at http://localhost:${PORT}/mcp`);
 });

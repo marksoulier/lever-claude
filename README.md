@@ -2,12 +2,12 @@
 
 A financial planning tool with an AI-powered Claude integration. Play out financial decisions — retirement timelines, contribution rates, what-if scenarios — before you make them.
 
-The project has two parts:
+The project has two parts that deploy independently:
 
-| Part | Directory | Purpose |
+| Part | Directory | Deployed to |
 |---|---|---|
-| Web app | `/` (root) | Next.js 16 customer-facing UI |
-| MCP server | `mcp-server/` | Exposes Lever data and tools to Claude |
+| Web app | `/` (root) | Vercel |
+| MCP server | `mcp-server/` | Railway |
 
 ---
 
@@ -18,108 +18,149 @@ The project has two parts:
 
 ---
 
-## Web App
+## Local development
 
-### Install
+### Web app
 
 ```bash
 npm install
-```
-
-### Develop
-
-```bash
 npm run dev
 ```
 
 Opens at [http://localhost:3000](http://localhost:3000).
 
-### Build
-
-```bash
-npm run build
-npm run start
-```
-
-### Routes
-
-| URL | Page |
-|---|---|
-| `/` | Homepage / landing |
-| `/dashboard` | Financial overview — metrics, plans, accounts |
-| `/plan/[id]` | Plan detail — allocation, projections, scenarios |
-| `/account/[id]` | Account detail — balance, stats, transactions |
-
-Seeded plan IDs: `retire-65`, `retire-60`  
-Seeded account IDs: `roth-ira`, `401k`, `mortgage`
-
-### Stack
-
-- **Next.js 16** (App Router)
-- **React 19**
-- **Tailwind CSS v4** — color system defined in `app/globals.css`
-- **TypeScript 5**
-
----
-
-## MCP Server
-
-The MCP server runs separately from the web app. It exposes Lever's financial data and tools to Claude via the [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) extension, which renders interactive React UIs as iframes inside the Claude chat window.
-
-### Install
+### MCP server
 
 ```bash
 cd mcp-server
 npm install
-```
-
-### Build the UIs
-
-The two interactive Claude apps (plan dashboard and scenario modeler) are React apps bundled into single HTML files by Vite:
-
-```bash
-npm run build
-```
-
-This produces `dist/plan-app.html` and `dist/scenario-app.html`.
-
-### Run the server
-
-```bash
-npm run serve
+npm run dev        # builds the UIs then starts the server
 ```
 
 Server starts at [http://localhost:3001/mcp](http://localhost:3001/mcp).
 
-### Develop (build + serve in one step)
-
-```bash
-npm run dev
-```
-
-### Tools exposed to Claude
-
-| Tool | Type | Description |
-|---|---|---|
-| `show_financial_plan` | Interactive UI | Renders the plan dashboard as an iframe in Claude |
-| `run_what_if` | Interactive UI | Opens a scenario modeler with sliders in Claude |
-| `update_contribution` | Plain text | Mutates the monthly contribution for a plan |
-
-### Stack
-
-- **@modelcontextprotocol/sdk** — MCP server and HTTP transport
-- **@modelcontextprotocol/ext-apps** — MCP Apps tool/resource registration and iframe protocol
-- **Express** — HTTP server wrapping the MCP transport
-- **Vite** + **vite-plugin-singlefile** — bundles each React UI into one self-contained HTML file
-- **zod** — input schema validation for tools
+For Claude Code, `.mcp.json` already points to `localhost:3001`. Restart Claude Code after starting the server.
 
 ---
 
-## Connecting to Claude
+## Deployment
 
-### Claude Code (local)
+The web app and MCP server deploy independently. The web app goes to **Vercel**. The MCP server goes to **Railway** — it's a long-running Express process and needs a host that keeps it alive, not a serverless platform.
 
-`.mcp.json` at the project root is already configured. When the MCP server is running on port 3001, Claude Code will connect automatically:
+### 1 — Push to GitHub
+
+Both are committed in the same repo. Push it if you haven't already:
+
+```bash
+git remote add origin https://github.com/your-username/lever-claude.git
+git push -u origin main
+```
+
+---
+
+### 2 — Deploy the web app to Vercel
+
+**a. Create an account**
+
+Go to [vercel.com/signup](https://vercel.com/signup) and sign up with GitHub. This gives Vercel permission to read your repositories.
+
+**b. Import the project**
+
+1. Click **Add New → Project**
+2. Find `lever-claude` in your repository list and click **Import**
+3. Vercel detects Next.js automatically and pre-fills all build settings — leave everything as the default:
+   - Framework: Next.js
+   - Root directory: `/`
+   - Build command: `next build`
+   - Install command: `npm install`
+4. Click **Deploy**
+
+The build takes about 60 seconds. When it finishes you get a live URL:
+
+```
+https://lever-claude.vercel.app
+```
+
+**c. Every future deploy is automatic**
+
+From this point on, every `git push` to `main` triggers a new Vercel build and updates the live URL. Every pull request gets its own separate preview URL automatically.
+
+---
+
+### 3 — Deploy the MCP server to Railway
+
+Railway is the recommended host for the MCP server. It runs Node.js processes continuously (no sleeping), scales on demand, and deploys from GitHub the same way Vercel does.
+
+**a. Create an account**
+
+Go to [railway.app](https://railway.app) and sign up with GitHub.
+
+**b. Create a new project**
+
+1. Click **New Project → Deploy from GitHub repo**
+2. Select the `lever-claude` repository
+3. Railway will detect the repo. Before it deploys, click **Configure** (or go to the service settings after creation)
+
+**c. Set the root directory**
+
+This is the most important step. The MCP server lives in a subdirectory, not the repo root.
+
+1. In your Railway service, go to **Settings → Source**
+2. Set **Root Directory** to `mcp-server`
+3. Railway now treats `mcp-server/` as the project root — it installs dependencies from `mcp-server/package.json` and runs scripts from there
+
+**d. Set the build and start commands**
+
+Railway auto-detects `npm run build` and `npm start` from `package.json`. Both are already configured:
+
+- **Build command:** `npm run build` — runs Vite to bundle the two React UIs
+- **Start command:** `npm start` — starts the Express MCP server
+
+You can verify or override these in **Settings → Deploy**.
+
+**e. Deploy**
+
+Click **Deploy**. Railway runs `npm install`, then `npm run build`, then `npm start`.
+
+When the deploy completes, Railway assigns a public URL:
+
+```
+https://lever-mcp-server-production.up.railway.app
+```
+
+Your MCP endpoint is that URL plus `/mcp`:
+
+```
+https://lever-mcp-server-production.up.railway.app/mcp
+```
+
+**f. Every future deploy is automatic**
+
+Like Vercel, pushing to `main` triggers Railway to rebuild and redeploy the MCP server automatically.
+
+---
+
+### 4 — Connect the deployed MCP server to Claude
+
+**Claude.ai (web or desktop)**
+
+Custom connectors require a paid Claude plan (Pro, Max, or Team).
+
+1. Open Claude → click your profile picture → **Settings**
+2. Go to **Connectors**
+3. Click **Add custom connector**
+4. Paste your Railway MCP URL: `https://lever-mcp-server-production.up.railway.app/mcp`
+5. Click **Save**
+
+Claude will now offer Lever tools in every conversation. Try:
+
+- *"Show me my financial plan"* → renders the interactive plan dashboard
+- *"Run a what-if scenario for retiring at 60"* → opens the scenario modeler with sliders
+- *"Update my monthly savings to $4,000"*
+
+**Claude Code (local development only)**
+
+`.mcp.json` at the project root already configures Claude Code for local dev. When developing, start the MCP server locally and Claude Code connects automatically:
 
 ```json
 {
@@ -131,46 +172,78 @@ npm run dev
 }
 ```
 
-Restart Claude Code after starting the server if it doesn't pick it up automatically.
+---
 
-### Claude.ai (web / desktop)
+## MCP server details
 
-Claude.ai requires a public URL. Use [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/) to tunnel your local server:
+The MCP server uses the [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) extension to render interactive React UIs as iframes directly inside the Claude chat window — not just plain text responses.
 
-```bash
-npx cloudflared tunnel --url http://localhost:3001
-```
+### Tools
 
-Copy the generated URL (e.g. `https://random-name.trycloudflare.com`) and add it as a custom connector in Claude:
+| Tool | Type | Description |
+|---|---|---|
+| `show_financial_plan` | Interactive UI | Renders the plan dashboard as a live iframe in Claude |
+| `run_what_if` | Interactive UI | Opens the scenario modeler with sliders in Claude |
+| `update_contribution` | Plain text | Updates the monthly savings contribution for a plan |
 
-**Settings → Connectors → Add custom connector** → paste `https://random-name.trycloudflare.com/mcp`
+### How the interactive UIs work
 
-> Custom connectors require a paid Claude plan (Pro, Max, or Team).
+When Claude calls `show_financial_plan` or `run_what_if`, the tool response includes a `_meta.ui.resourceUri` that points to a `ui://` resource. Claude fetches that resource — a self-contained HTML file bundled with React — and renders it as a sandboxed iframe in the conversation. The iframe communicates back to the MCP server bidirectionally: the user can interact with the UI, and clicking "Apply" calls `update_contribution` back through Claude to the server.
 
-### What you can say to Claude
+### Stack
 
-Once connected, Claude can call tools by name or by intent:
-
-- *"Show me my financial plan"*
-- *"Run a what-if scenario for retiring at 60"*
-- *"Update my monthly savings to $4,000"*
-- *"What happens if market returns drop to 5%?"*
+- **@modelcontextprotocol/sdk** — MCP server and Streamable HTTP transport
+- **@modelcontextprotocol/ext-apps** — MCP Apps tool/resource registration and iframe protocol
+- **Express** — HTTP server wrapping the MCP transport
+- **Vite** + **vite-plugin-singlefile** — bundles each React UI into one self-contained HTML file
+- **zod** — input schema validation
 
 ---
 
-## Developer Tools
+## Web app
 
-### playwright-cli (browser testing)
+### Routes
 
-The `playwright-cli` skill is installed at `.claude/skills/playwright-cli/`. It lets Claude Code open a real browser, navigate pages, take snapshots, and verify UI state.
+| URL | Page |
+|---|---|
+| `/` | Homepage / landing |
+| `/dashboard` | Financial overview — metrics, plans, accounts |
+| `/plan/[id]` | Plan detail — allocation, projections, scenarios |
+| `/account/[id]` | Account detail — balance, stats, transactions |
 
-**Firefox is the working browser in this environment** (Chromium requires system libraries unavailable in WSL without sudo). Firefox was installed during setup:
+Seeded plan IDs: `retire-65`, `retire-60`
+Seeded account IDs: `roth-ira`, `401k`, `mortgage`
+
+### Build
+
+```bash
+npm run build   # type-check + production build
+npm run start   # serve the production build locally
+npm run lint    # run ESLint
+```
+
+### Stack
+
+- **Next.js 16** (App Router)
+- **React 19**
+- **Tailwind CSS v4** — color tokens in `app/globals.css`
+- **TypeScript 5**
+
+---
+
+## Developer tools
+
+### playwright-cli
+
+The `playwright-cli` skill is installed at `.claude/skills/playwright-cli/`. It lets Claude Code open a real browser, navigate pages, and verify UI state during development.
+
+**Firefox is required** in this environment (Chromium needs system libraries that require sudo to install in WSL). Firefox was installed during initial setup:
 
 ```bash
 playwright-cli install-browser firefox
 ```
 
-To run a manual verification of all routes:
+Verify all routes are working:
 
 ```bash
 playwright-cli open --browser=firefox http://localhost:3000/
@@ -178,19 +251,20 @@ playwright-cli snapshot
 playwright-cli goto http://localhost:3000/dashboard
 playwright-cli goto http://localhost:3000/plan/retire-65
 playwright-cli goto http://localhost:3000/account/roth-ira
+playwright-cli goto http://localhost:3000/account/fake-id   # should 404
 playwright-cli close
 ```
 
 ---
 
-## Project Structure
+## Project structure
 
 ```
 lever-claude/
 ├── app/                        # Next.js App Router pages
 │   ├── layout.tsx              # Root layout (fonts, metadata)
 │   ├── globals.css             # Tailwind + brand color tokens
-│   ├── page.tsx                # Homepage
+│   ├── page.tsx                # / homepage
 │   ├── dashboard/
 │   │   └── page.tsx            # /dashboard
 │   ├── plan/[id]/
@@ -199,28 +273,27 @@ lever-claude/
 │       └── page.tsx            # /account/:id  (dynamic)
 │
 ├── mcp-server/
-│   ├── server.ts               # MCP server — tools, resources, HTTP
+│   ├── server.ts               # MCP server — tools, resources, Express HTTP
 │   ├── src/
 │   │   ├── store.ts            # In-memory plan data + projection logic
 │   │   ├── plan-app.tsx        # React UI: plan dashboard (renders in Claude)
-│   │   └── scenario-app.tsx    # React UI: what-if modeler (renders in Claude)
-│   ├── plan-app.html           # Vite entry for plan UI
-│   ├── scenario-app.html       # Vite entry for scenario UI
-│   └── vite.config.ts          # Bundles each UI into a single HTML file
+│   │   └── scenario-app.tsx    # React UI: what-if scenario modeler
+│   ├── plan-app.html           # Vite entry point for plan UI
+│   ├── scenario-app.html       # Vite entry point for scenario UI
+│   └── vite.config.ts          # Bundles UIs into single HTML files
 │
 ├── .claude/
-│   └── skills/
-│       └── playwright-cli/     # Browser automation skill for Claude Code
+│   └── skills/playwright-cli/ # Browser automation skill for Claude Code
 │
-├── .mcp.json                   # Claude Code MCP connector config
+├── .mcp.json                   # Claude Code connector (points to localhost:3001)
 └── public/                     # Static assets
 ```
 
 ---
 
-## Known Limitations (skeleton stage)
+## Known limitations (skeleton stage)
 
-- **Data is in-memory.** All plans and accounts are seeded at startup. Changes made via `update_contribution` persist only until the MCP server restarts.
-- **No authentication.** All routes are public.
-- **Nav header is duplicated** across the four app pages. A shared `layout.tsx` for the authenticated section is the next structural improvement.
-- **`#f08080` (debt/negative color) is hardcoded** in several files rather than defined as a CSS variable alongside the teal tokens.
+- **Data is in-memory.** Plans and accounts reset on every MCP server restart. `update_contribution` changes are lost when Railway redeploys.
+- **No authentication.** All routes and MCP tools are public.
+- **Nav header is duplicated** across the four app pages — a shared `app/dashboard/layout.tsx` would fix this.
+- **`#f08080` (debt/negative color) is hardcoded** in multiple files rather than defined as a CSS variable.
