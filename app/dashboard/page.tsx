@@ -34,12 +34,12 @@ export default function DashboardPage() {
               Add the lever MCP server to Claude to update your plan, run what-if scenarios, and find financial opportunities through conversation.
             </p>
           </div>
-          <a
-            href="#"
+          <Link
+            href="/connect"
             className="shrink-0 rounded-full bg-teal px-6 py-2.5 text-sm font-bold text-white hover:bg-teal-dark transition-colors"
           >
             Set up connector
-          </a>
+          </Link>
         </div>
 
         <div>

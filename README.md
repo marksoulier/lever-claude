@@ -144,11 +144,12 @@ To redeploy without a code change (e.g. after updating an environment variable),
 
 Custom connectors require a paid Claude plan (Pro, Max, or Team).
 
-1. Open Claude → click your profile picture → **Settings**
+1. Open Claude → click **Customize**
 2. Go to **Connectors**
-3. Click **Add custom connector**
-4. Paste your Railway MCP URL: `https://lever-claude-production.up.railway.app/mcp`
-5. Click **Save**
+3. Click **+** → **Add custom connector**
+4. Paste: `https://lever-claude-production.up.railway.app/mcp`
+5. Click **Add**
+6. To use it: click **+** in the chat input → **Connectors** → toggle lever on
 
 Claude will now offer Lever tools in every conversation. Try:
 
