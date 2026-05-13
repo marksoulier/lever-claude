@@ -128,6 +128,46 @@ The four cases and why each must be covered:
 | Malformed JSON | `response.json()` throws — same `try/catch` catches it | Already covered by outer `try/catch` |
 | Component unmounts | State update on dead component causes stale data bugs | See cleanup rule below |
 
+## Loading state — always account for the gap
+
+When data comes from outside the component there is always a gap between mount and arrival. During that gap the data is not there yet. Never assume it will be instant.
+
+Every section that fetches must handle all three moments explicitly:
+
+| Moment | State | What to render |
+|---|---|---|
+| Request in flight | `loading: true` | Skeleton that matches the shape of the real content |
+| Request failed | `error: string` | Visible error box — not a console log, not empty space |
+| Data arrived | `loading: false, error: null` | The real content |
+
+**Skeleton rules:**
+- Match the height and layout of the real content so the page does not jump when data arrives
+- Use `bg-zinc-100` placeholder blocks sized to the text/elements they replace
+- Two skeleton rows for a list, one block per card, matching padding of the real cards
+- Do not use a spinner for list content — spinners give no sense of how much space the result will take
+
+```tsx
+// skeleton for a list of cards
+{plansLoading && !plansError && (
+  <div className="flex flex-col gap-3">
+    {[0, 1].map((i) => (
+      <div key={i} className="rounded-2xl border border-zinc-100 px-6 py-5 shadow-sm flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="h-4 w-36 rounded bg-zinc-100" />
+          <div className="h-3 w-48 rounded bg-zinc-100" />
+        </div>
+        <div className="h-3 w-24 rounded bg-zinc-100" />
+      </div>
+    ))}
+  </div>
+)}
+```
+
+**Never do this:**
+- Render nothing while loading — blank space looks broken
+- Render `null` for the section — layout shifts when data arrives
+- Use loading state to guard the whole page return — only the fetched section should show a skeleton, the rest of the page renders immediately
+
 ## Visible errors — never use console.log as the only signal
 
 Errors must be visible in the UI during development, not just in the console. Use an `error` state and render it on screen:
