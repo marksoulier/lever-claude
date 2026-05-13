@@ -47,19 +47,24 @@ A build that compiles is not sufficient — tools must respond correctly at runt
 
 Use the `playwright-cli` skill to open the affected pages in a real browser and confirm the golden path renders correctly. Always check for console errors too.
 
-```
+`playwright-cli` is installed globally. Firefox and Chromium are both available. Default to Firefox; fall back to Chromium if Firefox fails.
+
+```bash
 playwright-cli open --browser=firefox http://localhost:3000/<changed-route>
+playwright-cli snapshot        # read the page structure
+playwright-cli console         # check for JS errors — must be 0 errors
+playwright-cli close
 ```
 
 Check:
 - The page renders without a blank screen or visible error
 - Key elements are present (headings, data, buttons)
-- No JavaScript errors in the browser console
+- `console` reports **0 errors** (warnings are acceptable)
 - Navigate to at least one linked page to catch broken routing
 
 For widget pages (`/plan-widget`, `/scenario-widget`) a visual check is sufficient — the MCP iframe interaction is tested separately via the tool call check above.
 
-If playwright-cli is not installed or Firefox is unavailable, say so explicitly rather than skipping the check.
+Do not skip this check. Do not report the task complete without running it.
 
 ---
 

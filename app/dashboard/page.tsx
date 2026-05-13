@@ -1,6 +1,44 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import type { Plan } from "@/lib/store";
+
+type PlanRow = { id: string; name: string; targetYear: string; assets: string; progress: number };
 
 export default function DashboardPage() {
+  const [plans, setPlans] = useState<PlanRow[]>([]);
+  const [plansError, setPlansError] = useState<string | null>(null);
+  const [plansLoading, setPlansLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const response = await fetch("/api/plans");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data: Plan[] = await response.json();
+        if (!cancelled) {
+          setPlans(data.map((p) => ({
+            id: p.id,
+            name: p.name,
+            targetYear: String(p.targetYear),
+            assets: `$${Math.round(p.currentBalance / 1000)}K saved`,
+            progress: Math.round((p.currentBalance / p.targetBalance) * 100),
+          })));
+        }
+      } catch (err) {
+        if (!cancelled) setPlansError((err as Error).message);
+      } finally {
+        if (!cancelled) setPlansLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="flex flex-col min-h-full bg-white">
       <header className="flex items-center justify-between px-8 py-4 border-b border-zinc-100">
@@ -44,6 +82,12 @@ export default function DashboardPage() {
 
         <div>
           <h2 className="text-base font-black text-zinc-900 mb-4">Your plans</h2>
+          {plansError && (
+            <p className="text-sm text-red-500 mb-3">Failed to load plans: {plansError}</p>
+          )}
+          {plansLoading && !plansError && (
+            <p className="text-sm text-zinc-400">Loading…</p>
+          )}
           <div className="flex flex-col gap-3">
             {plans.map((plan) => (
               <Link
@@ -113,9 +157,4 @@ const accountList = [
   { id: "roth-ira", name: "Roth IRA", institution: "Fidelity", icon: "🏦", balance: 107000 },
   { id: "401k", name: "401(k)", institution: "Vanguard", icon: "💼", balance: 284000 },
   { id: "mortgage", name: "Mortgage", institution: "Chase", icon: "🏠", balance: -234000 },
-];
-
-const plans = [
-  { id: "retire-65", name: "Retire at 65", targetYear: "2049", assets: "$487K saved", progress: 27 },
-  { id: "retire-60", name: "Retire early at 60", targetYear: "2044", assets: "$487K saved", progress: 18 },
 ];

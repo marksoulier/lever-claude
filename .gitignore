@@ -28,9 +28,9 @@
 .DS_Store
 *.pem
 
-# playwright cli session state
+# playwright cli session state (screenshots, console logs, traces)
 .playwright-cli/
-.playwright/
+# playwright cli project config is committed (.playwright/cli.config.json)
 
 # claude local settings (skills are committed, personal config is not)
 .claude/settings.local.json
