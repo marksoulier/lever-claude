@@ -60,3 +60,97 @@ Check:
 For widget pages (`/plan-widget`, `/scenario-widget`) a visual check is sufficient — the MCP iframe interaction is tested separately via the tool call check above.
 
 If playwright-cli is not installed or Firefox is unavailable, say so explicitly rather than skipping the check.
+
+---
+
+# Data fetching rules
+
+Apply these rules to every `fetch` call and every `useEffect` that loads data. Do not skip any of them to keep code shorter — each one prevents a real class of bug.
+
+## fetch — all four failure modes must be handled
+
+```ts
+// Required pattern for every fetch call
+async function load() {
+  try {
+    const response = await fetch("/api/something");
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);   // bad status — fetch does NOT throw for 4xx/5xx
+    }
+
+    const data = await response.json();             // can throw if body isn't valid JSON
+    return data;
+  } catch (err) {
+    // surface the error visibly — never silently swallow it
+    throw err;
+  }
+}
+```
+
+The four cases and why each must be covered:
+
+| Case | What happens without handling | Required handling |
+|---|---|---|
+| Network failure | Unhandled rejection crashes the component | `try/catch` around the whole block |
+| Bad status (4xx/5xx) | `fetch` fulfills — the bug is invisible | Check `response.ok` and throw |
+| Malformed JSON | `response.json()` throws — same `try/catch` catches it | Already covered by outer `try/catch` |
+| Component unmounts | State update on dead component causes stale data bugs | See cleanup rule below |
+
+## Visible errors — never use console.log as the only signal
+
+Errors must be visible in the UI during development, not just in the console. Use an `error` state and render it on screen:
+
+```ts
+const [data, setData] = useState(null);
+const [error, setError] = useState<string | null>(null);
+const [loading, setLoading] = useState(true);
+
+// In the render:
+if (error) return <p style={{ color: "red" }}>Error: {error}</p>;
+if (loading) return <p>Loading…</p>;
+```
+
+A `console.error` is acceptable in addition to a visible error state, never instead of one.
+
+## useEffect — check every dependency array for infinite loop risk
+
+Every `useEffect` that fetches data must have an explicit dependency array. Missing or wrong dependencies cause infinite fetch loops.
+
+```ts
+// ✓ runs once on mount
+useEffect(() => { load(); }, []);
+
+// ✓ runs when planId changes
+useEffect(() => { load(planId); }, [planId]);
+
+// ✗ no dependency array — runs after every render, causes infinite loop
+useEffect(() => { load(); });
+```
+
+Before writing any `useEffect`, answer: "what value changing should re-trigger this?" If the answer is "nothing — just run once", the array is `[]`. If it depends on a prop or state variable, that variable goes in the array. If you find yourself putting a function or object in the array, memoize it first with `useCallback`/`useMemo` or the effect will still re-run every render.
+
+## useEffect — cancel stale requests on unmount
+
+When a component unmounts before a fetch finishes, the callback will try to call `setState` on a dead component. Use a cancelled flag to guard it:
+
+```ts
+useEffect(() => {
+  let cancelled = false;
+
+  async function load() {
+    try {
+      const response = await fetch("/api/plans");
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!cancelled) setData(data);       // only update if still mounted
+    } catch (err) {
+      if (!cancelled) setError((err as Error).message);
+    } finally {
+      if (!cancelled) setLoading(false);
+    }
+  }
+
+  load();
+  return () => { cancelled = true; };     // cleanup: flip the flag on unmount
+}, []);
