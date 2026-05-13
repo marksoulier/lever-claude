@@ -83,10 +83,23 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-base font-black text-zinc-900 mb-4">Your plans</h2>
           {plansError && (
-            <p className="text-sm text-red-500 mb-3">Failed to load plans: {plansError}</p>
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-6 py-4 mb-3">
+              <p className="text-sm font-semibold text-red-600">Could not load plans</p>
+              <p className="text-xs text-red-400 mt-0.5">{plansError}</p>
+            </div>
           )}
           {plansLoading && !plansError && (
-            <p className="text-sm text-zinc-400">Loading…</p>
+            <div className="flex flex-col gap-3">
+              {[0, 1].map((i) => (
+                <div key={i} className="rounded-2xl border border-zinc-100 px-6 py-5 shadow-sm flex items-center justify-between">
+                  <div className="flex flex-col gap-2">
+                    <div className="h-4 w-36 rounded bg-zinc-100" />
+                    <div className="h-3 w-48 rounded bg-zinc-100" />
+                  </div>
+                  <div className="h-3 w-24 rounded bg-zinc-100" />
+                </div>
+              ))}
+            </div>
           )}
           <div className="flex flex-col gap-3">
             {plans.map((plan) => (
