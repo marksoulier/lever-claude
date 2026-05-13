@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Definition of done
 
-A task is not finished until both checks below pass. Do not report work as complete, summarise results, or ask what to do next until you have run them.
+A task is not finished until all three checks below pass. Do not report work as complete, summarise results, or ask what to do next until you have run them.
 
 ## 1. MCP tools — required after any change to `app/api/mcp/route.ts` or `lib/store.ts`
 
@@ -65,6 +65,32 @@ Check:
 For widget pages (`/plan-widget`, `/scenario-widget`) a visual check is sufficient — the MCP iframe interaction is tested separately via the tool call check above.
 
 Do not skip this check. Do not report the task complete without running it.
+
+## 3. Documentation — required after any change that affects how the app works
+
+Update `README.md` to reflect what changed. Do this before the final commit, not as an afterthought.
+
+**Update the README when you:**
+- Add, rename, or remove a route → update the Routes table
+- Add, rename, or remove an API endpoint → update the Routes table and any relevant section
+- Add, change, or remove an MCP tool → update the MCP tools table and the tool descriptions
+- Change how the app is deployed, configured, or run locally → update the relevant Deployment or Local development section
+- Add a new dependency or remove one → update the stack list if it appears there
+- Change the project file structure meaningfully → update the Project structure tree
+- Fix a known limitation → remove it from the Known limitations table
+- Introduce a new known limitation → add it
+
+**Do not update the README when you:**
+- Refactor internals with no user-visible effect
+- Fix a bug that doesn't change any documented behaviour
+- Change test or tooling config that isn't referenced in the README
+
+**What good documentation looks like:**
+- Accurate: matches what the code actually does right now, not what it did before
+- Specific: route tables have real paths, stack lists have real package names
+- Honest: known limitations are listed, not hidden
+
+Do not invent placeholder text ("coming soon", "TODO"). If something isn't built yet, either omit it or list it in Known limitations.
 
 ---
 

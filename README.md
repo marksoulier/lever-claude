@@ -164,6 +164,8 @@ The web app has a `/connect` page with step-by-step instructions. From the dashb
 | `/plan-widget` | Plan dashboard iframe UI (for Claude) | Static |
 | `/scenario-widget` | Scenario modeler iframe UI (for Claude) | Static |
 | `/api/mcp` | MCP server endpoint | Dynamic |
+| `/api/plans` | Returns all plans as JSON | Dynamic |
+| `/api/health` | Health check — returns `{status:"ok", timestamp}` | Dynamic |
 
 **Seeded IDs:**
 - Plans: `retire-65`, `retire-60`
