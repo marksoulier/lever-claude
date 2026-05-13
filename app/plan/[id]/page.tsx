@@ -1,8 +1,11 @@
 import Link from "next/link";
+import ContributionForm from "./ContributionForm";
+import { plans as storePlans } from "@/lib/store";
 
 export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   const { id } = await props.params;
   const plan = plans[id] ?? plans["retire-65"];
+  const currentContribution = storePlans[id]?.monthlyContribution ?? 3200;
 
   return (
     <div className="flex flex-col min-h-full bg-white">
@@ -22,16 +25,22 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
           <span className="text-zinc-600 dark:text-zinc-300">{plan.name}</span>
         </div>
 
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-zinc-900">{plan.name}</h1>
-            <p className="text-sm text-zinc-400 mt-1">
-              Target retirement: {plan.targetYear} · Assumed return: {plan.assumedReturn} · Inflation: {plan.inflation}
-            </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-black text-zinc-900">{plan.name}</h1>
+              <p className="text-sm text-zinc-400 mt-1">
+                Target retirement: {plan.targetYear} · Assumed return: {plan.assumedReturn} · Inflation: {plan.inflation}
+              </p>
+            </div>
           </div>
-          <button className="rounded-full border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-600 hover:border-teal hover:text-teal transition-colors">
-            Edit assumptions
-          </button>
+          <div className="rounded-2xl border border-zinc-100 p-5 shadow-sm flex flex-col gap-3">
+            <div>
+              <p className="text-sm font-black text-zinc-900">Monthly savings</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Enter a new amount to recalculate your retirement projection.</p>
+            </div>
+            <ContributionForm planId={id} currentContribution={currentContribution} />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
