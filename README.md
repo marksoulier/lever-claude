@@ -8,42 +8,46 @@ A financial planning tool with an AI-powered Claude integration. Play out financ
 
 | | URL |
 |---|---|
-| **Web app (production)** | https://lever-claude.vercel.app |
-| **MCP server (production)** | https://lever-claude-production.up.railway.app/mcp |
-| **Web app (local)** | http://localhost:3000 |
-| **MCP server (local)** | http://localhost:3001/mcp |
+| **Web app + MCP server (production)** | https://lever-claude.vercel.app |
+| **MCP endpoint (production)** | https://lever-claude.vercel.app/api/mcp |
+| **Local dev** | http://localhost:3000 |
+| **MCP endpoint (local)** | http://localhost:3000/api/mcp |
 
 ---
 
 ## Architecture
 
-This is a monorepo with two independent packages:
+This is a single Next.js application that serves both the web UI and the MCP server from one deployment.
 
 ```
 lever-claude/
-├── /            ← Next.js web app  (deploys to Vercel)
-└── mcp-server/  ← Express MCP server  (deploys to Railway)
+├── app/
+│   ├── api/mcp/route.ts      ← MCP server (Next.js route handler)
+│   ├── plan-widget/          ← Interactive plan UI (rendered in Claude iframe)
+│   ├── scenario-widget/      ← Interactive scenario modeler (rendered in Claude iframe)
+│   └── ...                   ← Web app pages
+├── lib/store.ts              ← Plan data + projection math (stateless, Supabase-ready)
+├── baseUrl.ts                ← Resolves public URL from env (Vercel or local)
+└── proxy.ts                  ← Global CORS headers (Next.js 16 middleware)
 ```
 
-They are **separate Node.js projects** with separate `package.json` files, separate `node_modules`, and separate TypeScript configs. The root `tsconfig.json` explicitly excludes `mcp-server/` so the Next.js compiler never touches MCP server code, and vice versa.
+The MCP server is a standard Next.js API route — no separate process, no separate deployment. Vercel runs it as a serverless function alongside the web pages.
 
-They share nothing at runtime — the web app is a customer-facing UI and the MCP server is a Claude integration layer. Both read from the same in-memory data today; when a database is added they will both connect to it.
+**Interactive UIs** use the [MCP Apps extension](https://modelcontextprotocol.io/extensions/apps/overview). When Claude calls `show_financial_plan` or `run_what_if`, the route self-fetches the rendered `/plan-widget` or `/scenario-widget` page and serves it as a sandboxed iframe resource. The iframe communicates back to the MCP server bidirectionally through Claude.
 
 ---
 
 ## Environments
 
-There are three environments:
+| Environment | URL | MCP endpoint |
+|---|---|---|
+| **Local dev** | `localhost:3000` | `localhost:3000/api/mcp` |
+| **Preview** | Vercel preview URL (per PR) | `<preview-url>/api/mcp` |
+| **Production** | `lever-claude.vercel.app` | `lever-claude.vercel.app/api/mcp` |
 
-| Environment | Web app | MCP server | Claude connector |
-|---|---|---|---|
-| **Local dev** | `localhost:3000` | `localhost:3001` | `.mcp.json` → localhost |
-| **Preview** | Vercel preview URL (per PR) | Railway (shared, always production) | n/a |
-| **Production** | `lever-claude.vercel.app` | `lever-claude-production.up.railway.app` | Custom connector in Claude |
+**Auto-deploy:** Vercel watches `main`. Every `git push` to `main` rebuilds and redeploys both the web app and MCP server automatically within ~60 seconds.
 
-**Preview deployments:** Every pull request to `main` gets its own Vercel preview URL automatically (e.g. `lever-claude-git-my-branch.vercel.app`). Railway does not create preview environments — all branches share the same Railway deployment.
-
-**Auto-deploy on merge:** Both Vercel and Railway watch the `main` branch. Every `git push` to `main` triggers both to rebuild and redeploy automatically within ~60 seconds. No manual steps required after initial setup.
+**Preview deployments:** Every pull request gets its own Vercel preview URL with a working MCP endpoint.
 
 ---
 
@@ -51,39 +55,20 @@ There are three environments:
 
 - **Node.js 18+** (v24 recommended — `node --version` to check)
 - **npm 9+**
-- A GitHub account (both Vercel and Railway deploy from GitHub)
+- A GitHub account connected to Vercel
 
 ---
 
 ## Local development
 
-You need two terminals — one for each package.
-
-### Terminal 1 — Web app
+One terminal is all you need:
 
 ```bash
-# from repo root
 npm install
 npm run dev
 ```
 
-Starts Next.js at **http://localhost:3000**.
-
-### Terminal 2 — MCP server
-
-```bash
-cd mcp-server
-npm install
-npm run dev   # builds the React UIs, then starts Express
-```
-
-Starts the MCP server at **http://localhost:3001/mcp**.
-
-`npm run dev` in the MCP server does two things in sequence:
-1. Runs Vite twice to bundle `plan-app.tsx` and `scenario-app.tsx` into self-contained HTML files in `dist/`
-2. Starts the Express server which serves those HTML files as MCP resources
-
-If you only change server logic (not the React UIs), you can skip the build and run `npm run serve` directly.
+Starts the web app and MCP server together at **http://localhost:3000**.
 
 ### Claude Code connector (local)
 
@@ -93,79 +78,59 @@ If you only change server logic (not the React UIs), you can skip the build and 
 {
   "mcpServers": {
     "lever": {
-      "url": "http://localhost:3001/mcp"
+      "url": "http://localhost:3000/api/mcp"
     }
   }
 }
 ```
 
-Start the MCP server first, then restart Claude Code if it doesn't pick it up automatically. In Claude Code you can then say *"show me my financial plan"* and the tools will call your local server.
+Start `npm run dev` first, then restart Claude Code if it doesn't pick it up automatically. You can then say *"show me my financial plan"* and the tools will call your local server.
 
-### No environment variables needed locally
+### Environment variables
 
-Neither package requires a `.env` file to run. All data is seeded in-memory in `mcp-server/src/store.ts`. When a database is added, connection strings will go in `.env.local` (web app) and a Railway environment variable (MCP server).
+No `.env` file is required to run locally. Plan data is seeded in `lib/store.ts`. When Supabase is added, connection strings will go in `.env.local`.
+
+For local testing of iframe UIs inside Claude (which loads widgets from an HTTPS URL), set a tunnel URL:
+
+```bash
+# .env.local
+BASE_URL=https://xxxx-xxx-xxx.ngrok-free.app
+```
 
 ---
 
 ## Deployment
 
-### Web app → Vercel
+### Vercel (web app + MCP server)
 
-Vercel was chosen because it built Next.js and has native support for its App Router, static pages, and serverless dynamic routes. No configuration file is needed — Vercel auto-detects everything.
+One deployment covers everything — web pages and the `/api/mcp` endpoint are all part of the same Next.js app.
 
 **Initial setup (one time):**
 
-1. Go to [vercel.com/signup](https://vercel.com/signup) → sign up with GitHub
-2. **Add New → Project** → import `lever-claude`
-3. Vercel auto-fills all settings — leave them as-is:
+1. Go to [vercel.com/new](https://vercel.com/new) → import `lever-claude`
+2. Vercel auto-detects Next.js — leave all settings as-is:
    - Framework: Next.js
    - Root directory: `./`
    - Build command: `next build`
-   - Install command: `npm install`
-4. Click **Deploy**
+   - Install command: `npm install --legacy-peer-deps`
+3. Click **Deploy**
 
-Build takes ~60 seconds. The live URL appears on the success screen.
+> **Note:** Pass `--legacy-peer-deps` in the install command. `mcp-handler` pins `@modelcontextprotocol/sdk@1.26.0` but `@modelcontextprotocol/ext-apps` requires `^1.29.0` — both work at runtime, the flag just skips the peer conflict check.
 
-**After that, deploys are automatic.** Every push to `main` rebuilds and republishes.
+Build takes ~60 seconds. After that, every push to `main` redeploys automatically.
 
-**Build output:** Vercel splits the build into static files (served from CDN globally) and serverless functions (for dynamic routes):
+**Build output:**
 
 ```
-○ /               static  — served from CDN
-○ /dashboard      static  — served from CDN
-○ /connect        static  — served from CDN
-ƒ /plan/[id]      dynamic — serverless function
-ƒ /account/[id]   dynamic — serverless function
+○ /                static  — CDN
+○ /dashboard       static  — CDN
+○ /connect         static  — CDN
+○ /plan-widget     static  — CDN (fetched by MCP route at runtime)
+○ /scenario-widget static  — CDN (fetched by MCP route at runtime)
+ƒ /plan/[id]       dynamic — serverless function
+ƒ /account/[id]    dynamic — serverless function
+ƒ /api/mcp         dynamic — serverless function (MCP server)
 ```
-
----
-
-### MCP server → Railway
-
-Railway was chosen because it runs Node.js processes continuously — no sleeping, no cold starts. Vercel's serverless model isn't suited for a long-running Express server that holds in-memory state.
-
-**Initial setup (one time):**
-
-1. Go to [railway.app](https://railway.app) → sign up with GitHub
-2. **New Project → Deploy from GitHub repo** → select `lever-claude`
-3. In the service settings → **Settings → Source** → set **Root Directory** to `mcp-server`
-
-   > This is the critical step. Without it Railway sees the repo root, finds the Next.js `package.json`, and tries to deploy the web app instead of the MCP server.
-
-4. Confirm build and start commands in **Settings → Deploy**:
-   - Build command: `npm run build`
-   - Start command: `npm start`
-5. Click **Deploy**
-6. Go to **Settings → Networking → Generate Domain** — Railway does not create a public URL automatically, you must click this button
-
-**After that, deploys are automatic.** Every push to `main` rebuilds and redeploys.
-
-**How the build works on Railway:**
-1. `npm install` — installs all mcp-server dependencies including Vite and React
-2. `npm run build` — runs Vite twice to bundle the two React UI apps into `dist/`
-3. `npm start` — starts Express; reads `dist/*.html` to serve as MCP UI resources
-
-**PORT:** Railway injects a `PORT` environment variable. `server.ts` reads it with `process.env.PORT || 3001`. Do not hardcode 3001 in production.
 
 ---
 
@@ -177,7 +142,7 @@ The web app has a `/connect` page with step-by-step instructions. From the dashb
 
 1. Open Claude → **Customize → Connectors**
 2. Click **+** → **Add custom connector**
-3. Paste `https://lever-claude-production.up.railway.app/mcp`
+3. Paste `https://lever-claude.vercel.app/api/mcp`
 4. Click **Add**
 5. To activate in a chat: click **+** in the chat input → **Connectors** → toggle lever on
 
@@ -196,12 +161,13 @@ The web app has a `/connect` page with step-by-step instructions. From the dashb
 | `/connect` | Claude connector setup guide | Static |
 | `/plan/[id]` | Plan detail — allocation, projections, scenarios | Dynamic |
 | `/account/[id]` | Account detail — balance, stats, transactions | Dynamic |
+| `/plan-widget` | Plan dashboard iframe UI (for Claude) | Static |
+| `/scenario-widget` | Scenario modeler iframe UI (for Claude) | Static |
+| `/api/mcp` | MCP server endpoint | Dynamic |
 
 **Seeded IDs:**
 - Plans: `retire-65`, `retire-60`
 - Accounts: `roth-ira`, `401k`, `mortgage`
-
-Try `/plan/fake-id` or `/account/fake-id` to verify the 404 handler.
 
 ---
 
@@ -213,21 +179,24 @@ Try `/plan/fake-id` or `/account/fake-id` to verify the 404 handler.
 |---|---|---|
 | `show_financial_plan` | Interactive UI | Renders the plan dashboard as an iframe in the chat |
 | `run_what_if` | Interactive UI | Opens the scenario modeler with sliders in the chat |
-| `update_contribution` | Plain text | Mutates the monthly savings contribution for a plan |
+| `update_contribution` | Plain text | Computes and returns a new projected balance for a given monthly savings amount |
 
 ### Interactive UI pattern
 
-`show_financial_plan` and `run_what_if` use the [MCP Apps extension](https://modelcontextprotocol.io/extensions/apps/overview). Each tool declares a `_meta.ui.resourceUri` pointing to a `ui://` resource. When Claude calls the tool, it fetches that resource — a self-contained React app bundled into a single HTML file by Vite — and renders it as a sandboxed iframe in the conversation. The iframe can call tools back through Claude bidirectionally (e.g. the scenario modeler calls `update_contribution` when the user clicks Apply).
+`show_financial_plan` and `run_what_if` use the [MCP Apps extension](https://modelcontextprotocol.io/extensions/apps/overview). Each tool declares a `_meta.ui.resourceUri` pointing to a `ui://` resource. When Claude calls the tool, it fetches that resource — the MCP route self-fetches the rendered Next.js page at `/plan-widget` or `/scenario-widget` and returns it as the iframe HTML. The iframe uses `@modelcontextprotocol/ext-apps` client-side to receive the tool result and call tools back through Claude bidirectionally.
 
 This pattern is currently supported by Claude only. Other MCP clients (Cursor, Copilot) will call the tools but won't render the iframe.
 
+### Stateless design
+
+`update_contribution` computes and returns without writing anywhere. Plan data is read from `lib/store.ts` (hardcoded). When Supabase is added, reads become DB queries and writes get persisted — the tool signature stays the same.
+
 ### Stack
 
-- `@modelcontextprotocol/sdk` — MCP server and Streamable HTTP transport
-- `@modelcontextprotocol/ext-apps` — MCP Apps tool/resource registration and iframe protocol
-- `express` + `cors` — HTTP server
-- `vite` + `vite-plugin-singlefile` — bundles each React UI into one HTML file
-- `zod` — input schema validation for tools
+- `mcp-handler` — Vercel's Next.js MCP adapter (`createMcpHandler`)
+- `@modelcontextprotocol/sdk` — MCP protocol types and transport
+- `@modelcontextprotocol/ext-apps` — interactive iframe tool/resource registration
+- `zod` — tool input schema validation
 
 ---
 
@@ -238,10 +207,10 @@ This pattern is currently supported by Claude only. Other MCP clients (Cursor, C
 - **Tailwind CSS v4** — brand color tokens defined in `app/globals.css`
 - **TypeScript 5**
 
-### Useful commands (run from repo root)
+### Useful commands
 
 ```bash
-npm run dev     # start dev server
+npm run dev     # start dev server (web + MCP)
 npm run build   # type-check + production build
 npm run start   # serve the production build locally
 npm run lint    # run ESLint
@@ -280,38 +249,33 @@ playwright-cli close
 ```
 lever-claude/
 │
-│  ── Web app (Vercel) ──────────────────────────────────────
+│  ── App (Vercel) ──────────────────────────────────────────────
 ├── app/
-│   ├── layout.tsx              Root layout — fonts, metadata
-│   ├── globals.css             Tailwind import + brand color tokens
-│   ├── page.tsx                /  homepage
-│   ├── dashboard/page.tsx      /dashboard
-│   ├── connect/page.tsx        /connect  Claude connector setup guide
-│   ├── plan/[id]/page.tsx      /plan/:id  (dynamic)
-│   └── account/[id]/page.tsx   /account/:id  (dynamic)
+│   ├── layout.tsx                  Root layout — fonts, metadata
+│   ├── globals.css                 Tailwind import + brand color tokens
+│   ├── page.tsx                    /  homepage
+│   ├── dashboard/page.tsx          /dashboard
+│   ├── connect/page.tsx            /connect  Claude connector setup guide
+│   ├── plan/[id]/page.tsx          /plan/:id  (dynamic)
+│   ├── account/[id]/page.tsx       /account/:id  (dynamic)
+│   ├── plan-widget/page.tsx        /plan-widget  iframe UI for Claude
+│   ├── scenario-widget/page.tsx    /scenario-widget  iframe UI for Claude
+│   └── api/mcp/route.ts            /api/mcp  MCP server endpoint
 │
-├── public/                     Static assets
-├── next.config.ts              Next.js config
-├── tsconfig.json               Next.js TypeScript config (excludes mcp-server/)
-├── package.json                Web app dependencies
+├── lib/
+│   └── store.ts                    Read-only plan data + projection math
 │
-│  ── MCP server (Railway) ──────────────────────────────────
-└── mcp-server/
-    ├── server.ts               Entry point — tools, resources, Express HTTP
-    ├── src/
-    │   ├── store.ts            In-memory plan data + projection math
-    │   ├── plan-app.tsx        React UI: plan dashboard (iframe in Claude)
-    │   └── scenario-app.tsx    React UI: what-if scenario modeler
-    ├── plan-app.html           Vite HTML entry for plan UI
-    ├── scenario-app.html       Vite HTML entry for scenario UI
-    ├── vite.config.ts          Bundles each UI into a single self-contained HTML file
-    ├── tsconfig.json           MCP server TypeScript config (independent of root)
-    └── package.json            MCP server dependencies (independent of root)
-
-│  ── Tooling ───────────────────────────────────────────────
-├── .claude/skills/playwright-cli/   Browser automation skill for Claude Code
-├── .mcp.json                        Claude Code connector → localhost:3001
-└── .gitignore                       Excludes node_modules, dist/, .playwright-cli/
+│  ── Config ────────────────────────────────────────────────────
+├── baseUrl.ts                      Resolves public URL from Vercel env vars
+├── proxy.ts                        Global CORS headers (Next.js 16)
+├── next.config.ts                  assetPrefix for iframe asset loading
+├── tsconfig.json
+├── package.json
+│
+│  ── Tooling ───────────────────────────────────────────────────
+├── .claude/skills/playwright-cli/  Browser automation skill for Claude Code
+├── .mcp.json                       Claude Code connector → localhost:3000/api/mcp
+└── .gitignore
 ```
 
 ---
@@ -320,8 +284,7 @@ lever-claude/
 
 | Limitation | Impact | Fix when |
 |---|---|---|
-| Data is in-memory | `update_contribution` resets on every Railway redeploy | Adding a database |
+| Data is hardcoded in `lib/store.ts` | `update_contribution` computes but doesn't persist | Adding Supabase |
 | No authentication | All routes and MCP tools are public | Adding auth layer |
 | Nav header duplicated across 4 pages | Update in 4 files instead of 1 | Add `app/dashboard/layout.tsx` |
-| `#f08080` debt color hardcoded | Color change requires hunting multiple files | Add `--lever-salmon` to `globals.css` |
 | MCP interactive UI is Claude-only | Other MCP clients get text responses, no iframe | MCP Apps spec matures across clients |

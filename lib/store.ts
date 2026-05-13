@@ -1,3 +1,5 @@
+// Read-only plan data. No mutations — state will be persisted in Supabase.
+
 export type Allocation = {
   label: string;
   pct: number;

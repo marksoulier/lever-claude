@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { baseURL } from "@/baseUrl";
 
-const MCP_URL = "https://lever-claude-production.up.railway.app/mcp";
+const MCP_URL = `${baseURL}/api/mcp`;
 
 export default function ConnectPage() {
   return (

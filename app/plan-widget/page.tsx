@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { createRoot } from "react-dom/client";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import { App } from "@modelcontextprotocol/ext-apps";
 
 type Allocation = { label: string; pct: number; color: string };
@@ -20,18 +21,19 @@ type Plan = {
   allocation: Allocation[];
 };
 
-const mcpApp = new App({ name: "Lever Plan Dashboard", version: "1.0.0" });
-
 function fmt(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
   if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
   return `$${n}`;
 }
 
-function PlanDashboard() {
+export default function PlanWidget() {
   const [plan, setPlan] = useState<Plan | null>(null);
+  const appRef = useRef<App | null>(null);
 
   useEffect(() => {
+    const mcpApp = new App({ name: "Lever Plan Dashboard", version: "1.0.0" });
+    appRef.current = mcpApp;
     mcpApp.connect();
     mcpApp.ontoolresult = (result) => {
       const text = result.content?.find((c) => c.type === "text")?.text;
@@ -40,8 +42,8 @@ function PlanDashboard() {
   }, []);
 
   const openScenario = async () => {
-    if (!plan) return;
-    await mcpApp.callServerTool({ name: "run_what_if", arguments: { plan_id: plan.id } });
+    if (!plan || !appRef.current) return;
+    await appRef.current.callServerTool({ name: "run_what_if", arguments: { plan_id: plan.id } });
   };
 
   if (!plan) {
@@ -64,7 +66,6 @@ function PlanDashboard() {
 
   return (
     <div style={s.root}>
-      {/* Header */}
       <div style={s.header}>
         <div>
           <div style={s.badge}>Lever</div>
@@ -78,7 +79,6 @@ function PlanDashboard() {
         </div>
       </div>
 
-      {/* Metrics */}
       <div style={s.grid2}>
         {[
           { label: "Current Balance", value: fmt(plan.currentBalance) },
@@ -103,7 +103,6 @@ function PlanDashboard() {
         ))}
       </div>
 
-      {/* Goal progress */}
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
           <span style={s.sectionLabel}>Goal progress</span>
@@ -120,7 +119,6 @@ function PlanDashboard() {
         </div>
       </div>
 
-      {/* Asset allocation */}
       <div>
         <p style={s.sectionLabel}>Asset Allocation</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
@@ -138,7 +136,6 @@ function PlanDashboard() {
         </div>
       </div>
 
-      {/* Footer */}
       <div style={s.footer}>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <span style={{ fontSize: 12, color: "#9ca3af" }}>Monthly contribution</span>
@@ -155,13 +152,13 @@ function PlanDashboard() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  root: { padding: 20, maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 },
-  loading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 220, gap: 12 },
+  root: { padding: 20, maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20, fontFamily: "system-ui, sans-serif" },
+  loading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 220, gap: 12, fontFamily: "system-ui, sans-serif" },
   spinner: { width: 22, height: 22, border: "2px solid #e5e7eb", borderTopColor: "#4bc3c8", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
   badge: { fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#4bc3c8", textTransform: "uppercase", marginBottom: 4 },
-  title: { fontSize: 20, fontWeight: 700, color: "#111827", lineHeight: 1.3 },
-  subtitle: { fontSize: 12, color: "#9ca3af", marginTop: 3 },
+  title: { fontSize: 20, fontWeight: 700, color: "#111827", lineHeight: 1.3, margin: 0 },
+  subtitle: { fontSize: 12, color: "#9ca3af", marginTop: 3, marginBottom: 0 },
   probChip: { padding: "3px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, flexShrink: 0, marginTop: 2 },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
   card: { background: "#f9fafb", borderRadius: 12, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 2 },
@@ -173,5 +170,3 @@ const s: Record<string, React.CSSProperties> = {
   footer: { display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 16, borderTop: "1px solid #f3f4f6" },
   cta: { background: "#4bc3c8", color: "#fff", border: "none", borderRadius: 999, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
 };
-
-createRoot(document.getElementById("root")!).render(<PlanDashboard />);
