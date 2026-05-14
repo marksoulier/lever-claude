@@ -1,11 +1,38 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import ContributionForm from "./ContributionForm";
-import { plans as storePlans } from "@/lib/store";
+import { createServerClient } from "@/lib/supabase/server";
+import { planFromRow, type DbPlanRow } from "@/lib/supabase/mappers";
+
+function fmtBalance(n: number): string {
+  return n >= 1_000_000
+    ? `$${(n / 1_000_000).toFixed(2)}M`
+    : `$${Math.round(n / 1000)}K`;
+}
 
 export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   const { id } = await props.params;
-  const plan = plans[id] ?? plans["retire-65"];
-  const currentContribution = storePlans[id]?.monthlyContribution ?? 3200;
+
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("plans")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) notFound();
+
+  const plan = planFromRow(data as DbPlanRow);
+  const shortfall = plan.projectedBalance - plan.targetBalance;
+
+  const metrics = [
+    { label: "Projected balance",    value: fmtBalance(plan.projectedBalance) },
+    { label: "Monthly income",        value: `$${plan.monthlyIncomeAtRetirement.toLocaleString()}` },
+    { label: "Shortfall / surplus",   value: `${shortfall >= 0 ? "+" : ""}${fmtBalance(Math.abs(shortfall))}` },
+    { label: "Probability of success", value: `${plan.successProbability}%` },
+  ];
+
+  const scenarios = scenariosByRetirementAge[plan.retirementAge] ?? [];
 
   return (
     <div className="flex flex-col min-h-full bg-white">
@@ -20,9 +47,9 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
 
       <main className="flex flex-col gap-8 px-8 py-10 max-w-5xl mx-auto w-full">
         <div className="flex items-center gap-2 text-sm text-zinc-400">
-          <Link href="/dashboard" className="hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">Dashboard</Link>
+          <Link href="/dashboard" className="hover:text-zinc-600 transition-colors">Dashboard</Link>
           <span>›</span>
-          <span className="text-zinc-600 dark:text-zinc-300">{plan.name}</span>
+          <span className="text-zinc-600">{plan.name}</span>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -30,7 +57,7 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
             <div>
               <h1 className="text-2xl font-black text-zinc-900">{plan.name}</h1>
               <p className="text-sm text-zinc-400 mt-1">
-                Target retirement: {plan.targetYear} · Assumed return: {plan.assumedReturn} · Inflation: {plan.inflation}
+                Target retirement: {plan.targetYear} · Assumed return: {plan.assumedReturn}% · Inflation: {plan.inflation}%
               </p>
             </div>
           </div>
@@ -39,12 +66,12 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
               <p className="text-sm font-black text-zinc-900">Monthly savings</p>
               <p className="text-xs text-zinc-400 mt-0.5">Enter a new amount to recalculate your retirement projection.</p>
             </div>
-            <ContributionForm planId={id} currentContribution={currentContribution} />
+            <ContributionForm planId={id} currentContribution={plan.monthlyContribution} />
           </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {plan.metrics.map((m) => (
+          {metrics.map((m) => (
             <div key={m.label} className="rounded-2xl bg-white border border-zinc-100 p-5 flex flex-col gap-1 shadow-sm">
               <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{m.label}</span>
               <span className="text-2xl font-black text-zinc-900">{m.value}</span>
@@ -79,27 +106,29 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
           </div>
         </div>
 
-        <div>
-          <h2 className="font-black text-zinc-900 mb-4">What-if scenarios</h2>
-          <div className="flex flex-col gap-3">
-            {plan.scenarios.map((s) => (
-              <div
-                key={s.label}
-                className="flex items-center justify-between rounded-2xl bg-white border border-zinc-100 px-6 py-4 shadow-sm"
-              >
-                <div>
-                  <p className="text-sm font-bold text-zinc-900">{s.label}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">{s.description}</p>
+        {scenarios.length > 0 && (
+          <div>
+            <h2 className="font-black text-zinc-900 mb-4">What-if scenarios</h2>
+            <div className="flex flex-col gap-3">
+              {scenarios.map((s) => (
+                <div
+                  key={s.label}
+                  className="flex items-center justify-between rounded-2xl bg-white border border-zinc-100 px-6 py-4 shadow-sm"
+                >
+                  <div>
+                    <p className="text-sm font-bold text-zinc-900">{s.label}</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">{s.description}</p>
+                  </div>
+                  <span className={`text-sm font-bold ${s.positive ? "text-teal-dark" : "text-red-400"}`}>
+                    {s.delta}
+                  </span>
                 </div>
-                <span className={`text-sm font-bold ${s.positive ? "text-teal-dark" : "text-red-400"}`}>
-                  {s.delta}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="rounded-2xl bg-teal dark:bg-teal-dark p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="rounded-2xl bg-teal p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <p className="font-bold text-white">Ask Claude about this plan</p>
             <p className="text-sm text-white/70 mt-1">
@@ -118,59 +147,19 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   );
 }
 
-const plans: Record<string, {
-  name: string;
-  targetYear: string;
-  assumedReturn: string;
-  inflation: string;
-  metrics: { label: string; value: string }[];
-  allocation: { label: string; pct: number; color: string }[];
-  scenarios: { label: string; description: string; delta: string; positive: boolean }[];
-}> = {
-  "retire-65": {
-    name: "Retire at 65",
-    targetYear: "2049",
-    assumedReturn: "7%",
-    inflation: "2.5%",
-    metrics: [
-      { label: "Projected balance", value: "$1.84M" },
-      { label: "Monthly income", value: "$7,200" },
-      { label: "Shortfall / surplus", value: "+$40K" },
-      { label: "Probability of success", value: "87%" },
-    ],
-    allocation: [
-      { label: "US Equities", pct: 50, color: "#4bc3c8" },
-      { label: "International Equities", pct: 20, color: "#3b82f6" },
-      { label: "Bonds", pct: 20, color: "#f59e0b" },
-      { label: "Cash & Alternatives", pct: 10, color: "#8b5cf6" },
-    ],
-    scenarios: [
-      { label: "Increase monthly savings by $500", description: "From $3,200 to $3,700/mo", delta: "+$124K at retirement", positive: true },
-      { label: "Market downturn of 30% in 2030", description: "One-time shock, then recovery", delta: "-$89K at retirement", positive: false },
-      { label: "Retire two years earlier (age 63)", description: "Shorter accumulation phase", delta: "-$201K at retirement", positive: false },
-    ],
-  },
-  "retire-60": {
-    name: "Retire early at 60",
-    targetYear: "2044",
-    assumedReturn: "7%",
-    inflation: "2.5%",
-    metrics: [
-      { label: "Projected balance", value: "$1.21M" },
-      { label: "Monthly income", value: "$4,800" },
-      { label: "Shortfall / surplus", value: "-$240K" },
-      { label: "Probability of success", value: "61%" },
-    ],
-    allocation: [
-      { label: "US Equities", pct: 60, color: "#4bc3c8" },
-      { label: "International Equities", pct: 20, color: "#3b82f6" },
-      { label: "Bonds", pct: 15, color: "#f59e0b" },
-      { label: "Cash & Alternatives", pct: 5, color: "#8b5cf6" },
-    ],
-    scenarios: [
-      { label: "Increase monthly savings by $1,000", description: "From $3,200 to $4,200/mo", delta: "+$198K at retirement", positive: true },
-      { label: "Part-time income of $2K/mo until 65", description: "Bridge income reduces withdrawals", delta: "+$310K at retirement", positive: true },
-      { label: "Healthcare costs increase by $500/mo", description: "Pre-Medicare gap coverage", delta: "-$78K at retirement", positive: false },
-    ],
-  },
+type Scenario = { label: string; description: string; delta: string; positive: boolean };
+
+// Keyed by retirementAge. Scenarios aren't in the DB yet — add a scenarios
+// table when users need to save or share them.
+const scenariosByRetirementAge: Record<number, Scenario[]> = {
+  65: [
+    { label: "Increase monthly savings by $500", description: "From $3,200 to $3,700/mo", delta: "+$124K at retirement", positive: true },
+    { label: "Market downturn of 30% in 2030",   description: "One-time shock, then recovery", delta: "-$89K at retirement", positive: false },
+    { label: "Retire two years earlier (age 63)", description: "Shorter accumulation phase",   delta: "-$201K at retirement", positive: false },
+  ],
+  60: [
+    { label: "Increase monthly savings by $1,000",         description: "From $3,200 to $4,200/mo",          delta: "+$198K at retirement", positive: true },
+    { label: "Part-time income of $2K/mo until 65",        description: "Bridge income reduces withdrawals", delta: "+$310K at retirement", positive: true },
+    { label: "Healthcare costs increase by $500/mo",        description: "Pre-Medicare gap coverage",         delta: "-$78K at retirement",  positive: false },
+  ],
 };

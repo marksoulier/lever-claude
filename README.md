@@ -88,7 +88,24 @@ Start `npm run dev` first, then restart Claude Code if it doesn't pick it up aut
 
 ### Environment variables
 
-No `.env` file is required to run locally. Plan data is seeded in `lib/store.ts`. When Supabase is added, connection strings will go in `.env.local`.
+Copy `.env.example` to `.env.local` and fill in your values. `.env.local` is gitignored — never commit it.
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Where to find it | Safe in browser? |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Dashboard → Project Settings → API | Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Dashboard → Project Settings → API → Publishable key | Yes |
+
+**Never add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local` or any committed file.** It bypasses Row Level Security entirely. If you need it for server-side admin operations, set it in Vercel Dashboard → Project → Settings → Environment Variables as a server-only variable (not `NEXT_PUBLIC_`).
+
+**Pre-commit check** — if you're unsure whether a secret is staged:
+```bash
+git diff --staged | grep -iE "(service_role|supabase_service|sbp_|eyJhbGci)"
+```
+Any output means a secret is about to be committed. Unstage and move it to `.env.local`.
 
 For local testing of iframe UIs inside Claude (which loads widgets from an HTTPS URL), set a tunnel URL:
 
@@ -243,6 +260,43 @@ playwright-cli goto http://localhost:3000/account/roth-ira
 playwright-cli goto http://localhost:3000/account/fake-id   # should 404
 playwright-cli close
 ```
+
+### Supabase agent skills
+
+Installed locally via `npx` — not committed to the repo (gitignored at `.agents/`). Each developer installs them once:
+
+```bash
+npx skills add supabase/agent-skills
+```
+
+This writes two skill packs to `.agents/skills/`:
+
+| Skill | What it does |
+|---|---|
+| `supabase` | Core guidance for using the Supabase MCP tools — migrations, RLS, schema inspection, type generation |
+| `supabase-postgres-best-practices` | Reference docs for indexes, connection pooling, RLS performance, JSONB, and more |
+
+Once installed, Claude Code loads these automatically and applies the guidance when you work with the database.
+
+**MCP server setup (also required):** the skills guide Claude Code on *how* to use the Supabase MCP tools, but the tools themselves are registered via `.mcp.json`. Add the Supabase entry to your local `.mcp.json` — do not commit it, as it contains a Personal Access Token:
+
+```json
+{
+  "mcpServers": {
+    "lever": { "url": "http://localhost:3000/api/mcp" },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=<your-project-ref>",
+      "headers": { "Authorization": "Bearer <your-supabase-pat>" }
+    }
+  }
+}
+```
+
+- **`project_ref`** — Supabase Dashboard → Project Settings → General
+- **`your-supabase-pat`** — Supabase Dashboard → Account → Access Tokens → Generate new token
+
+Restart Claude Code after editing `.mcp.json`.
 
 ---
 

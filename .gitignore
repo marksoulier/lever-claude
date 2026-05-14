@@ -35,14 +35,18 @@
 # claude local settings (skills are committed, personal config is not)
 .claude/settings.local.json
 
+# supabase agent skills (installed locally via npx, not committed)
+.agents/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — .env.example is the committed template; real values stay in .env.local
 .env*
+!.env.example
 
 # vercel
 .vercel

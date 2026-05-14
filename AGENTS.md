@@ -94,6 +94,248 @@ Do not invent placeholder text ("coming soon", "TODO"). If something isn't built
 
 ---
 
+# Environment variables — safety rules
+
+**Before every commit and before every deployment, verify these rules are met. No exceptions.**
+
+## What is safe vs. what is not
+
+| Variable | Safe to commit? | Safe in `NEXT_PUBLIC_`? | Notes |
+|---|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | No — use `.env.example` as template | Yes | Project address, not a secret, but keep out of git |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No — use `.env.example` as template | Yes | Publishable by design — RLS controls access, not key secrecy |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Never** | **Never** | Bypasses RLS entirely — server-side only, Vercel env vars only |
+
+## Pre-commit checklist
+
+Before `git commit`, run:
+
+```bash
+git diff --staged | grep -iE "(service_role|supabase_service|sbp_|eyJhbGci)"
+```
+
+If that returns any output, stop — you are about to commit a secret. Unstage the file and move the value to `.env.local`.
+
+## Rules
+
+- **`.env.local` is the only place real values live.** It is gitignored by the `.env*` rule in `.gitignore`. Never rename it to `.env` or `.env.development` — those are not gitignored.
+- **`.env.example` is the committed template.** It contains placeholder values only — no real keys, no real URLs. Keep it up to date when new variables are added.
+- **Never add `SUPABASE_SERVICE_ROLE_KEY` to any `NEXT_PUBLIC_` variable.** `NEXT_PUBLIC_` values are inlined into the browser bundle at build time. The service role key in the browser means any user can bypass RLS and read or delete any row in your database.
+- **Set secrets in Vercel, not in code.** Vercel Dashboard → Project → Settings → Environment Variables. Mark them as server-only (do not tick "Browser"). They are injected at runtime and never appear in the client bundle.
+- **If a secret is accidentally committed**, rotate it immediately — assume it is compromised. Generate a new key in Supabase Dashboard → Project Settings → API → Rotate. A git history rewrite does not help; the key was already exposed the moment it was pushed.
+
+---
+
+# Supabase — database operations
+
+Claude Code connects to Supabase through an MCP server declared in `.mcp.json`. When the server is active, a set of `mcp__supabase__*` tools are available directly in the conversation — no separate CLI, no manual SQL client.
+
+**Do not run bare SQL in a `bash` block against Supabase.** Use the tools below. They go through the MCP server, respect your project ref, and are auditable in the migration history.
+
+## Which tool to use for which job
+
+| Task | Tool | Notes |
+|---|---|---|
+| Create or alter a table, index, trigger, function | `mcp__supabase__apply_migration` | DDL only — recorded in migration history |
+| Query data, insert/update/delete rows, inspect policies | `mcp__supabase__execute_sql` | Ad-hoc SQL — not recorded as a migration |
+| See all tables and columns | `mcp__supabase__list_tables` | Pass `verbose: true` for column detail |
+| See migration history | `mcp__supabase__list_migrations` | Shows every applied migration by name and date |
+| Check security advisors and perf warnings | `mcp__supabase__get_advisors` | Run this after any schema change |
+| Pull runtime logs | `mcp__supabase__get_logs` | Pass a service name (`api`, `postgres`, `edge`) |
+| Generate TypeScript types from current schema | `mcp__supabase__generate_typescript_types` | Run after any schema change that affects the app |
+| Get the project's public URL | `mcp__supabase__get_project_url` | Use when wiring up the Supabase client |
+| Get the anon/publishable API key | `mcp__supabase__get_publishable_keys` | Use when wiring up the Supabase client |
+| List installed Postgres extensions | `mcp__supabase__list_extensions` | |
+| Search Supabase docs | `mcp__supabase__search_docs` | Useful when you're unsure of an API or feature |
+
+## snake_case ↔ camelCase convention
+
+Postgres uses snake_case column names. JavaScript uses camelCase. These must never mix inside the app.
+
+**The rule:** translate at the boundary, once, using `planFromRow()` in `lib/supabase/mappers.ts`. Everything inside the app uses camelCase. Nothing outside the mapper ever reads a snake_case field.
+
+```
+Supabase row          │  planFromRow()           │  App (components, API responses)
+─────────────────────────────────────────────────────────────────────────────────
+target_balance        │  →  targetBalance        │
+success_probability   │  →  successProbability   │
+monthly_contribution  │  →  monthlyContribution  │
+```
+
+**Where to call the mapper:**
+- API route GET handlers — map before `Response.json()`
+- Server Components that fetch plans — map before passing to JSX
+- Never in Client Components — they receive already-mapped data via props or API responses
+
+**When you add a column to the `plans` table:**
+1. Add it to `DbPlanRow` in `lib/supabase/mappers.ts`
+2. Add the mapping line in `planFromRow()`
+3. Add it to the `Plan` type in `lib/store.ts` if the app needs it
+
+**When generated types are ready:**
+Replace the hand-written `DbPlanRow` in `lib/supabase/mappers.ts` with the generated `Database["public"]["Tables"]["plans"]["Row"]` type. The `planFromRow()` function body stays the same.
+
+## Common tasks
+
+**Inspect the schema:**
+```
+mcp__supabase__list_tables  schemas=["public"]  verbose=true
+```
+
+**Read data or check a query before committing it:**
+```
+mcp__supabase__execute_sql  query="select * from plans limit 5"
+```
+
+**Check RLS policies on a table:**
+```
+mcp__supabase__execute_sql  query="select * from pg_policies where tablename = 'plans'"
+```
+
+**List all users (from auth schema):**
+```
+mcp__supabase__execute_sql  query="select id, email, created_at from auth.users limit 20"
+```
+
+**Apply a schema change (DDL):**
+```
+mcp__supabase__apply_migration  name="add_notes_to_plans"  query="alter table plans add column notes text"
+```
+Always use `apply_migration` for DDL — never `execute_sql`. Migration names must be snake_case and descriptive; they become the permanent record of what changed and when.
+
+**Regenerate TypeScript types after a schema change:**
+```
+mcp__supabase__generate_typescript_types
+```
+Copy the output into `lib/database.types.ts` (create it if it doesn't exist). Import from there in any file that queries Supabase.
+
+**Check for security or performance issues:**
+```
+mcp__supabase__get_advisors
+```
+Run this after every migration. It will flag missing RLS, unused indexes, and other common problems.
+
+## How the connection is configured
+
+The connection is declared in `.mcp.json` at the repo root:
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=<your-project-ref>",
+      "headers": { "Authorization": "Bearer <your-pat>" }
+    }
+  }
+}
+```
+
+- **`project_ref`** — found in Supabase Dashboard → Project Settings → General. Tells the MCP server which database to target.
+- **`Authorization` Bearer token** — a Personal Access Token from Supabase Dashboard → Account → Access Tokens. Proves ownership of the account.
+
+**Security:** the Bearer token grants access to all Supabase projects under your account. Never commit it to git. Keep the `supabase` entry in your user-level Claude config (`~/.claude/mcp.json`) rather than in the project `.mcp.json`, which is committed.
+
+---
+
+# MCP server testing
+
+The Lever MCP server exposes three tools to Claude: `show_financial_plan`, `run_what_if`, and `update_contribution`. There are three levels of testing, each catching a different class of bug.
+
+## Level 1 — Protocol test (is the server alive?)
+
+Tests the HTTP layer only. No LLM involved. Run after any change to `app/api/mcp/route.ts`.
+
+**What to ask Claude Code:**
+> "Run the MCP handshake and tools list against local" — or — "against prod"
+
+Claude will run:
+
+```bash
+# 1. Handshake — confirms the server speaks MCP
+curl -s -X POST http://localhost:3000/api/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}'
+
+# 2. Tool list — confirms all tools are registered
+curl -s -X POST http://localhost:3000/api/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+```
+
+For prod, swap `http://localhost:3000` with `https://lever-claude.vercel.app`.
+
+**What to check:** `initialize` response contains `"protocolVersion"`. Tool list contains `show_financial_plan`, `run_what_if`, and `update_contribution` by name.
+
+## Level 2 — Tool execution test (do the tools return real data?)
+
+Claude Code has direct access to the Lever MCP tools via `.mcp.json`. It can call them the same way Claude.ai would, and inspect the raw result. This is the most useful level for day-to-day development.
+
+**What to ask Claude Code:**
+> "Call all three Lever MCP tools and verify the output"
+
+Or target a specific tool:
+> "Call `show_financial_plan` and show me what it returns"
+> "Call `update_contribution` with monthlyContribution 4500 and check the result"
+> "Call `run_what_if` and tell me if the response looks correct"
+
+**What Claude checks for each tool:**
+- Returns a non-empty result (not `null`, not `{}`, not an error object)
+- Data matches what is in Supabase — not stale hardcoded values from `lib/store.ts`
+- Numeric fields are numbers, not strings
+- The `show_financial_plan` and `run_what_if` tools return a `_meta.ui.resourceUri` for the iframe widget
+
+**Tools available to Claude Code (from `.mcp.json`):**
+```
+mcp__claude_ai_Lever_Business__show_financial_plan
+mcp__claude_ai_Lever_Business__run_what_if
+mcp__claude_ai_Lever_Business__update_contribution
+```
+
+## Level 3 — Conversational flow test (does the LLM call the right tool?)
+
+This is the full end-to-end: a user says something → the LLM decides which tool to call → the tool runs → the LLM responds with the result. Claude Code cannot simulate this itself — it is the LLM.
+
+**Option A — Manual (test in Claude.ai):**
+Add the connector, then say:
+```
+"Show me my financial plan"              → expect: show_financial_plan called
+"Run a what-if scenario"                 → expect: run_what_if called
+"Update my monthly contribution to 4500" → expect: update_contribution called
+```
+
+**Option B — Automated (Claude API test script):**
+> "Build a Claude API test script that sends 'show me my financial plan' and asserts that show_financial_plan was called"
+
+Claude will use the `claude-api` skill to build a script that sends the prompt via the Anthropic SDK with the MCP tools declared, then checks that the correct tool was invoked with valid arguments.
+
+## User persona simulation
+
+To test the workflow as a real user would experience it — not as a developer — ask Claude Code to roleplay a persona while using playwright-cli and the MCP tools together.
+
+**What to ask:**
+> "Act as a first-time user who just signed up. Walk through creating a plan, exploring the detail page, and running a what-if scenario. Tell me where you got confused or where the UI broke."
+
+> "Act as a user who contributed $500/month less than planned. Use the contribution form and MCP tools to understand the impact."
+
+Claude will use playwright-cli to navigate the UI, call MCP tools to interact with the data layer, and report observations as the persona — surfacing gaps between what the UI promises and what actually happens.
+
+**Modern tools for this (beyond Claude Code):**
+
+| Tool | What it does | Best for |
+|---|---|---|
+| [Stagehand](https://github.com/browserbase/stagehand) | LLM-controlled browser — give it a goal in plain English, it figures out the clicks | AI-driven exploratory testing |
+| [browser-use](https://github.com/browser-use/browser-use) | Open-source Python library — LLM agents that control a real browser | Scripted persona workflows |
+| [Shortest](https://github.com/anti-work/shortest) | AI end-to-end testing — write tests in plain English, runs them in a browser | Regression testing without writing selectors |
+| [Magnitude](https://magnitude.run) | AI-first E2E test platform — natural language test cases, visual diffing | Teams wanting a hosted AI test runner |
+| playwright-cli + Claude Code | What this project uses — browser automation with AI interpretation | Right now, no extra setup |
+
+For this project at MVP stage, playwright-cli + Claude Code persona prompts is the right tool — no extra infrastructure, no new accounts. Graduate to Stagehand or Shortest when you want tests that run automatically in CI without Claude Code being in the loop.
+
+---
+
 # Data fetching rules
 
 Apply these rules to every `fetch` call and every `useEffect` that loads data. Do not skip any of them to keep code shorter — each one prevents a real class of bug.

@@ -3,8 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { Plan } from "@/lib/store";
+import CreatePlanForm from "./CreatePlanForm";
+
 
 type PlanRow = { id: string; name: string; targetYear: string; assets: string; progress: number };
+
+function toPlanRow(p: Plan): PlanRow {
+  return {
+    id:         p.id,
+    name:       p.name,
+    targetYear: String(p.targetYear),
+    assets:     `$${Math.round(p.currentBalance / 1000)}K saved`,
+    progress:   Math.round((p.currentBalance / p.targetBalance) * 100),
+  };
+}
 
 export default function DashboardPage() {
   const [plans, setPlans] = useState<PlanRow[]>([]);
@@ -19,15 +31,7 @@ export default function DashboardPage() {
         const response = await fetch("/api/plans");
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data: Plan[] = await response.json();
-        if (!cancelled) {
-          setPlans(data.map((p) => ({
-            id: p.id,
-            name: p.name,
-            targetYear: String(p.targetYear),
-            assets: `$${Math.round(p.currentBalance / 1000)}K saved`,
-            progress: Math.round((p.currentBalance / p.targetBalance) * 100),
-          })));
-        }
+        if (!cancelled) setPlans(data.map(toPlanRow));
       } catch (err) {
         if (!cancelled) setPlansError((err as Error).message);
       } finally {
@@ -81,7 +85,10 @@ export default function DashboardPage() {
         </div>
 
         <div>
-          <h2 className="text-base font-black text-zinc-900 mb-4">Your plans</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-black text-zinc-900">Your plans</h2>
+            <CreatePlanForm />
+          </div>
           {plansError && (
             <div className="rounded-2xl border border-red-100 bg-red-50 px-6 py-4 mb-3">
               <p className="text-sm font-semibold text-red-600">Could not load plans</p>
