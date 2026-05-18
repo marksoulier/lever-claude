@@ -44,7 +44,7 @@ export default function ContributionForm({
 
     try {
       const response = await fetch(`/api/plans/${planId}`, {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ monthlyContribution: amount }),
       });

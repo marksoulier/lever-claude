@@ -66,6 +66,209 @@ For widget pages (`/plan-widget`, `/scenario-widget`) a visual check is sufficie
 
 Do not skip this check. Do not report the task complete without running it.
 
+### Testing the mobile app (Expo web export)
+
+Playwright cannot test the native app directly. Use the Expo web export — the same React Native code compiled to run in a browser.
+
+**When to run this:** any change to files under `mobile/`.
+
+**What it covers:** auth, Supabase data loading, navigation state, component rendering. It does NOT cover native gestures, `Platform.OS === "ios"` branches, or native modules.
+
+**Step 1 — build** (run once per code change, from `mobile/`):
+```bash
+cd /home/yocto/work/lever-claude/mobile && npx expo export --platform web
+```
+
+**Step 2 — serve** (keep running across test runs):
+```bash
+npx serve /home/yocto/work/lever-claude/mobile/dist --listen 8081 > /tmp/expo-web.log 2>&1 &
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/   # must return 200
+```
+
+**Step 3 — test sequence:**
+```bash
+playwright-cli open --browser=firefox http://localhost:8081/
+playwright-cli console   # Errors: 0
+playwright-cli snapshot  # expect: logo "lever", Email textbox, Password textbox, Sign in button
+
+# Sign in — note: use fill directly, NOT the /api/test-auth route (that's web-only)
+playwright-cli fill "getByRole('textbox', { name: 'Email' })" "demo@lever.dev"
+playwright-cli fill "getByRole('textbox', { name: 'Password' })" "demo1234"
+playwright-cli click "getByText('Sign in')"
+playwright-cli run-code "async page => { await page.waitForTimeout(3000); }"
+
+playwright-cli console   # Errors: 0
+playwright-cli snapshot  # expect: logo, "Sign out" button, plan cards
+
+playwright-cli click "getByText('Sign out')"
+playwright-cli run-code "async page => { await page.waitForTimeout(1500); }"
+playwright-cli snapshot  # expect: login screen returned
+
+playwright-cli close
+```
+
+**Auth note:** the `/api/test-auth` server-side sign-in route is web-only (`localhost:3000`). The Expo web build uses the Supabase client directly — fill email/password in the UI as shown above.
+
+**Maestro (native testing) — future:** Maestro has an MCP server (`claude mcp add maestro -- maestro mcp`) and would give direct native device control. Blocked on WSL2 for now — see README → Developer tools → Maestro for the full picture.
+
+### Logging in during playwright tests
+
+The app requires authentication. Use the dev-only sign-in route to bypass the browser auth flow — it does the exchange server-side, avoiding Firefox/WSL CORS issues with Supabase's auth API.
+
+**Demo credentials (local dev only):**
+
+| Email | Password | Notes |
+|---|---|---|
+| `demo@lever.dev` | `demo1234` | Standard demo user — use for most tests |
+
+**Sign in and save state (run once per session):**
+
+```bash
+playwright-cli open --browser=firefox "http://localhost:3000/api/test-auth?email=demo%40lever.dev&password=demo1234"
+# The route exchanges credentials server-side, sets auth cookies, and redirects to /dashboard.
+playwright-cli state-save .playwright-cli/auth.json
+playwright-cli close
+```
+
+**Reuse saved state (all subsequent tests in the session):**
+
+```bash
+playwright-cli open --browser=firefox http://localhost:3000
+playwright-cli state-load .playwright-cli/auth.json
+playwright-cli goto http://localhost:3000/dashboard
+# Now authenticated — no login prompt
+```
+
+**Verify you are authenticated before testing a protected page:**
+
+```bash
+playwright-cli eval "window.location.pathname"  # must return "/dashboard", not "/login"
+```
+
+**Notes:**
+- `.playwright-cli/auth.json` is gitignored — each developer creates it locally
+- The saved state expires when the Supabase session expires (default 1 hour). Re-run the state-save block if you get redirected to `/login`
+- `GET /api/test-auth` returns 404 in production — it only exists in `NODE_ENV=development`
+- Never use real user credentials in test flows — always use the demo account
+- After signing out in a test, `auth.json` is stale — always re-run the state-save block before the next test run
+
+### Full test run — standard sequence
+
+Run this sequence to verify the full app after any significant change. Each step is a discrete check.
+
+```bash
+# ── 0. Setup ────────────────────────────────────────────────────────────────
+playwright-cli open --browser=firefox "http://localhost:3000/api/test-auth?email=demo%40lever.dev&password=demo1234"
+playwright-cli state-save .playwright-cli/auth.json
+
+# ── 1. Dashboard ─────────────────────────────────────────────────────────────
+# Expect: user email in header, sign-out button, plans list, 0 console errors
+playwright-cli console   # Errors: 0
+playwright-cli snapshot  # confirm email, "Your plans" heading, plan cards present
+
+# ── 2. Create plan — happy path ──────────────────────────────────────────────
+playwright-cli click "getByRole('button', { name: '+ New plan' })"
+playwright-cli fill "getByLabel('Plan name')" "Smoke Test Plan"
+playwright-cli fill "getByLabel('Target retirement age')" "65"
+playwright-cli fill "getByLabel('Monthly contribution ($)')" "3000"
+playwright-cli click "getByRole('button', { name: 'Create plan' })"
+# Expect: navigates to /plan/<uuid>
+playwright-cli eval "window.location.pathname"   # must start with /plan/
+
+# ── 3. Plan detail ───────────────────────────────────────────────────────────
+# Expect: plan name, metrics cards, allocation bars, 0 errors
+playwright-cli console   # Errors: 0
+playwright-cli snapshot  # confirm heading, Projected balance, Probability of success
+
+# ── 4. Contribution recalculate ──────────────────────────────────────────────
+playwright-cli triple-click "getByRole('spinbutton')"
+playwright-cli fill "getByRole('spinbutton')" "5000"
+playwright-cli click "getByRole('button', { name: 'Recalculate' })"
+# Expect: result cards appear with updated values, 0 errors
+playwright-cli console   # Errors: 0
+playwright-cli snapshot  # confirm Projected balance, Success probability, Monthly income cards
+
+# ── 5. Navigation ────────────────────────────────────────────────────────────
+playwright-cli click "getByRole('link', { name: 'Dashboard' })"
+playwright-cli eval "window.location.pathname"   # must be /dashboard
+
+# ── 6. Sign out ──────────────────────────────────────────────────────────────
+playwright-cli click "getByRole('button', { name: 'Sign out' })"
+playwright-cli eval "window.location.pathname"   # must be /login
+
+# ── 7. Redirect after sign-out ───────────────────────────────────────────────
+playwright-cli goto http://localhost:3000/dashboard
+playwright-cli eval "window.location.pathname"   # must be /login (redirected)
+
+playwright-cli close
+```
+
+### Edge case tests — run via curl (server validation, no browser needed)
+
+These test server-side Zod validation directly, bypassing browser HTML constraints.
+
+```bash
+BASE="http://localhost:3000"
+
+# Age at boundary: must be > 41, so 41 must fail
+curl -s -X POST $BASE/api/plans -H "Content-Type: application/json" \
+  -d '{"name":"x","retirementAge":41,"monthlyContribution":500}' | grep error
+# Expect: "retirementAge must be greater than current age (41)"
+
+# Negative contribution
+curl -s -X POST $BASE/api/plans -H "Content-Type: application/json" \
+  -d '{"name":"x","retirementAge":65,"monthlyContribution":-1}' | grep error
+# Expect: "monthlyContribution must be positive"
+
+# Whitespace-only name
+curl -s -X POST $BASE/api/plans -H "Content-Type: application/json" \
+  -d '{"name":"   ","retirementAge":65,"monthlyContribution":500}' | grep error
+# Expect: "name must not be empty"
+
+# Malformed JSON
+curl -s -X POST $BASE/api/plans -H "Content-Type: application/json" \
+  -d 'not json' | grep error
+# Expect: "Request body must be JSON"
+
+# Missing field
+curl -s -X POST $BASE/api/plans -H "Content-Type: application/json" \
+  -d '{"name":"x"}' | grep error
+# Expect: "retirementAge must be a number"
+
+# PATCH without auth
+curl -s -X PATCH "$BASE/api/plans/00000000-0000-0000-0000-000000000000" \
+  -H "Content-Type: application/json" \
+  -d '{"monthlyContribution":500}' | grep error
+# Expect: "Unauthorized"
+```
+
+### Database verification — confirm UI matches DB after tests
+
+After running the full test run, verify the created plan persisted correctly:
+
+```
+mcp__supabase__execute_sql
+query: "select name, monthly_contribution, projected_balance, success_probability from plans where name = 'Smoke Test Plan'"
+```
+
+Confirm:
+- Row exists with the correct `name`
+- `monthly_contribution` matches the recalculated value (e.g., 5000 if you changed it)
+- `projected_balance` and `success_probability` match what the UI showed after recalculate
+
+### Known issues found in testing
+
+| Issue | Observed | Severity |
+|---|---|---|
+| Dashboard metrics cards are hardcoded | "Portfolio value: $487,200" never updates | Low — cosmetic until auth wires user-specific data |
+| Plans from other users visible | Dev RLS read policy shows all plans regardless of owner | Medium — drop dev policies before production |
+| Saved playwright auth expires after 1 hour | state-load brings back stale cookies after session expiry | Expected — re-run state-save |
+| Firefox/WSL can't call Supabase auth API from browser | CORS blocks email/password in Firefox on WSL | Workaround: use /api/test-auth route |
+| Stripe webhook forwarder must be started manually | Without `stripe listen`, `checkout.session.completed` never reaches the app; subscription row never written; what-if panel stays locked forever | Run `~/.local/bin/stripe listen --forward-to localhost:3000/api/stripe/webhook` in a second terminal before testing checkout |
+| Stripe CLI API version mismatch | CLI sends events at `2023-10-16`; SDK retrieves objects at `2026-04-22.dahlia`; `current_period_end` field location differs across versions | Handled in webhook via `(item as any).current_period_end ?? (sub as any).current_period_end` fallback |
+| What-if scenarios absent for non-standard retirement ages | `scenariosByRetirementAge` only has entries for 60 and 65; premium users with other ages see unlocked panel but no content | Add age to the static record, or migrate to a DB-backed scenarios table |
+| Stripe Checkout requires cardholder name and ZIP | Not documented in old test flow — `4242...` card alone is insufficient; submit will stay on checkout page silently | Always fill name ("Demo User") and ZIP ("10001") when testing checkout with Playwright |
+
 ## 3. Documentation — required after any change that affects how the app works
 
 Update `README.md` to reflect what changed. Do this before the final commit, not as an afterthought.
@@ -92,6 +295,103 @@ Update `README.md` to reflect what changed. Do this before the final commit, not
 
 Do not invent placeholder text ("coming soon", "TODO"). If something isn't built yet, either omit it or list it in Known limitations.
 
+## 4. Off-codebase configuration — required after any change that touches an external service
+
+This project depends on services configured outside the codebase: Supabase Dashboard, Google Cloud Console, Vercel. Configuration that lives only in a browser dashboard is invisible to anyone joining later — it is the hardest knowledge to rediscover and the most common source of "it works on my machine" failures.
+
+**Document external configuration whenever you:**
+- Enable, disable, or configure an auth provider (Google, GitHub, etc.)
+- Add or change redirect URLs or Site URL in Supabase Auth settings
+- Add, rotate, or scope an API key or secret
+- Change a Vercel environment variable
+- Create or modify a Google Cloud OAuth app, service account, or IAM role
+- Enable a Supabase extension or change a database setting
+- Set up a webhook, cron job, or edge function with external dependencies
+
+**What the documentation must include for each external service:**
+
+```
+Service: [Google Cloud Console / Supabase Dashboard / Vercel / etc.]
+What was configured: [specific setting — be exact, not vague]
+Where to find it: [Dashboard → Section → Subsection]
+Value or format: [the exact value, or the format if it's a secret]
+Why it's needed: [one sentence — what breaks without it]
+Linked to: [the code file that consumes this config]
+```
+
+**Where it goes:** add it to the relevant section in `README.md`. If no section exists, create one. Never leave external configuration documented only in chat, a ticket, or memory.
+
+**If you cannot complete the external configuration yourself** (e.g. requires browser login to a third-party dashboard), document exactly what steps the developer must take manually — with the exact navigation path, the exact values to enter, and which step to do first. Do not leave the developer to infer it from the code.
+
+**Example — correct:**
+> Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID → Authorised redirect URIs → add `https://[project-ref].supabase.co/auth/v1/callback`
+
+**Example — not acceptable:**
+> "Configure Google OAuth in the usual way."
+
+## 5. Production database sync — required before any deploy that includes a schema change
+
+Code and schema must move to production together. Deploying code that references a column, table, or policy that does not yet exist in the production database causes runtime errors that are invisible in development.
+
+**Run this checklist before every deploy that includes a migration:**
+
+### Step 1 — audit for dev policies
+
+Dev policies bypass row-level ownership and must never exist in production. Run this query against the production Supabase project:
+
+```sql
+select policyname, cmd from pg_policies
+where tablename = 'plans'
+  and policyname like 'dev:%';
+```
+
+**If this returns any rows: stop. Do not deploy.** Drop the dev policies first:
+
+```sql
+drop policy "dev: allow anonymous reads" on plans;
+drop policy "dev: allow inserts" on plans;
+drop policy "dev: allow updates" on plans;
+```
+
+### Step 2 — compare migration history
+
+List migrations applied to the dev project:
+```
+mcp__supabase__list_migrations
+```
+
+Then connect to the production project and run the same command. Any migration present on dev but absent from production must be applied before the code deploy.
+
+Apply them in chronological order (oldest first — migration names are timestamped):
+```
+mcp__supabase__apply_migration  name="<migration_name>"  query="<sql>"
+```
+
+### Step 3 — verify production schema
+
+After applying migrations, confirm the tables and columns the new code depends on actually exist in production:
+```
+mcp__supabase__list_tables  schemas=["public"]  verbose=true
+```
+
+Check that every column referenced in the new code is present. If a column is missing, the migration was not applied or failed silently.
+
+### Step 4 — run get_advisors on production
+
+```
+mcp__supabase__get_advisors
+```
+
+This flags missing RLS, policy gaps, and missing indexes that appeared as a result of the new migration. Fix any critical advisories before the deploy lands.
+
+### The two-project model
+
+Currently the app uses one Supabase project for both development and production. See README → Deployment → Database environments for the plan to split into `lever-dev` and `lever-prod`. Until that split happens:
+
+- All migrations run against the same project — apply them carefully
+- Dev policies exist on the same database real users query — drop them before any user other than yourself signs up
+- The production deploy checklist above applies on every push to main that includes a migration
+
 ---
 
 # Environment variables — safety rules
@@ -104,14 +404,16 @@ Do not invent placeholder text ("coming soon", "TODO"). If something isn't built
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | No — use `.env.example` as template | Yes | Project address, not a secret, but keep out of git |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No — use `.env.example` as template | Yes | Publishable by design — RLS controls access, not key secrecy |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Never** | **Never** | Bypasses RLS entirely — server-side only, Vercel env vars only |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Never** | **Never** | Bypasses RLS entirely — required by Stripe webhook handler locally and on Vercel |
+| `STRIPE_SECRET_KEY` | **Never** | **Never** | Server-only Stripe API key (`sk_test_...` locally, `sk_live_...` on Vercel) |
+| `STRIPE_WEBHOOK_SECRET` | **Never** | **Never** | Signing secret from `stripe listen` (local) or Stripe Dashboard webhook settings (prod) |
 
 ## Pre-commit checklist
 
 Before `git commit`, run:
 
 ```bash
-git diff --staged | grep -iE "(service_role|supabase_service|sbp_|eyJhbGci)"
+git diff --staged | grep -iE "(service_role|supabase_service|sbp_|eyJhbGci|sk_test_|sk_live_|whsec_)"
 ```
 
 If that returns any output, stop — you are about to commit a secret. Unstage the file and move the value to `.env.local`.

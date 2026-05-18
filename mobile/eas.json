@@ -1,0 +1,34 @@
+{
+  "cli": {
+    "version": ">= 16.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://avzhlaxhopzmrjnmregc.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_YGqnQlufglFfCW11w0wWwA_V2wMAGzS",
+        "EXPO_PUBLIC_API_URL": "https://lever-claude.vercel.app"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://avzhlaxhopzmrjnmregc.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_YGqnQlufglFfCW11w0wWwA_V2wMAGzS",
+        "EXPO_PUBLIC_API_URL": "https://lever-claude.vercel.app"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://avzhlaxhopzmrjnmregc.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_YGqnQlufglFfCW11w0wWwA_V2wMAGzS",
+        "EXPO_PUBLIC_API_URL": "https://lever-claude.vercel.app"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

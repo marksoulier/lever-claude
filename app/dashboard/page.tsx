@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import type { User } from "@supabase/supabase-js";
 import type { Plan } from "@/lib/store";
+import { supabase } from "@/lib/supabase/client";
 import CreatePlanForm from "./CreatePlanForm";
+import UserMenu, { displayName } from "./UserMenu";
 
 
 type PlanRow = { id: string; name: string; targetYear: string; assets: string; progress: number };
@@ -18,10 +21,22 @@ function toPlanRow(p: Plan): PlanRow {
   };
 }
 
+function timeGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function DashboardPage() {
+  const [user, setUser] = useState<User | null>(null);
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [plansError, setPlansError] = useState<string | null>(null);
   const [plansLoading, setPlansLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,16 +62,20 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-full bg-white">
       <header className="flex items-center justify-between px-8 py-4 border-b border-zinc-100">
         <Link href="/" className="text-xl font-black tracking-tight text-zinc-900 lowercase">lever</Link>
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <Link href="/dashboard" className="text-teal font-semibold">Dashboard</Link>
-          <a href="#" className="text-zinc-500 hover:text-zinc-900 transition-colors">Settings</a>
-        </nav>
+        <div className="flex items-center gap-6">
+          <nav className="flex items-center gap-6 text-sm font-medium">
+            <Link href="/dashboard" className="text-teal font-semibold">Dashboard</Link>
+          </nav>
+          <UserMenu />
+        </div>
       </header>
 
       <main className="flex flex-col gap-8 px-8 py-10 max-w-5xl mx-auto w-full">
         <div>
-          <h1 className="text-2xl font-black text-zinc-900">Good morning, Mark</h1>
-          <p className="text-sm text-zinc-400 mt-1">Here's where your retirement plan stands today.</p>
+          <h1 className="text-2xl font-black text-zinc-900">
+            {timeGreeting()}{user ? `, ${displayName(user)}` : ""}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">Here&apos;s where your retirement plan stands today.</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

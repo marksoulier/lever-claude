@@ -4,7 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { planFromRow, type DbPlanRow } from "@/lib/supabase/mappers";
 
 export async function GET() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase.from("plans").select("*").order("retirement_age");
 
   if (error) {
@@ -17,10 +17,7 @@ export async function GET() {
 // ── Validation schema ──────────────────────────────────────────────────────
 // Only what the browser knows. Server derives id, projectedBalance, etc.
 
-const CURRENT_AGE = 41;   // replace with user record when auth exists
-// Hardcoded until auth session provides a real user ID.
-// Every insert is attributed to this dev user.
-const DEV_USER_ID = "568533f9-4ce3-48e8-881b-4f197a186142";
+const CURRENT_AGE = 41; // replace with user profile field when profiles table exists
 
 const CreatePlan = z.object({
   name: z.string().trim().min(1, "name must not be empty"),
@@ -74,14 +71,20 @@ export async function POST(request: Request) {
   );
   const monthlyIncomeAtRetirement = Math.round((projectedBalance * 0.04) / 12);
 
+  // ── Authenticate ─────────────────────────────────────────────────────
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   // ── Insert into Supabase ──────────────────────────────────────────────
   // Column names are snake_case (Postgres convention). planFromRow() maps
   // them back to camelCase before the response leaves this handler.
-  const supabase = createServerClient();
   const { data, error } = await supabase
     .from("plans")
     .insert({
-      user_id:                     DEV_USER_ID,
+      user_id:                     user.id,
       name,
       retirement_age:              retirementAge,
       current_age:                 CURRENT_AGE,

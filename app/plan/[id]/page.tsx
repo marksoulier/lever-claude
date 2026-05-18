@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ContributionForm from "./ContributionForm";
+import WhatIfPanel from "./WhatIfPanel";
+import UserMenu from "@/app/dashboard/UserMenu";
 import { createServerClient } from "@/lib/supabase/server";
 import { planFromRow, type DbPlanRow } from "@/lib/supabase/mappers";
+import { isPremium } from "@/lib/supabase/subscription";
 
 function fmtBalance(n: number): string {
   return n >= 1_000_000
@@ -13,12 +16,11 @@ function fmtBalance(n: number): string {
 export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   const { id } = await props.params;
 
-  const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from("plans")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const supabase = await createServerClient();
+  const [{ data, error }, premium] = await Promise.all([
+    supabase.from("plans").select("*").eq("id", id).single(),
+    isPremium(),
+  ]);
 
   if (error || !data) notFound();
 
@@ -40,9 +42,12 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
         <Link href="/" className="text-xl font-black tracking-tight text-zinc-900 lowercase">
           lever
         </Link>
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <Link href="/dashboard" className="text-teal font-semibold">Dashboard</Link>
-        </nav>
+        <div className="flex items-center gap-6">
+          <nav className="flex items-center gap-6 text-sm font-medium">
+            <Link href="/dashboard" className="text-teal font-semibold">Dashboard</Link>
+          </nav>
+          <UserMenu />
+        </div>
       </header>
 
       <main className="flex flex-col gap-8 px-8 py-10 max-w-5xl mx-auto w-full">
@@ -106,27 +111,10 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
           </div>
         </div>
 
-        {scenarios.length > 0 && (
-          <div>
-            <h2 className="font-black text-zinc-900 mb-4">What-if scenarios</h2>
-            <div className="flex flex-col gap-3">
-              {scenarios.map((s) => (
-                <div
-                  key={s.label}
-                  className="flex items-center justify-between rounded-2xl bg-white border border-zinc-100 px-6 py-4 shadow-sm"
-                >
-                  <div>
-                    <p className="text-sm font-bold text-zinc-900">{s.label}</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">{s.description}</p>
-                  </div>
-                  <span className={`text-sm font-bold ${s.positive ? "text-teal-dark" : "text-red-400"}`}>
-                    {s.delta}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <div>
+          <h2 className="font-black text-zinc-900 mb-4">What-if scenarios</h2>
+          <WhatIfPanel isPremium={premium} scenarios={scenarios} />
+        </div>
 
         <div className="rounded-2xl bg-teal p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
