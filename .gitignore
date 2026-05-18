@@ -33,8 +33,10 @@
 .playwright-cli/
 # playwright cli project config is committed (.playwright/cli.config.json)
 
-# claude local settings (skills are committed, personal config is not)
+# claude local settings and runtime files (skills are committed, personal config is not)
 .claude/settings.local.json
+.claude/settings.json
+.claude/scheduled_tasks.lock
 
 # supabase agent skills (installed locally via npx, not committed)
 .agents/
