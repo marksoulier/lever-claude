@@ -965,6 +965,39 @@ The only Mac-specific step is creating an Apple Developer account, which is done
 
 ---
 
+#### EAS build rules — hard-learned
+
+These tripped up the first builds. Read before troubleshooting.
+
+**Always `cd mobile` before running `eas` commands.** EAS reads `app.json` and `eas.json` from the current directory. Running from the repo root finds neither — it creates stray `app.json`/`eas.json` files at the root and fails.
+
+```bash
+# Wrong — runs from repo root, creates stray files
+eas build --platform android
+
+# Correct
+cd mobile && eas build --platform android --profile preview
+```
+
+**EAS builds from git, not from your working directory.** Commit all changes before triggering a build. If `mobile/` files aren't committed, EAS archives the previous commit and builds the old version.
+
+**`--clear-cache` clears Gradle/npm caches, not the fingerprint.** If EAS says "computed fingerprint" but doesn't pick up your new file, confirm the file is committed and the commit hash changed.
+
+**Supabase + Hermes: dynamic import() fix.** `@supabase/supabase-js` v2+ uses `import(/* webpackIgnore: true */ '@opentelemetry/api')` internally. Hermes (React Native's production JS engine) rejects this syntax. Fixed in this project via:
+- `babel.config.js` — `babel-plugin-transform-dynamic-import` converts `import()` to `require()` at build time
+- `metro.config.js` — `resolveRequest` stubs `@opentelemetry/*` to an empty module
+
+Do not remove these without testing a production EAS build — the error (`Invalid expression encountered`) only appears in release/Hermes builds, not in Expo Go or dev builds.
+
+**Always run `npx expo install --check` after adding packages.** EAS uses the Expo SDK version from `app.json` to validate compatibility. Version mismatches (like `@react-native-async-storage/async-storage` v3 with Expo 54) compile locally but fail on EAS with generic Gradle errors.
+
+```bash
+cd mobile && npx expo install --check
+# Must print: "Dependencies are up to date"
+```
+
+---
+
 ## Stripe billing
 
 ### Overview
