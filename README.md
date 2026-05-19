@@ -111,11 +111,18 @@ cp .env.example .env.local
 
 **`STRIPE_SECRET_KEY`** — the Stripe CLI stores its session at `~/.config/stripe/config.toml`. The test mode key is readable there if you've run `stripe login`. Never commit it.
 
-**Pre-commit check** — if you're unsure whether a secret is staged:
+**Pre-commit check** — run this before every commit:
 ```bash
 git diff --staged | grep -iE "(service_role|supabase_service|sbp_|eyJhbGci|sk_test_|sk_live_|whsec_)"
 ```
-Any output means a secret is about to be committed. Unstage and move it to `.env.local`.
+Any output means a secret is staged. Unstage the file and move the value to the right place:
+
+| Pattern | What it is | Where it belongs |
+|---|---|---|
+| `sbp_` | Supabase Personal Access Token | `~/.claude/mcp.json` (user-level, never committed) |
+| `service_role` / `eyJhbGci` | Supabase service role key | `.env.local` |
+| `sk_test_` / `sk_live_` | Stripe secret key | `.env.local` |
+| `whsec_` | Stripe webhook signing secret | `.env.local` |
 
 ### Stripe webhook forwarding (local dev)
 
@@ -624,25 +631,37 @@ This writes two skill packs to `.agents/skills/`:
 
 Once installed, Claude Code loads these automatically and applies the guidance when you work with the database.
 
-**MCP server setup (also required):** the skills guide Claude Code on *how* to use the Supabase MCP tools, but the tools themselves are registered via `.mcp.json`. Add the Supabase entry to your local `.mcp.json` — do not commit it, as it contains a Personal Access Token:
+**MCP server setup (also required):** the skills guide Claude Code on *how* to use the Supabase MCP tools, but the tools themselves are registered in your **user-level** Claude config — `~/.claude/mcp.json`. This file is never committed.
+
+> **Do not add the Supabase entry to the project `.mcp.json`.** That file is committed to git. A PAT in `.mcp.json` will be blocked by GitHub push protection and the token must be rotated immediately.
+
+Create or edit `~/.claude/mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "lever": { "url": "http://localhost:3000/api/mcp" },
     "supabase": {
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=<your-project-ref>",
+      "url": "https://mcp.supabase.com/mcp?project_ref=avzhlaxhopzmrjnmregc",
       "headers": { "Authorization": "Bearer <your-supabase-pat>" }
     }
   }
 }
 ```
 
-- **`project_ref`** — Supabase Dashboard → Project Settings → General
-- **`your-supabase-pat`** — Supabase Dashboard → Account → Access Tokens → Generate new token
+- **`your-supabase-pat`** — Supabase Dashboard → Account → Access Tokens → Generate new token. The token is shown once — copy it immediately.
 
-Restart Claude Code after editing `.mcp.json`.
+The project `.mcp.json` only contains the lever entry and is safe to commit:
+
+```json
+{
+  "mcpServers": {
+    "lever": { "url": "http://localhost:3000/api/mcp" }
+  }
+}
+```
+
+Restart Claude Code after editing `~/.claude/mcp.json`.
 
 ---
 
