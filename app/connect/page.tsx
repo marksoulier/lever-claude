@@ -3,6 +3,8 @@ import { baseURL } from "@/baseUrl";
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+type Step = { title: string; detail?: string; code?: string | null };
+
 export default async function ConnectPage() {
   // Resolve the current user and their api_token.
   // The admin client is used for the profiles upsert so the user's row is
@@ -28,7 +30,7 @@ export default async function ConnectPage() {
     }
   }
 
-  const proSteps = [
+  const proSteps: Step[] = [
     { title: "Open Claude and click Customize", detail: "In the Claude sidebar or top menu, click Customize." },
     { title: "Go to Connectors", detail: "Inside Customize, select the Connectors section." },
     { title: "Add a custom connector", detail: 'Click the "+" button, then select "Add custom connector".' },
@@ -36,7 +38,7 @@ export default async function ConnectPage() {
     { title: "Enable it in a conversation", detail: 'Click the "+" in the chat input, select Connectors, and toggle lever on.' },
   ];
 
-  const teamSteps = [
+  const teamSteps: Step[] = [
     { title: "Open Organization settings", detail: "As an admin, go to Organization settings → Connectors." },
     { title: "Add a connector", detail: 'Click "Add", hover over "Custom", then select "Web".' },
     { title: "Each member uses their own URL", detail: "Each member signs in to lever, visits this page, and copies their personal URL.", code: null },
