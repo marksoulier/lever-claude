@@ -1,9 +1,55 @@
 import Link from "next/link";
 import { baseURL } from "@/baseUrl";
+import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-const MCP_URL = `${baseURL}/api/mcp`;
+export default async function ConnectPage() {
+  // Resolve the current user and their api_token.
+  // The admin client is used for the profiles upsert so the user's row is
+  // guaranteed to exist even on first visit (before the trigger fires).
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function ConnectPage() {
+  let mcpUrl = `${baseURL}/api/mcp`;
+
+  if (user) {
+    const admin = createAdminClient();
+    // Ensure a profile row exists, then read the token.
+    await admin.from("profiles").upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("api_token")
+      .eq("id", user.id)
+      .single();
+    if (profile?.api_token) {
+      mcpUrl = `${baseURL}/api/mcp?token=${profile.api_token}`;
+    }
+  }
+
+  const proSteps = [
+    { title: "Open Claude and click Customize", detail: "In the Claude sidebar or top menu, click Customize." },
+    { title: "Go to Connectors", detail: "Inside Customize, select the Connectors section." },
+    { title: "Add a custom connector", detail: 'Click the "+" button, then select "Add custom connector".' },
+    { title: "Paste your personal lever URL", detail: "Enter the URL below and click Add. The token in the URL identifies you.", code: mcpUrl },
+    { title: "Enable it in a conversation", detail: 'Click the "+" in the chat input, select Connectors, and toggle lever on.' },
+  ];
+
+  const teamSteps = [
+    { title: "Open Organization settings", detail: "As an admin, go to Organization settings → Connectors." },
+    { title: "Add a connector", detail: 'Click "Add", hover over "Custom", then select "Web".' },
+    { title: "Each member uses their own URL", detail: "Each member signs in to lever, visits this page, and copies their personal URL.", code: null },
+    { title: "Members connect individually", detail: "Each member goes to Customize → Connectors, finds lever, and clicks Connect." },
+  ];
+
+  const prompts = [
+    "Show me my financial plan",
+    "Run a what-if scenario for retiring at 60",
+    "Update my monthly savings to $4,000",
+    "What happens if market returns drop to 5%?",
+  ];
+
   return (
     <div className="flex flex-col min-h-full bg-white">
       <header className="flex items-center justify-between px-8 py-4 border-b border-zinc-100">
@@ -22,13 +68,17 @@ export default function ConnectPage() {
           </p>
         </div>
 
-        {/* URL copy box */}
+        {/* Personal URL copy box */}
         <div className="rounded-2xl border border-teal-mid bg-teal-light p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-teal-dark mb-2">Your lever MCP URL</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-dark mb-2">Your personal lever MCP URL</p>
           <div className="flex items-center gap-3 bg-white rounded-xl border border-teal-mid px-4 py-3">
-            <code className="text-sm font-mono text-zinc-800 flex-1 break-all">{MCP_URL}</code>
+            <code className="text-sm font-mono text-zinc-800 flex-1 break-all">{mcpUrl}</code>
           </div>
-          <p className="text-xs text-zinc-400 mt-2">You'll paste this URL into Claude in the steps below.</p>
+          <p className="text-xs text-zinc-400 mt-2">
+            {user
+              ? "This URL is unique to your account — keep it private. Anyone with this URL can read your plan."
+              : "Sign in to get your personal URL with your account token."}
+          </p>
         </div>
 
         {/* Instructions — Pro / Max */}
@@ -47,7 +97,7 @@ export default function ConnectPage() {
                   <p className="text-sm font-semibold text-zinc-900">{step.title}</p>
                   {step.detail && <p className="text-sm text-zinc-400 mt-0.5">{step.detail}</p>}
                   {step.code && (
-                    <code className="inline-block mt-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-zinc-700 font-mono">
+                    <code className="inline-block mt-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-zinc-700 font-mono break-all">
                       {step.code}
                     </code>
                   )}
@@ -61,7 +111,7 @@ export default function ConnectPage() {
         <div className="rounded-2xl border border-zinc-100 overflow-hidden shadow-sm">
           <div className="bg-zinc-50 px-6 py-4 border-b border-zinc-100">
             <p className="font-black text-zinc-900">Team or Enterprise plan</p>
-            <p className="text-sm text-zinc-400 mt-0.5">Admins set up the connector for the whole org</p>
+            <p className="text-sm text-zinc-400 mt-0.5">Each member connects with their own personal URL</p>
           </div>
           <div className="flex flex-col divide-y divide-zinc-100">
             {teamSteps.map((step, i) => (
@@ -73,7 +123,7 @@ export default function ConnectPage() {
                   <p className="text-sm font-semibold text-zinc-900">{step.title}</p>
                   {step.detail && <p className="text-sm text-zinc-400 mt-0.5">{step.detail}</p>}
                   {step.code && (
-                    <code className="inline-block mt-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-zinc-700 font-mono">
+                    <code className="inline-block mt-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-zinc-700 font-mono break-all">
                       {step.code}
                     </code>
                   )}
@@ -116,54 +166,3 @@ export default function ConnectPage() {
     </div>
   );
 }
-
-const proSteps = [
-  {
-    title: "Open Claude and click Customize",
-    detail: "In the Claude sidebar or top menu, click Customize.",
-  },
-  {
-    title: "Go to Connectors",
-    detail: "Inside Customize, select the Connectors section.",
-  },
-  {
-    title: "Add a custom connector",
-    detail: 'Click the "+" button, then select "Add custom connector".',
-  },
-  {
-    title: "Paste the lever MCP URL",
-    detail: "Enter the URL below and click Add.",
-    code: MCP_URL,
-  },
-  {
-    title: "Enable it in a conversation",
-    detail: 'Click the "+" in the chat input, select Connectors, and toggle lever on.',
-  },
-];
-
-const teamSteps = [
-  {
-    title: "Open Organization settings",
-    detail: "As an admin, go to Organization settings → Connectors.",
-  },
-  {
-    title: "Add a connector",
-    detail: 'Click "Add", hover over "Custom", then select "Web".',
-  },
-  {
-    title: "Paste the lever MCP URL",
-    detail: "Enter the URL and click Add.",
-    code: MCP_URL,
-  },
-  {
-    title: "Members connect individually",
-    detail: "Each member goes to Customize → Connectors, finds lever, and clicks Connect.",
-  },
-];
-
-const prompts = [
-  "Show me my financial plan",
-  "Run a what-if scenario for retiring at 60",
-  "Update my monthly savings to $4,000",
-  "What happens if market returns drop to 5%?",
-];

@@ -431,7 +431,19 @@ The web app has a `/connect` page with step-by-step instructions. From the dashb
 |---|---|---|
 | `show_financial_plan` | Interactive UI | Renders the plan dashboard as an iframe in the chat |
 | `run_what_if` | Interactive UI | Opens the scenario modeler with sliders in the chat |
-| `update_contribution` | Plain text | Computes and returns a new projected balance for a given monthly savings amount |
+| `update_contribution` | Plain text | Computes a new projected balance and persists the updated contribution to Supabase |
+
+### Authentication — token in URL
+
+The MCP endpoint is public but user-scoped via a token in the connector URL:
+
+```
+https://lever-claude.vercel.app/api/mcp?token=<api_token>
+```
+
+Each user has a unique `api_token` UUID stored in the `profiles` table. The MCP route reads the token from the query string, looks up the user via the service role client (bypasses RLS), then fetches only that user's plans. The `/connect` page shows each signed-in user their personal URL.
+
+**Token security:** treat the connector URL like a password — anyone with it can read and update your plan. If compromised, regenerate the token in the `profiles` table.
 
 ### Interactive UI pattern
 
@@ -439,9 +451,9 @@ The web app has a `/connect` page with step-by-step instructions. From the dashb
 
 This pattern is currently supported by Claude only. Other MCP clients (Cursor, Copilot) will call the tools but won't render the iframe.
 
-### Stateless design
+### Live data design
 
-`update_contribution` computes and returns without writing anywhere. Plan data is read from `lib/store.ts` (hardcoded). When Supabase is added, reads become DB queries and writes get persisted — the tool signature stays the same.
+All three tools read from and write to the user's real Supabase plan rows. The `plan_id` parameter on all tools is optional — omitting it selects the user's most recently created plan, so Claude can answer "update my contribution to $4,000" without needing to know the plan UUID.
 
 ### Stack
 
@@ -674,6 +686,7 @@ lever-claude/
 │   └── supabase/
 │       ├── client.ts               Browser Supabase client (createBrowserClient)
 │       ├── server.ts               Server Supabase client factory (createServerClient)
+│       ├── admin.ts                Service role client — bypasses RLS (MCP route, Stripe webhook)
 │       ├── mappers.ts              planFromRow() — snake_case DB → camelCase app
 │       └── subscription.ts         isPremium() / getActiveSubscription() — server-side helpers
 │
@@ -1082,7 +1095,6 @@ A local `stripe-cli` skill is at `~/.claude/skills/stripe-cli/` — this is user
 |---|---|---|
 | `CURRENT_AGE` hardcoded at 41 in POST /api/plans | Projection math is wrong for users of any other age | Replace with user record when profiles are added |
 | Dashboard metrics cards are hardcoded | Portfolio value, target, savings shown are static strings, not live DB values | Derive from user's first plan once auth identifies the user |
-| MCP tools still read from `lib/store.ts` | `show_financial_plan` and `run_what_if` return seeded data, not real user plans | Wire MCP tools to Supabase once auth session is available in the MCP route |
 | Nav header duplicated across 4 pages | Update in 4 files instead of 1 | Add `app/dashboard/layout.tsx` |
 | MCP interactive UI is Claude-only | Other MCP clients get text responses, no iframe | MCP Apps spec matures across clients |
 | What-if scenarios are hardcoded by retirement age | Only ages 60 and 65 have scenario data; other ages show the unlocked panel but no scenarios | Replace static `scenariosByRetirementAge` with a DB-backed scenarios table |
