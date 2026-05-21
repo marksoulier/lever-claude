@@ -232,17 +232,15 @@ This requires steps in two external dashboards. Both must be completed before th
    ```
 6. Save
 
-#### Step 3 — Drop dev RLS policies before going live
+#### Step 3 — Verify RLS is clean before going live
 
-During development, three permissive RLS policies allow unauthenticated access. Drop them once auth is working:
+Run this query against the production project to confirm no dev bypass policies exist:
 
 ```sql
-drop policy "dev: allow anonymous reads" on plans;
-drop policy "dev: allow inserts" on plans;
-drop policy "dev: allow updates" on plans;
+select policyname, cmd from pg_policies where policyname like 'dev:%';
 ```
 
-After dropping them, the `"users can manage their own plans"` policy (`user_id = auth.uid()`) handles everything — users can only see and modify their own plans.
+Expected result: zero rows. If any rows appear, drop them before real users sign up.
 
 ### Login options
 
@@ -257,9 +255,10 @@ Both land on `/dashboard` after authentication.
 
 ### Demo accounts (development only)
 
-| Email | Password | Use for |
-|---|---|---|
-| `demo@lever.dev` | `demo1234` | Agent and playwright tests |
+| Email | Password | Role | Use for |
+|---|---|---|---|
+| `demo@lever.dev` | `demo1234` | Standard user | Agent and playwright tests — standard product flow |
+| `admin@lever.dev` | `admin1234` | Admin | Admin panel tests (`/admin`) |
 
 ### Dev-only sign-in route
 
@@ -373,25 +372,21 @@ Every schema change starts as a migration on the dev project and must be applied
    ```
    Confirm all columns the new code depends on are present.
 
-#### What the dev policies are and when to drop them
+#### Row-level security — current state
 
-Three policies currently bypass row-level ownership on the dev project:
+All tables have RLS enabled with ownership-scoped policies. Verified clean as of 2026-05-21 — no dev bypass policies exist.
 
-```sql
-"dev: allow anonymous reads"   -- lets anyone SELECT all rows
-"dev: allow inserts"           -- lets anyone INSERT without auth
-"dev: allow updates"           -- lets anyone UPDATE any row
-```
+| Table | Policy scope |
+|---|---|
+| `plans` | SELECT / INSERT / UPDATE / DELETE — `user_id = auth.uid()` |
+| `accounts` | ALL — `auth.uid() = user_id` |
+| `documents` | SELECT / INSERT / DELETE — `auth.uid() = user_id` |
+| `net_worth_snapshots` | ALL — `auth.uid() = user_id` |
+| `profiles` | SELECT — `auth.uid() = id` |
+| `subscriptions` | SELECT only — writes go through service role via Stripe webhook |
+| `notifications` | RLS enabled, no user-facing policies — admin-only via service role |
 
-These must **never exist on the production project.** They exist on dev so that agent and playwright tests can run without a full auth session.
-
-When you split to two projects, drop them from `lever-prod` immediately after creating it:
-
-```sql
-drop policy "dev: allow anonymous reads" on plans;
-drop policy "dev: allow inserts" on plans;
-drop policy "dev: allow updates" on plans;
-```
+The admin panel (`/admin`) and MCP admin tools use the service role client, which bypasses RLS by design. This is intentional — admin access is gated by email check in code, not by RLS.
 
 After this, only `"users can manage their own plans"` remains and users can only see and modify their own rows.
 

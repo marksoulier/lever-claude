@@ -75,55 +75,11 @@ playwright-cli close
 
 ---
 
-## How Claude creates test users
+## Creating new test users
 
-**Preferred method — Supabase Dashboard (manual, clean):**
-1. Supabase Dashboard → Authentication → Users → Add user
-2. Enter email + password, tick "Auto Confirm User"
-3. The GoTrue service creates a fully-formed record with all required fields
+Always use the Supabase Dashboard: **Authentication → Users → Add user**. Enter email + password and tick "Auto Confirm User". Never create users via raw SQL — it bypasses GoTrue's setup and produces incomplete records.
 
-This is always the right way. The Dashboard bypasses the GoTrue API's occasional 500 errors and creates a correctly-formed record.
-
-**Why the admin@lever.dev user was created via raw SQL (and what went wrong):**
-The GoTrue Admin API (`POST /auth/v1/admin/users`) returned a 500 "Database error creating new user" when first attempted. Rather than investigating, the user was inserted directly into `auth.users` via SQL — which produced an incomplete record with `NULL` in the `confirmation_token`, `recovery_token`, `email_change_token_new`, and `email_change` columns. GoTrue expects empty strings `''` for those, not `NULL`.
-
-The incomplete record then caused GoTrue's `auth.admin.listUsers()` to return "Database error finding users" for the entire project whenever it tried to enumerate users. This is why the admin API routes use `admin.rpc("admin_list_users")` (a `security definer` SQL function) instead of the SDK's `auth.admin` namespace.
-
-**The correct SQL approach if you must create a user via SQL** (avoid this if possible):
-```sql
--- Step 1: insert user with all required fields
-insert into auth.users (
-  instance_id, id, aud, role, email,
-  encrypted_password, email_confirmed_at,
-  confirmation_token, recovery_token, email_change_token_new, email_change,
-  raw_app_meta_data, raw_user_meta_data,
-  created_at, updated_at
-) values (
-  '00000000-0000-0000-0000-000000000000',
-  gen_random_uuid(), 'authenticated', 'authenticated',
-  'newuser@example.com',
-  crypt('password', gen_salt('bf')),
-  now(),
-  '', '', '', '',   -- IMPORTANT: empty string, not NULL
-  '{"provider":"email","providers":["email"]}', '{}',
-  now(), now()
-);
-
--- Step 2: add identity record (required for email sign-in)
-insert into auth.identities (id, user_id, provider_id, provider, identity_data, created_at, updated_at)
-values (
-  gen_random_uuid(), '<user-id-from-step-1>', 'newuser@example.com', 'email',
-  '{"sub":"<user-id-from-step-1>","email":"newuser@example.com","email_verified":true}',
-  now(), now()
-);
-
--- Step 3: set a proper bcrypt password via Admin API (SQL crypt() may not match GoTrue's expected format)
--- curl -X PUT https://<project>.supabase.co/auth/v1/admin/users/<user-id> \
---   -H "Authorization: Bearer <service-role-key>" \
---   -d '{"password":"password","email_confirm":true}'
-```
-
-**Making a user admin:**
+## Making a user admin
 Admin access is controlled by the `ADMIN_EMAILS` environment variable (comma-separated). To grant admin access to an email:
 1. Add it to `.env.local`: `ADMIN_EMAILS=marksoulkid@gmail.com,admin@lever.dev,new@example.com`
 2. Restart the dev server (`npm run dev`)
