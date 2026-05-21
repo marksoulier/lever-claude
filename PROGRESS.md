@@ -190,7 +190,6 @@ The core differentiator from a static spreadsheet: lever watches the world for t
 
 | Issue | Severity | Fix |
 |---|---|---|
-| RLS dev policies on `plans` table bypass ownership | Medium | Drop dev policies before any real user signs up |
 | Stripe Checkout requires cardholder name + ZIP (not documented in test flow) | Low | Always fill "Demo User" and "10001" in playwright tests |
 | `run_what_if` widget uses hardcoded sliders, not plan data | Medium | Wire widget to real plan context |
 | `show_financial_plan` widget (`/plan-widget`) renders static demo data | Medium | Wire to fetch from Supabase using the plan ID |
