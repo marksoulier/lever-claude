@@ -1,3 +1,14 @@
+# Test credentials
+
+| Email | Password | Role | Notes |
+|---|---|---|---|
+| `demo@lever.dev` | `demo1234` | Standard user | Use for most playwright tests — no admin access |
+| `admin@lever.dev` | `admin1234` | Admin | Accesses `/admin`; use for admin panel tests |
+
+Sign in via: `GET /api/test-auth?email=<email>&password=<password>` — sets auth cookies server-side and redirects to `/dashboard`.
+
+---
+
 # Session direction
 
 At the start of every session, after running the startup checklist, run the business health snapshot from `STARTUP.md` — user activity (Supabase), revenue (Stripe MCP), and user feedback (UserJot MCP). Then read `PROGRESS.md` for the documented priority order.

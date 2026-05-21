@@ -174,6 +174,20 @@ This means `read_document` works indefinitely as long as the file is in Supabase
 - Summarization is best-effort: if Anthropic API key is missing or call fails, document still saves with `summary: null`. No upload is blocked.
 - Files API beta types not in stable SDK — used `as unknown as` cast; documented with inline comment.
 
+### ~~Admin panel~~ ✅ Done (2026-05-21)
+`/admin` route gated server-side to `ADMIN_EMAILS` (env var, defaults to `marksoulkid@gmail.com,admin@lever.dev`). User card grid with stats bar, setup health dots, primary plan snippet. `/admin/users/[userId]` detail page: health summary with gap callout, plans, accounts, documents (with summaries), notification queue with Approve/Discard buttons. Sidebar Admin link shown only to admin users (amber style). MCP tools: `list_users`, `get_user_context`, `queue_recommendation` — all admin-gated. `notifications` table with draft/approved/sent/discarded states.
+
+**Workaround documented:** Supabase GoTrue `auth.admin.listUsers()` returns "Database error finding users" in the Next.js runtime on this project. Fixed by creating a `security definer` SQL function `public.admin_list_users()` that queries `auth.users` directly — callable via `admin.rpc("admin_list_users")`.
+
+**Admin test user:** `admin@lever.dev` / `admin1234` — created via raw SQL + identity record (GoTrue Admin API returned 500 during creation; SQL insert works).
+
+**The workflow:**
+1. Open `/admin` to see all users
+2. In this Claude Code conversation, call `list_users` to get an overview
+3. Call `get_user_context` with a user's email to get their full financial picture
+4. Claude generates a recommendation, call `queue_recommendation` to save as draft
+5. Back in `/admin/users/[id]`, review the draft and approve or discard
+
 ### 6. Background monitoring + notifications
 The core differentiator from a static spreadsheet: lever watches the world for the user.
 

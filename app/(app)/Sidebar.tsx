@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Plan } from "@/lib/store";
+import { ADMIN_EMAILS } from "@/lib/admin-auth";
 import UserModal from "./UserModal";
 
 type SidebarPlan = Pick<Plan, "id" | "name"> & { isPrimary: boolean };
@@ -34,6 +35,14 @@ function DocumentIcon({ size = 15 }: { size?: number }) {
   );
 }
 
+function AdminIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5l3.5-.5L8 2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -50,6 +59,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [plans, setPlans] = useState<SidebarPlan[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
 
   const loadPlans = useCallback(async () => {
     try {
@@ -72,6 +82,14 @@ export default function Sidebar() {
     window.addEventListener("plans-updated", loadPlans);
     return () => window.removeEventListener("plans-updated", loadPlans);
   }, [loadPlans]);
+
+  useEffect(() => {
+    import("@/lib/supabase/client").then(({ supabase }) => {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        setUserIsAdmin(ADMIN_EMAILS.includes(user?.email ?? ""));
+      });
+    });
+  }, []);
 
   const primaryPlan = plans.find((p) => p.isPrimary);
   const whatIfs = plans.filter((p) => !p.isPrimary);
@@ -167,8 +185,26 @@ export default function Sidebar() {
           )}
         </nav>
 
+        {/* Admin — only shown to admin accounts */}
+        {userIsAdmin && (
+          <div className="px-2 py-2 border-t border-zinc-200 mt-auto">
+            <Link
+              href="/admin"
+              title={collapsed ? "Admin" : undefined}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                pathname.startsWith("/admin")
+                  ? "bg-amber-50 text-amber-600 font-semibold"
+                  : "text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"
+              } ${collapsed ? "justify-center" : ""}`}
+            >
+              <AdminIcon />
+              {!collapsed && <span>Admin</span>}
+            </Link>
+          </div>
+        )}
+
         {/* Documents */}
-        <div className="px-2 py-2 border-t border-zinc-200 mt-auto">
+        <div className={`px-2 py-2 border-t border-zinc-200 ${!userIsAdmin ? "mt-auto" : ""}`}>
           <Link
             href="/documents"
             title={collapsed ? "Documents" : undefined}

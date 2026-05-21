@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { ADMIN_EMAILS } from "@/lib/admin-auth";
 import { createMcpHandler } from "mcp-handler";
 import {
   registerAppTool,
@@ -945,6 +946,164 @@ async function handleMcp(request: Request) {
 
           return {
             content: [{ type: "text" as const, text: JSON.stringify(status, null, 2) }],
+          };
+        },
+      );
+
+      // ── Admin tools ────────────────────────────────────────────────────────
+
+      async function requireAdmin() {
+        if (!userId) return "Not authenticated.";
+        const { data } = await admin.rpc("admin_list_users");
+        const u = (data ?? []).find((row: { id: string; email: string }) => row.id === userId);
+        if (!ADMIN_EMAILS.includes(u?.email ?? "")) return "Admin access required.";
+        return null;
+      }
+
+      server.tool(
+        "list_users",
+        "Admin tool: list all Lever users with their setup status, plan metrics, account count, document count, and draft notification count. Use this to get an overview of all users before deciding who to analyse. Requires admin access.",
+        {},
+        async () => {
+          const err = await requireAdmin();
+          if (err) return { content: [{ type: "text" as const, text: err }] };
+
+          const { data: users, error: usersErr } = await admin.rpc("admin_list_users");
+          if (usersErr) return { content: [{ type: "text" as const, text: `Failed to fetch users: ${usersErr.message}` }] };
+
+          const [plansRes, accountsRes, docsRes, subsRes, notifsRes] = await Promise.all([
+            admin.from("plans").select("user_id, name, is_primary, projected_balance, success_probability, context"),
+            admin.from("accounts").select("user_id"),
+            admin.from("documents").select("user_id"),
+            admin.from("subscriptions").select("user_id, status"),
+            admin.from("notifications").select("user_id, status"),
+          ]);
+
+          const plans = plansRes.data ?? [];
+          const accounts = accountsRes.data ?? [];
+          const docs = docsRes.data ?? [];
+          const subs = subsRes.data ?? [];
+          const notifs = notifsRes.data ?? [];
+
+          type RpcUser = { id: string; email: string; last_sign_in_at: string | null; created_at: string };
+          const lines = (users as RpcUser[]).map((u) => {
+            const userPlans = plans.filter((p: { user_id: string }) => p.user_id === u.id);
+            const primary = userPlans.find((p: { is_primary: boolean }) => p.is_primary) as { name: string; projected_balance: number; success_probability: number; context: unknown } | undefined;
+            const sub = subs.find((s: { user_id: string }) => s.user_id === u.id) as { status: string } | undefined;
+            const draftCount = notifs.filter((n: { user_id: string; status: string }) => n.user_id === u.id && n.status === "draft").length;
+
+            return [
+              `## ${u.email} (${sub?.status === "active" ? "Premium" : "Free"})`,
+              `Plans: ${userPlans.length} | Accounts: ${accounts.filter((a: { user_id: string }) => a.user_id === u.id).length} | Docs: ${docs.filter((d: { user_id: string }) => d.user_id === u.id).length} | Draft notifications: ${draftCount}`,
+              primary ? `Primary plan: "${primary.name}" — $${primary.projected_balance.toLocaleString()} projected, ${primary.success_probability}% success, context: ${primary.context ? "set" : "missing"}` : "No primary plan",
+              `Last active: ${u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "never"} | ID: ${u.id}`,
+            ].join("\n");
+          });
+
+          return {
+            content: [{ type: "text" as const, text: `${users.length} users:\n\n${lines.join("\n\n")}` }],
+          };
+        },
+      );
+
+      server.tool(
+        "get_user_context",
+        "Admin tool: retrieve the complete financial context for a specific user — all their plans (with metrics and context), accounts, and document summaries. Use this before generating a recommendation for a user. Identify the user by email or user ID.",
+        {
+          email: z.string().optional().describe("User's email address (partial match, case-insensitive). Use this OR user_id."),
+          user_id: z.string().optional().describe("Exact user UUID. Use this OR email."),
+        },
+        async ({ email, user_id: targetId }: { email?: string; user_id?: string }) => {
+          const err = await requireAdmin();
+          if (err) return { content: [{ type: "text" as const, text: err }] };
+          if (!email && !targetId) return { content: [{ type: "text" as const, text: "Provide email or user_id." }] };
+
+          let resolvedId = targetId;
+          type AuthUserRow = { id: string; email: string; last_sign_in_at: string | null; created_at: string };
+          let targetUser: AuthUserRow | null = null;
+
+          const { data: allUsers } = await admin.rpc("admin_list_users");
+          const userList = (allUsers ?? []) as AuthUserRow[];
+
+          if (!resolvedId && email) {
+            const match = userList.find((u) => u.email?.toLowerCase().includes(email.toLowerCase()));
+            if (!match) return { content: [{ type: "text" as const, text: `No user found with email matching "${email}".` }] };
+            resolvedId = match.id;
+          }
+          targetUser = userList.find((u) => u.id === resolvedId) ?? null;
+          if (!targetUser) return { content: [{ type: "text" as const, text: "User not found." }] };
+
+          const [plansRes, accountsRes, docsRes, subsRes] = await Promise.all([
+            admin.from("plans").select("*").eq("user_id", resolvedId!).order("created_at"),
+            admin.from("accounts").select("*").eq("user_id", resolvedId!).order("created_at"),
+            admin.from("documents").select("name, file_type, summary, created_at").eq("user_id", resolvedId!),
+            admin.from("subscriptions").select("status, current_period_end").eq("user_id", resolvedId!).maybeSingle(),
+          ]);
+
+          const userPlans = ((plansRes.data ?? []) as DbPlanRow[]).map(planFromRow);
+          const primary = userPlans.find((p) => p.isPrimary);
+          const sub = subsRes.data as { status: string; current_period_end: string | null } | null;
+
+          const sections = [
+            `# User: ${targetUser?.email}`,
+            `Subscription: ${sub?.status === "active" ? "Premium" : "Free"} | Last active: ${targetUser?.last_sign_in_at ? new Date(targetUser.last_sign_in_at).toLocaleDateString() : "never"} | ID: ${targetUser?.id}`,
+            "",
+            `## Plans (${userPlans.length})`,
+            ...userPlans.map((p) => [
+              `**${p.name}**${p.isPrimary ? " (Primary)" : " (What-if)"}`,
+              `Projected: $${p.projectedBalance.toLocaleString()} | Success: ${p.successProbability}% | Monthly: $${p.monthlyContribution.toLocaleString()} | Retire at: ${p.retirementAge}`,
+              p.context ? `Context: DOB ${(p.context as Record<string, unknown>).dateOfBirth ?? "unknown"} | Income $${(p.context as Record<string, unknown>).annualIncome ?? "unknown"}/yr | Risk: ${(p.context as Record<string, unknown>).riskTolerance ?? "unknown"} | Target income: $${(p.context as Record<string, unknown>).targetMonthlyIncome ?? "unknown"}/mo` : "Context: not set",
+              (p.context as Record<string, unknown>)?.narrative ? `Narrative: ${(p.context as Record<string, unknown>).narrative}` : "",
+            ].filter(Boolean).join("\n")),
+            "",
+            `## Accounts (${(accountsRes.data ?? []).length})`,
+            ...(accountsRes.data ?? []).map((a: { name: string; type: string; balance: number; institution: string | null }) =>
+              `${a.name} (${a.type}${a.institution ? ` · ${a.institution}` : ""}): $${a.balance.toLocaleString()}`
+            ),
+            "",
+            `## Documents (${(docsRes.data ?? []).length})`,
+            ...(docsRes.data ?? []).map((d: { name: string; summary: string | null }) =>
+              `**${d.name}**: ${d.summary ?? "_no summary_"}`
+            ),
+          ];
+
+          if (userPlans.length > 0 && primary) {
+            const gap = primary.projectedBalance - primary.targetBalance;
+            sections.push("", "## Quick analysis");
+            sections.push(gap >= 0
+              ? `On track: $${gap.toLocaleString()} surplus vs target balance of $${primary.targetBalance.toLocaleString()}.`
+              : `Gap: $${Math.abs(gap).toLocaleString()} short of target balance of $${primary.targetBalance.toLocaleString()}.`
+            );
+          }
+
+          return { content: [{ type: "text" as const, text: sections.join("\n") }] };
+        },
+      );
+
+      server.tool(
+        "queue_recommendation",
+        "Admin tool: save a recommendation or notification message as a draft for a specific user. The draft will appear in the admin dashboard under that user's Notifications section, where it can be reviewed and approved before sending. Use this after analysing a user with get_user_context and deciding on a recommendation to send them.",
+        {
+          user_id: z.string().describe("The user's UUID to queue the recommendation for. Get this from list_users or get_user_context."),
+          message: z.string().describe("The recommendation message to send to the user. Write it in second person, as if speaking directly to them. Should be specific to their situation — not generic advice."),
+        },
+        async ({ user_id: targetId, message }: { user_id: string; message: string }) => {
+          const err = await requireAdmin();
+          if (err) return { content: [{ type: "text" as const, text: err }] };
+
+          const { data, error } = await admin.from("notifications").insert({
+            user_id: targetId,
+            message,
+            status: "draft",
+          }).select().single();
+
+          if (error || !data) return { content: [{ type: "text" as const, text: `Failed to queue: ${error?.message}` }] };
+
+          return {
+            content: [{
+              type: "text" as const,
+              text: `Queued as draft notification (ID: ${(data as { id: string }).id}). Review and approve it at /admin/users/${targetId} in the Lever dashboard.`,
+            }],
           };
         },
       );
