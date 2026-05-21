@@ -4,6 +4,62 @@ This document tracks what has been built, why decisions were made, and what come
 
 ---
 
+## Manual recommendation workflow
+
+This is the current process for generating and sending user recommendations. Background monitoring will automate this later — for now it runs manually through Claude Code.
+
+### Step 1 — Pull user context
+
+In this conversation, call:
+```
+get_user_context  email: "user@example.com"
+```
+
+### Step 2 — Run the opportunity scan
+
+After the context is returned, paste this prompt:
+
+```
+Using the financial context above and web search, find 2–4 specific opportunities
+this person should look into right now. Focus on changes from the last 6 months.
+
+Search across:
+- IRS contribution limit or rule changes this tax year (401k, IRA, Roth IRA, HSA, catch-up)
+- New or expiring federal programs matching their income bracket and age
+- Interest rate environment — does it affect their debt accounts or conservative allocation?
+- Tax law changes relevant to their income level or retirement timeline
+- Roth conversion windows — does their income this year create a favorable opportunity?
+- State-specific programs if their location is known from context
+
+Relevance test before including anything: does this apply to their specific income,
+age, account types, and gap vs target? Skip anything that would apply to anyone
+regardless of their situation.
+
+For each opportunity: what it is, why it applies to them specifically (cite their
+actual numbers), and what they should do. 2–3 sentences each.
+
+Then write a notification message — 2–4 sentences, second person, plain language,
+no disclaimers or jargon. Should feel like a heads-up from a knowledgeable friend.
+Call queue_recommendation with that message.
+```
+
+### Step 3 — Review in the admin panel
+
+Open `/admin/users/[id]` in the browser. The queued draft appears in the Notifications section. Read it — if it's accurate and useful, hit **Approve**. If it needs editing, discard it and re-run with a refined prompt.
+
+### What makes a good notification
+
+- Cites their actual numbers (e.g. "your $3,000/month contribution puts you in the phase-out range for...")
+- One clear action they can take
+- No financial advisor language ("this is not advice", "consult a professional")
+- Short enough to read in 30 seconds
+
+### Future automation
+
+When this workflow is consistent and the output quality is reliable, it gets replaced by a Vercel Cron job that runs the same prompt on a schedule and queues drafts automatically. The admin approval step stays — you review before anything sends.
+
+---
+
 ## Current state of the app (as of 2026-05-21)
 
 ### What works end-to-end
