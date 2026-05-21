@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import type { NetWorthSnapshot } from "@/app/api/net-worth/route";
+import type { DocumentRecord } from "@/app/api/documents/route";
 import NetWorthGraph from "./NetWorthGraph";
 import CreatePlanForm from "./CreatePlanForm";
 import AccountsPanel from "./AccountsPanel";
@@ -13,6 +15,8 @@ export default function DashboardPage() {
   const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>([]);
   const [snapshotsLoading, setSnapshotsLoading] = useState(true);
   const [snapshotsError, setSnapshotsError] = useState<string | null>(null);
+
+  const [docCount, setDocCount] = useState<number | null>(null);
 
   const [logAmount, setLogAmount] = useState("");
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10));
@@ -38,6 +42,15 @@ export default function DashboardPage() {
     const cancel = loadSnapshots();
     return () => { cancel.then((fn) => fn?.()); };
   }, [loadSnapshots]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/documents")
+      .then((r) => r.json())
+      .then((data: DocumentRecord[]) => { if (!cancelled) setDocCount(Array.isArray(data) ? data.length : 0); })
+      .catch(() => { if (!cancelled) setDocCount(0); });
+    return () => { cancelled = true; };
+  }, []);
 
   // Check for existing plans to decide whether to show the onboarding gate
   useEffect(() => {
@@ -156,6 +169,39 @@ export default function DashboardPage() {
         <div className="rounded-2xl bg-teal-light border border-teal-mid px-5 py-4 text-sm text-zinc-600">
           Select a plan from the sidebar to view its detail and run what-if scenarios.
         </div>
+      </section>
+
+      {/* Documents teaser */}
+      <section>
+        <h2 className="text-base font-black text-zinc-900 mb-3">Documents</h2>
+        <Link
+          href="/documents"
+          className="flex items-center justify-between rounded-2xl bg-white border border-zinc-100 shadow-sm px-5 py-4 hover:border-teal hover:shadow-md transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-zinc-100 group-hover:bg-teal-light flex items-center justify-center transition-colors">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="text-zinc-400 group-hover:text-teal transition-colors">
+                <path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                <path d="M9 2v4h4" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              {docCount === null ? (
+                <div className="h-4 w-32 rounded bg-zinc-100" />
+              ) : docCount === 0 ? (
+                <p className="text-sm font-semibold text-zinc-700">Upload your first document</p>
+              ) : (
+                <p className="text-sm font-semibold text-zinc-700">
+                  {docCount} document{docCount !== 1 ? "s" : ""} uploaded
+                </p>
+              )}
+              <p className="text-xs text-zinc-400 mt-0.5">Tax forms, pay stubs, bank statements</p>
+            </div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden className="text-zinc-300 group-hover:text-teal transition-colors shrink-0">
+            <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Link>
       </section>
     </div>
   );

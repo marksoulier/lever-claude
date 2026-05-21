@@ -9,6 +9,13 @@
       "headers": {
         "Authorization": "Bearer YOUR_SUPABASE_PAT"
       }
+    },
+    "userjot": {
+      "type": "http",
+      "url": "https://api.userjot.com/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_USERJOT_TOKEN"
+      }
     }
   }
 }

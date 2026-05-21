@@ -1,3 +1,11 @@
+# Session direction
+
+At the start of every session, after running the startup checklist, run the business health snapshot from `STARTUP.md` — user activity (Supabase), revenue (Stripe MCP), and user feedback (UserJot MCP). Then read `PROGRESS.md` for the documented priority order.
+
+Based on those inputs, **propose the single highest-leverage next task** with a one-sentence rationale. Do not wait for the user to direct you. If the user says "startup" or "let's get started", this is the expected workflow.
+
+---
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 

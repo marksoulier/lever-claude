@@ -33,18 +33,82 @@ curl -s -o /dev/null -w "%{http_code}" \
   -d '{"query":"SELECT 1"}' | grep -q "^2" && echo "Supabase REST ✓" || echo "Supabase REST ✗ — check PAT in .mcp.json"
 
 echo ""
-echo "── Lever MCP tools (9 expected) ───────────────────"
+echo "── Lever MCP tools (10 expected) ──────────────────"
 curl -s -X POST http://localhost:3000/api/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
-  | grep -o '"name":"[^"]*"' | wc -l | xargs -I{} sh -c '[ {} -eq 9 ] && echo "MCP tools ✓ ({} tools)" || echo "MCP tools ✗ ({} tools — expected 9, dev server may need restart)"'
+  | grep -o '"name":"[^"]*"' | wc -l | xargs -I{} sh -c '[ {} -eq 10 ] && echo "MCP tools ✓ ({} tools)" || echo "MCP tools ✗ ({} tools — expected 10, dev server may need restart)"'
 
 echo ""
 echo "── Git state ──────────────────────────────────────"
 git branch --show-current
 git status --short | head -5
 ```
+
+---
+
+---
+
+## Business health snapshot (run after quick check)
+
+After verifying the environment is healthy, run these checks to understand the current state of the business. Use the results together with `PROGRESS.md` to decide what to work on next.
+
+### User activity — Supabase
+
+```sql
+-- Total signed-up users
+select count(*) as total_users from auth.users;
+
+-- New signups in the last 7 days
+select count(*) as new_users_7d from auth.users
+where created_at > now() - interval '7 days';
+
+-- Total plans created
+select count(*) as total_plans from plans;
+
+-- Active premium subscriptions
+select count(*) as active_subscriptions from subscriptions
+where status = 'active';
+
+-- Most recently active users (last login)
+select email, last_sign_in_at from auth.users
+order by last_sign_in_at desc nulls last limit 10;
+```
+
+Run each via `mcp__supabase__execute_sql` or the Supabase REST API fallback.
+
+### Revenue — Stripe MCP
+
+Call these tools and summarise the results:
+
+| Tool | What to check |
+|---|---|
+| `mcp__stripe__retrieve_balance` | Current available + pending balance |
+| `mcp__stripe__list_subscriptions` (status=active) | Count of active paid subscribers |
+| `mcp__stripe__list_payment_intents` (limit=10) | Recent payments — amounts and dates |
+
+### User feedback — UserJot MCP
+
+UserJot is connected at `https://api.userjot.com/v1/mcp`. Call whatever list/read tools it exposes to surface:
+- Most-requested features
+- Bug reports or complaints
+- Themes across recent feedback
+
+Note: UserJot currently has placeholder/fake feedback. Treat it as a template — the structure and workflow are valid even before real feedback arrives.
+
+---
+
+## Deciding next steps
+
+After running the business health snapshot, Claude should propose the highest-leverage next task without waiting for the user to choose. Weigh:
+
+1. **User feedback** — what are users asking for or reporting as broken?
+2. **Revenue signals** — are subscriptions growing, flat, or churning?
+3. **User activity** — are users returning, or dropping off after signup?
+4. **PROGRESS.md priority order** — what is the documented next step?
+
+Offer a single recommendation with a one-sentence rationale. Example: _"Based on 3 users being stuck at the onboarding gate and no plans created, the highest-leverage next task is fixing the onboarding experience."_ Then ask for confirmation before starting.
 
 ---
 
@@ -57,14 +121,14 @@ git status --short | head -5
 | `tsc` | any version | `npm install` in the project root |
 | `curl` | any version | Pre-installed on all platforms |
 | Dev server | `{"status":"ok"}` | `npm run dev` in a separate terminal |
-| `.mcp.json` | File exists, both servers present | Copy `.mcp.json.example`, fill in Supabase PAT and project ref. PAT from: [Supabase Dashboard → Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
+| `.mcp.json` | File exists, 3 servers present (lever, supabase, userjot) | Copy `.mcp.json.example`, fill in Supabase PAT and project ref. PAT from: [Supabase Dashboard → Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
 | Supabase REST | HTTP 200/201 | Check PAT is valid and not expired. Project ref: `avzhlaxhopzmrjnmregc` |
-| Lever MCP tools | 9 tools listed | Restart dev server (`npm run dev`). If tools are missing, check `app/api/mcp/route.ts` for compile errors |
+| Lever MCP tools | 10 tools listed | Restart dev server (`npm run dev`). If tools are missing, check `app/api/mcp/route.ts` for compile errors |
 | Git branch | `main` or feature branch | Normal — just know what branch you're on before making changes |
 
 ---
 
-## MCP tools that must be present (9 total)
+## MCP tools that must be present (10 total)
 
 If any of these are missing after the server starts, the feature that depends on them is broken:
 
@@ -78,6 +142,7 @@ If any of these are missing after the server starts, the feature that depends on
 | `add_account` | Onboarding / ongoing — Claude adds financial accounts |
 | `update_account_balance` | Claude updates an existing account balance |
 | `create_what_if_plan` | Claude clones a plan with changed parameters for comparison |
+| `get_document_summaries` | Claude reads Claude's summaries of uploaded financial docs for plan context |
 | `get_onboarding_status` | Claude checks setup progress; drives the onboarding flow |
 
 ---

@@ -16,6 +16,24 @@ function ChartIcon({ size = 16 }: { size?: number }) {
   );
 }
 
+function HomeIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M2 7l6-5 6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+      <path d="M6 14v-4h4v4" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function DocumentIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+      <path d="M9 2v4h4" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -89,6 +107,20 @@ export default function Sidebar() {
 
         {/* Scrollable plan list */}
         <nav className="flex-1 overflow-y-auto py-3 flex flex-col gap-1 px-2">
+          {/* Home */}
+          <Link
+            href="/dashboard"
+            title={collapsed ? "Home" : undefined}
+            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-1 ${
+              pathname === "/dashboard"
+                ? "bg-teal-light text-teal-dark font-semibold"
+                : "text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"
+            } ${collapsed ? "justify-center" : ""}`}
+          >
+            <HomeIcon />
+            {!collapsed && <span>Home</span>}
+          </Link>
+
           {/* Primary plan section */}
           {(primaryPlan || !collapsed) && (
             <div className="mb-1">
@@ -135,13 +167,29 @@ export default function Sidebar() {
           )}
         </nav>
 
+        {/* Documents */}
+        <div className="px-2 py-2 border-t border-zinc-200 mt-auto">
+          <Link
+            href="/documents"
+            title={collapsed ? "Documents" : undefined}
+            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${
+              pathname.startsWith("/documents")
+                ? "bg-teal-light text-teal-dark font-semibold"
+                : "text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"
+            } ${collapsed ? "justify-center" : ""}`}
+          >
+            <DocumentIcon />
+            {!collapsed && <span>Documents</span>}
+          </Link>
+        </div>
+
         {/* New plan button */}
         <div className="px-2 py-2 border-t border-zinc-200">
           {collapsed ? (
             <Link
               href="/dashboard"
               className="flex items-center justify-center w-10 h-10 mx-auto rounded-lg text-zinc-400 hover:text-teal hover:bg-zinc-200 transition-colors"
-              title="Dashboard / new plan"
+              title="New plan"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
                 <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

@@ -108,23 +108,13 @@ Hard-gate blur overlay on the dashboard (`hasPlans === false`). Shows the full a
 3. Submit at https://anthropic.com/partners/mcp (contact/partnership form)
 4. Once approved, users see "Connect" button at `claude.ai/directory`
 
-### 1. Financial document storage ← **next step**
-New users land on the dashboard with no plans and no context. The path to value is unclear.
+### ~~1. Financial document storage~~ ✅ Done (2026-05-21)
+`documents` table + Supabase Storage bucket `documents` with RLS. `/documents` page with drag-and-drop upload zone and document list. On upload: file stored in Supabase Storage + uploaded to Anthropic Files API + Claude Haiku summarizes it server-side; summary stored in DB. `get_document_summaries` MCP tool (tool #9) lets Claude pull all summaries into a plan conversation. Dashboard shows a clickable teaser card with upload count. Sidebar: `Home` nav item with home icon (was "Dashboard"), `Documents` nav item above "New plan". `ANTHROPIC_API_KEY` env var required in `.env.local` — see `.env.example`.
 
-**Build:**
-- After first login, detect `plans.count === 0` and show an onboarding card
-- Card: "Set up your plan with Claude" → links to Claude with a pre-written prompt that guides the user through the `update_plan_context` + create-plan flow
-- Or: a lightweight 3-step wizard in the dashboard (name, DOB, income → creates a plan with context prefilled) as a fallback for users without Claude access
-
-### 5. Financial document storage
-The business plan calls for users to upload tax forms, pay stubs, mortgage documents, etc. that Claude can read for context.
-
-**Build:**
-- Supabase Storage bucket `documents` with RLS
-- Upload UI in dashboard (drag-and-drop or file picker)
-- On upload: trigger a Supabase Edge Function that calls Claude to summarize the document
-- Store summary alongside file metadata in a `documents` table
-- Pass relevant document summaries as context when calling MCP tools
+**Decision log:**
+- Chose Anthropic Files API (Claude native) over Unstructured.io / Reducto — no extra service, same cost, Claude handles PDF/image/text natively. Can add Reducto later for complex table extraction if needed.
+- Summarization is best-effort: if Anthropic API key is missing or call fails, document still saves with `summary: null`. No upload is blocked.
+- Files API beta types not in stable SDK — used `as unknown as` cast; documented with inline comment.
 
 ### 6. Background monitoring + notifications
 The core differentiator from a static spreadsheet: lever watches the world for the user.

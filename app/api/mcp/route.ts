@@ -683,6 +683,49 @@ async function handleMcp(request: Request) {
         },
       );
 
+      // ── Documents tool ────────────────────────────────────────────────────
+
+      server.tool(
+        "get_document_summaries",
+        "Retrieve Claude's summaries of all financial documents the user has uploaded — tax forms, pay stubs, bank statements, mortgage contracts, etc. Call this when you need financial context from the user's documents before building or updating a plan. Returns the document name, type, upload date, and the extracted financial summary for each file.",
+        {},
+        async () => {
+          if (!userId) return { content: [{ type: "text" as const, text: "Not authenticated." }] };
+
+          const { data, error } = await admin
+            .from("documents")
+            .select("id, name, file_type, summary, created_at")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false });
+
+          if (error) return { content: [{ type: "text" as const, text: `Failed to load documents: ${error.message}` }] };
+
+          const docs = data ?? [];
+          if (docs.length === 0) {
+            return {
+              content: [{
+                type: "text" as const,
+                text: "No documents uploaded yet. Ask the user to upload financial documents (tax forms, pay stubs, bank statements) at lever — there is a Documents section in the sidebar.",
+              }],
+            };
+          }
+
+          const lines = docs.map((d: { name: string; file_type: string; created_at: string; summary: string | null }) =>
+            [
+              `## ${d.name} (${d.file_type}, uploaded ${new Date(d.created_at).toLocaleDateString()})`,
+              d.summary ?? "_No summary available — document may still be processing._",
+            ].join("\n")
+          );
+
+          return {
+            content: [{
+              type: "text" as const,
+              text: `${docs.length} document(s) on file:\n\n${lines.join("\n\n")}`,
+            }],
+          };
+        },
+      );
+
       // ── Onboarding tool ────────────────────────────────────────────────────
 
       server.tool(
