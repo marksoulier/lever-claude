@@ -1,4 +1,5 @@
 import type { Plan } from "@/lib/store";
+import type { PlanContext } from "@/lib/plan-context";
 
 // Explicit shape of a row coming back from Supabase for the plans table.
 // When you run mcp__supabase__generate_typescript_types, replace this with the
@@ -19,6 +20,8 @@ export type DbPlanRow = {
   success_probability: number | null;
   monthly_income_at_retirement: number | null;
   allocation: Plan["allocation"];
+  is_primary: boolean;
+  context: PlanContext | null;
   created_at: string;
   updated_at: string;
 };
@@ -42,5 +45,7 @@ export function planFromRow(row: DbPlanRow): Plan {
     successProbability:        row.success_probability        ?? 0,
     monthlyIncomeAtRetirement: row.monthly_income_at_retirement ?? 0,
     allocation:                row.allocation,
+    isPrimary:                 row.is_primary ?? false,
+    context:                   row.context ?? null,
   };
 }

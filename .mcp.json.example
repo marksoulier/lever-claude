@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "lever": {
+      "url": "http://localhost:3000/api/mcp"
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF",
+      "headers": {
+        "Authorization": "Bearer YOUR_SUPABASE_PAT"
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 // Read-only plan data. No mutations — state will be persisted in Supabase.
 
+import type { PlanContext } from "@/lib/plan-context";
+
 export type Allocation = {
   label: string;
   pct: number;
@@ -21,6 +23,8 @@ export type Plan = {
   inflation: number;
   monthlyIncomeAtRetirement: number;
   allocation: Allocation[];
+  isPrimary: boolean;
+  context: PlanContext | null;
 };
 
 export function projectBalance(
@@ -51,6 +55,8 @@ export const plans: Record<string, Plan> = {
     assumedReturn: 7,
     inflation: 2.5,
     monthlyIncomeAtRetirement: 7200,
+    isPrimary: true,
+    context: null,
     allocation: [
       { label: "US Equities", pct: 50, color: "#4bc3c8" },
       { label: "International Equities", pct: 20, color: "#3b82f6" },
@@ -72,6 +78,8 @@ export const plans: Record<string, Plan> = {
     assumedReturn: 7,
     inflation: 2.5,
     monthlyIncomeAtRetirement: 4800,
+    isPrimary: false,
+    context: null,
     allocation: [
       { label: "US Equities", pct: 60, color: "#4bc3c8" },
       { label: "International Equities", pct: 20, color: "#3b82f6" },

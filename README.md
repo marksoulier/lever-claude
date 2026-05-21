@@ -27,11 +27,19 @@ This is a single Next.js application that serves both the web UI and the MCP ser
 ```
 lever-claude/
 ├── app/
+│   ├── (app)/                ← Protected shell (collapsible sidebar layout)
+│   │   ├── layout.tsx        ← Sidebar shell — wraps all authenticated pages
+│   │   ├── Sidebar.tsx       ← Collapsible left panel: primary plan, what-if scenarios, user button
+│   │   ├── UserModal.tsx     ← Profile / subscription / sign-out modal
+│   │   ├── dashboard/        ← Net worth overview, accounts, snapshot log
+│   │   └── plan/[id]/        ← Plan detail — metrics, allocation, what-if, set-as-primary
 │   ├── api/mcp/route.ts      ← MCP server (Next.js route handler)
+│   ├── api/net-worth/        ← GET/POST net worth snapshots
 │   ├── plan-widget/          ← Interactive plan UI (rendered in Claude iframe)
 │   ├── scenario-widget/      ← Interactive scenario modeler (rendered in Claude iframe)
-│   └── ...                   ← Web app pages
-├── lib/store.ts              ← Plan data + projection math (stateless, Supabase-ready)
+│   └── ...                   ← Public pages (login, connect, auth callback)
+├── lib/store.ts              ← Plan type + projection math
+├── lib/supabase/mappers.ts   ← snake_case → camelCase translation at the DB boundary
 ├── baseUrl.ts                ← Resolves public URL from env (Vercel or local)
 └── proxy.ts                  ← Global CORS headers (Next.js 16 middleware)
 ```
@@ -414,15 +422,16 @@ The web app has a `/connect` page with step-by-step instructions. From the dashb
 | `/` | Homepage / landing | Public | Static |
 | `/login` | Google sign-in | Public | Static |
 | `/auth/callback` | OAuth redirect handler | Public | Dynamic |
-| `/dashboard` | Metrics, plans, accounts | Protected | Static |
+| `/dashboard` | Net worth graph, accounts, snapshot logger | Protected | Static |
 | `/connect` | Claude connector setup guide | Protected | Static |
-| `/plan/[id]` | Plan detail — allocation, projections, scenarios | Protected | Dynamic |
+| `/plan/[id]` | Plan detail — metrics, allocation, scenarios, set-as-primary | Protected | Dynamic |
 | `/account/[id]` | Account detail — balance, stats, transactions | Protected | Dynamic |
 | `/plan-widget` | Plan dashboard iframe UI (for Claude) | Public | Static |
 | `/scenario-widget` | Scenario modeler iframe UI (for Claude) | Public | Static |
 | `/api/mcp` | MCP server endpoint | Public | Dynamic |
 | `/api/plans` | Returns all plans as JSON | Public | Dynamic |
-| `/api/plans/[id]` | Recalculate + persist contribution for a plan | Protected | Dynamic |
+| `/api/plans/[id]` | Recalculate contribution or set plan as primary | Protected | Dynamic |
+| `/api/net-worth` | GET all snapshots / POST a new net worth snapshot | Protected | Dynamic |
 | `/api/stripe/checkout` | Create a Stripe Checkout session, return redirect URL | Protected | Dynamic |
 | `/api/stripe/webhook` | Receive Stripe events, write subscription to Supabase | Public (Stripe sig) | Dynamic |
 | `/api/test-auth` | Dev-only server-side sign-in for agents and playwright | Dev only | Dynamic |

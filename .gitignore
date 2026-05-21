@@ -51,9 +51,15 @@ yarn-error.log*
 .env*
 !.env.example
 
+# mcp config contains tokens — .mcp.json.example is the committed template
+.mcp.json
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#images
+*.png
