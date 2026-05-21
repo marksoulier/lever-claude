@@ -1,11 +1,135 @@
-# Test credentials
+# Test users
+
+## Active test accounts
 
 | Email | Password | Role | Notes |
 |---|---|---|---|
 | `demo@lever.dev` | `demo1234` | Standard user | Use for most playwright tests — no admin access |
 | `admin@lever.dev` | `admin1234` | Admin | Accesses `/admin`; use for admin panel tests |
 
-Sign in via: `GET /api/test-auth?email=<email>&password=<password>` — sets auth cookies server-side and redirects to `/dashboard`.
+These accounts exist in the Supabase database. Do not delete them — they are the only test accounts.
+
+---
+
+## Signing in during tests
+
+Use the dev-only server-side sign-in route. It exchanges credentials server-side, sets auth cookies, and redirects to `/dashboard`. Avoids browser CORS issues with Supabase's auth API in WSL.
+
+```bash
+# Standard user
+playwright-cli open --browser=firefox "http://localhost:3000/api/test-auth?email=demo%40lever.dev&password=demo1234"
+playwright-cli state-save .playwright-cli/auth.json
+
+# Admin user
+playwright-cli open --browser=firefox "http://localhost:3000/api/test-auth?email=admin%40lever.dev&password=admin1234"
+playwright-cli state-save .playwright-cli/auth-admin.json
+```
+
+Always verify the redirect worked before testing a protected page:
+```bash
+playwright-cli eval "window.location.pathname"  # must be /dashboard, not /login or /api/test-auth
+```
+
+---
+
+## Testing as a regular user
+
+Signs in as `demo@lever.dev`. Tests the standard product: dashboard, plans, accounts, documents, what-if scenarios. This user has no access to `/admin` — navigating there redirects to `/dashboard`.
+
+```bash
+playwright-cli open --browser=firefox "http://localhost:3000/api/test-auth?email=demo%40lever.dev&password=demo1234"
+playwright-cli state-save .playwright-cli/auth.json
+
+playwright-cli goto http://localhost:3000/dashboard
+playwright-cli eval "window.location.pathname"   # /dashboard
+playwright-cli snapshot  # confirms: Home active in sidebar, NO Admin link
+
+# Verify admin route is blocked
+playwright-cli goto http://localhost:3000/admin
+playwright-cli eval "window.location.pathname"   # must redirect to /dashboard
+
+playwright-cli close
+```
+
+---
+
+## Testing as an admin user
+
+Signs in as `admin@lever.dev`. Tests the admin panel: user list, user detail, notification approval workflow. The sidebar shows an amber "Admin" link that is invisible to standard users.
+
+```bash
+playwright-cli open --browser=firefox "http://localhost:3000/api/test-auth?email=admin%40lever.dev&password=admin1234"
+playwright-cli state-save .playwright-cli/auth-admin.json
+
+playwright-cli goto http://localhost:3000/admin
+playwright-cli eval "window.location.pathname"   # /admin (not redirected)
+playwright-cli snapshot  # confirms: Admin link visible in sidebar (amber), user cards present
+
+# Click into a user's detail
+playwright-cli click "getByRole('link', { name: 'View →' }).first()"
+playwright-cli eval "window.location.pathname"   # /admin/users/<uuid>
+playwright-cli snapshot  # confirms: setup health, plans, accounts, notifications section
+
+playwright-cli close
+```
+
+---
+
+## How Claude creates test users
+
+**Preferred method — Supabase Dashboard (manual, clean):**
+1. Supabase Dashboard → Authentication → Users → Add user
+2. Enter email + password, tick "Auto Confirm User"
+3. The GoTrue service creates a fully-formed record with all required fields
+
+This is always the right way. The Dashboard bypasses the GoTrue API's occasional 500 errors and creates a correctly-formed record.
+
+**Why the admin@lever.dev user was created via raw SQL (and what went wrong):**
+The GoTrue Admin API (`POST /auth/v1/admin/users`) returned a 500 "Database error creating new user" when first attempted. Rather than investigating, the user was inserted directly into `auth.users` via SQL — which produced an incomplete record with `NULL` in the `confirmation_token`, `recovery_token`, `email_change_token_new`, and `email_change` columns. GoTrue expects empty strings `''` for those, not `NULL`.
+
+The incomplete record then caused GoTrue's `auth.admin.listUsers()` to return "Database error finding users" for the entire project whenever it tried to enumerate users. This is why the admin API routes use `admin.rpc("admin_list_users")` (a `security definer` SQL function) instead of the SDK's `auth.admin` namespace.
+
+**The correct SQL approach if you must create a user via SQL** (avoid this if possible):
+```sql
+-- Step 1: insert user with all required fields
+insert into auth.users (
+  instance_id, id, aud, role, email,
+  encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  gen_random_uuid(), 'authenticated', 'authenticated',
+  'newuser@example.com',
+  crypt('password', gen_salt('bf')),
+  now(),
+  '', '', '', '',   -- IMPORTANT: empty string, not NULL
+  '{"provider":"email","providers":["email"]}', '{}',
+  now(), now()
+);
+
+-- Step 2: add identity record (required for email sign-in)
+insert into auth.identities (id, user_id, provider_id, provider, identity_data, created_at, updated_at)
+values (
+  gen_random_uuid(), '<user-id-from-step-1>', 'newuser@example.com', 'email',
+  '{"sub":"<user-id-from-step-1>","email":"newuser@example.com","email_verified":true}',
+  now(), now()
+);
+
+-- Step 3: set a proper bcrypt password via Admin API (SQL crypt() may not match GoTrue's expected format)
+-- curl -X PUT https://<project>.supabase.co/auth/v1/admin/users/<user-id> \
+--   -H "Authorization: Bearer <service-role-key>" \
+--   -d '{"password":"password","email_confirm":true}'
+```
+
+**Making a user admin:**
+Admin access is controlled by the `ADMIN_EMAILS` environment variable (comma-separated). To grant admin access to an email:
+1. Add it to `.env.local`: `ADMIN_EMAILS=marksoulkid@gmail.com,admin@lever.dev,new@example.com`
+2. Restart the dev server (`npm run dev`)
+3. For production: add `ADMIN_EMAILS` to Vercel Dashboard → Settings → Environment Variables
+
+The admin check happens server-side in `app/(app)/admin/layout.tsx` (page guard) and in each `/api/admin/*` route handler. The sidebar admin link is shown client-side based on the same list loaded from `lib/admin-auth.ts`.
 
 ---
 
