@@ -108,6 +108,64 @@ Hard-gate blur overlay on the dashboard (`hasPlans === false`). Shows the full a
 3. Submit at https://anthropic.com/partners/mcp (contact/partnership form)
 4. Once approved, users see "Connect" button at `claude.ai/directory`
 
+---
+
+## Document pipeline — how it works
+
+### Upload path (only supported path)
+
+Documents must be uploaded through the **Lever dashboard → Documents page**. Claude (in a conversation) should never attempt to accept files directly or offer to receive them — always redirect the user to the dashboard.
+
+```
+User selects file on /documents page
+        │
+        ▼
+POST /api/documents  (multipart/form-data)
+        │
+        ├─→ Supabase Storage bucket "documents"
+        │     path: {userId}/{uuid}.{ext}
+        │     permanent — the source of truth
+        │
+        ├─→ Anthropic Files API  (beta, files-api-2025-04-14)
+        │     returns anthropic_file_id
+        │     expires after 30 days on Anthropic's servers
+        │     (auto-refreshed by read_document tool when needed)
+        │
+        └─→ Claude Haiku (claude-haiku-4-5-20251001)
+              called once at upload time with the file_id
+              returns financial summary text
+              stored in documents.summary  ← permanent in DB
+```
+
+If `ANTHROPIC_API_KEY` is missing or the Haiku call fails, the upload still completes — the document is saved with `summary: null`. The file is always safe in Supabase Storage.
+
+### How Claude accesses documents
+
+| Situation | Tool to call | Cost |
+|---|---|---|
+| Need financial context for a plan | `get_document_summaries` | Free — reads from DB only |
+| User asks a specific question about one doc | `read_document` | Haiku API call |
+| User wants to upload a new document | Direct to dashboard | No tool — tell user to go to `/documents` |
+
+### Why uploads happen in the dashboard, not via MCP
+
+When a user uploads a file to Claude.ai, Claude processes the content but the raw binary is never exposed to MCP tools — only text Claude extracted is accessible. Sending via MCP would mean:
+- No original file stored in Supabase (no source of truth)
+- No ability to re-read the original later
+- Claude would need to pass extracted text, not the real file — losing formatting, tables, structure
+
+The dashboard upload pipeline stores the original binary in Supabase Storage permanently, runs the full Claude summarisation, and makes the result available to all future Claude conversations via `get_document_summaries`. This is always the right path.
+
+### `read_document` — auto file_id refresh
+
+Anthropic's Files API files expire after ~30 days. The `read_document` tool handles this automatically:
+- File `created_at` < 25 days ago → uses the stored `anthropic_file_id` directly
+- File older than 25 days → downloads the binary from Supabase Storage, re-uploads to Anthropic Files API, gets a fresh `file_id`, saves it back to `documents.anthropic_file_id`
+
+This means `read_document` works indefinitely as long as the file is in Supabase Storage.
+
+---
+
 ### ~~1. Financial document storage~~ ✅ Done (2026-05-21)
 `documents` table + Supabase Storage bucket `documents` with RLS. `/documents` page with drag-and-drop upload zone and document list. On upload: file stored in Supabase Storage + uploaded to Anthropic Files API + Claude Haiku summarizes it server-side; summary stored in DB. `get_document_summaries` MCP tool (tool #9) lets Claude pull all summaries into a plan conversation. Dashboard shows a clickable teaser card with upload count. Sidebar: `Home` nav item with home icon (was "Dashboard"), `Documents` nav item above "New plan". `ANTHROPIC_API_KEY` env var required in `.env.local` — see `.env.example`.
 

@@ -688,7 +688,7 @@ async function handleMcp(request: Request) {
 
       server.tool(
         "get_document_summaries",
-        "Retrieve Claude's summaries of all financial documents the user has uploaded — tax forms, pay stubs, bank statements, mortgage contracts, etc. Call this when you need financial context from the user's documents before building or updating a plan. Returns the document name, type, upload date, and the extracted financial summary for each file.",
+        "Retrieve Claude's summaries of all financial documents the user has uploaded — tax forms, pay stubs, bank statements, mortgage contracts, etc. Call this when you need financial context from the user's documents before building or updating a plan. Returns the document name, type, upload date, and the extracted financial summary for each file. IMPORTANT: If the user has no documents yet, or wants to add more, always direct them to upload via the Lever dashboard (Documents section in the sidebar at lever-claude.vercel.app or localhost:3000). Do NOT attempt to accept files directly in this conversation — the dashboard upload pipeline stores the file, runs it through Claude for summarisation, and saves the result so it is available in all future conversations.",
         {},
         async () => {
           if (!userId) return { content: [{ type: "text" as const, text: "Not authenticated." }] };
@@ -729,7 +729,7 @@ async function handleMcp(request: Request) {
 
       server.tool(
         "read_document",
-        "Read the full content of a specific uploaded financial document and answer a question about it. Use this when the stored summary isn't detailed enough — e.g. 'What does my W-2 say about box 12?' or 'What is the exact interest rate on my mortgage?'. Claude reads the original file directly. If the Anthropic file cache has expired (files older than 25 days), it re-uploads from storage automatically.",
+        "Read the full content of a specific financial document that the user previously uploaded via the Lever dashboard, and answer a question about it. Use this when the stored summary is not detailed enough — e.g. 'What does my W-2 say about box 12?' or 'What is the exact interest rate on my mortgage?'. The original file is read directly from storage. If the Anthropic file cache has expired (files older than 25 days), it re-uploads from Supabase Storage automatically. NOTE: This tool only works for documents already uploaded through the Lever dashboard. If the user mentions a document they have not uploaded yet, tell them to go to the Lever dashboard → Documents and upload it there first.",
         {
           document_name: z
             .string()
@@ -860,13 +860,15 @@ async function handleMcp(request: Request) {
             };
           }
 
-          const [plansResult, accountsResult] = await Promise.all([
+          const [plansResult, accountsResult, documentsResult] = await Promise.all([
             admin.from("plans").select("id, name, is_primary, context").eq("user_id", userId),
             admin.from("accounts").select("id").eq("user_id", userId),
+            admin.from("documents").select("id").eq("user_id", userId),
           ]);
 
           const plans     = plansResult.data ?? [];
           const accounts  = accountsResult.data ?? [];
+          const documents = documentsResult.data ?? [];
           const primary   = plans.find((p: { is_primary: boolean }) => p.is_primary);
           const hasContext = primary && (primary as { context: unknown }).context !== null;
 
@@ -888,6 +890,9 @@ async function handleMcp(request: Request) {
           if (accounts.length > 0) {
             completedSteps.push(`Has ${accounts.length} financial account(s) recorded`);
           }
+          if (documents.length > 0) {
+            completedSteps.push(`Has ${documents.length} financial document(s) uploaded`);
+          }
 
           if (plans.length === 0) {
             nextSteps.push({
@@ -908,6 +913,13 @@ async function handleMcp(request: Request) {
               step: "Add financial accounts",
               action: "Ask the user to list their key accounts: checking/savings, retirement accounts (401k, IRA, Roth IRA), investments, real estate, and any significant debts (mortgage, loans). For each, ask the approximate current balance. Call add_account for each one. Balances are always positive — debt type handles the sign.",
               tool: "add_account",
+            });
+          }
+
+          if (plans.length > 0 && hasContext && accounts.length > 0 && documents.length === 0) {
+            nextSteps.push({
+              step: "Upload financial documents",
+              action: "Ask the user if they have any financial documents handy — W-2s, pay stubs, bank statements, mortgage documents, 401k statements. Tell them to go to the Lever dashboard → Documents (sidebar) and upload them there. The dashboard runs each file through Claude automatically and saves a summary. Once uploaded, you can reference the summaries in this conversation using get_document_summaries.",
             });
           }
 
