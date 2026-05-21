@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { createMcpHandler } from "mcp-handler";
 import {
   registerAppTool,
@@ -722,6 +723,120 @@ async function handleMcp(request: Request) {
               type: "text" as const,
               text: `${docs.length} document(s) on file:\n\n${lines.join("\n\n")}`,
             }],
+          };
+        },
+      );
+
+      server.tool(
+        "read_document",
+        "Read the full content of a specific uploaded financial document and answer a question about it. Use this when the stored summary isn't detailed enough — e.g. 'What does my W-2 say about box 12?' or 'What is the exact interest rate on my mortgage?'. Claude reads the original file directly. If the Anthropic file cache has expired (files older than 25 days), it re-uploads from storage automatically.",
+        {
+          document_name: z
+            .string()
+            .optional()
+            .describe("Name of the document to read (partial match, case-insensitive). Use this OR document_id."),
+          document_id: z
+            .string()
+            .optional()
+            .describe("Exact UUID of the document. Use this OR document_name."),
+          question: z
+            .string()
+            .optional()
+            .describe("Specific question to answer about the document. If omitted, returns a detailed extraction of all financial data in the file."),
+        },
+        async ({
+          document_name,
+          document_id,
+          question,
+        }: {
+          document_name?: string;
+          document_id?: string;
+          question?: string;
+        }) => {
+          if (!userId) return { content: [{ type: "text" as const, text: "Not authenticated." }] };
+          if (!document_name && !document_id) {
+            return { content: [{ type: "text" as const, text: "Provide document_name or document_id." }] };
+          }
+
+          let query = admin.from("documents").select("*").eq("user_id", userId);
+          if (document_id) {
+            query = query.eq("id", document_id);
+          } else if (document_name) {
+            query = query.ilike("name", `%${document_name}%`);
+          }
+          const { data: matches } = await query;
+
+          if (!matches || matches.length === 0) {
+            return { content: [{ type: "text" as const, text: `No document found matching "${document_name ?? document_id}". Ask the user to upload it first.` }] };
+          }
+          if (matches.length > 1) {
+            const names = (matches as { name: string }[]).map((d) => `"${d.name}"`).join(", ");
+            return { content: [{ type: "text" as const, text: `Multiple documents matched: ${names}. Be more specific or use document_id.` }] };
+          }
+
+          const doc = matches[0] as {
+            id: string;
+            name: string;
+            file_type: string;
+            storage_path: string;
+            anthropic_file_id: string | null;
+            created_at: string;
+          };
+
+          if (!process.env.ANTHROPIC_API_KEY) {
+            return { content: [{ type: "text" as const, text: "Document reading requires ANTHROPIC_API_KEY to be set on the server." }] };
+          }
+
+          const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+          // Use the cached file_id if it is within the 25-day safe window;
+          // re-upload from Supabase Storage otherwise.
+          const SAFE_WINDOW_MS = 25 * 24 * 60 * 60 * 1000;
+          const ageMs = Date.now() - new Date(doc.created_at).getTime();
+          let fileId = (ageMs < SAFE_WINDOW_MS && doc.anthropic_file_id) ? doc.anthropic_file_id : null;
+
+          if (!fileId) {
+            const { data: fileData, error: downloadError } = await admin.storage
+              .from("documents")
+              .download(doc.storage_path);
+
+            if (downloadError || !fileData) {
+              return { content: [{ type: "text" as const, text: `Could not retrieve document from storage: ${downloadError?.message}` }] };
+            }
+
+            const buffer = Buffer.from(await fileData.arrayBuffer());
+            const uploaded = await (anthropic.beta as unknown as {
+              files: { upload: (args: { file: File }) => Promise<{ id: string }> };
+            }).files.upload({ file: new File([buffer], doc.name, { type: doc.file_type }) });
+
+            fileId = uploaded.id;
+            // Persist the refreshed file_id so subsequent calls within 25 days skip the re-upload
+            await admin.from("documents").update({ anthropic_file_id: fileId }).eq("id", doc.id);
+          }
+
+          const isImage = doc.file_type.startsWith("image/");
+          const contentBlock = isImage
+            ? { type: "image", source: { type: "file", file_id: fileId } }
+            : { type: "document", source: { type: "file", file_id: fileId } };
+
+          const prompt = question
+            ? `Answer this question about the document: ${question}`
+            : "Extract and provide ALL financial information from this document in full detail. Include every dollar amount, date, rate, term, account number (last 4 digits only), name, and any other financially relevant data.";
+
+          const msg = await (anthropic.messages.create as (args: unknown) => Promise<{
+            content: Array<{ type: string; text?: string }>;
+          }>)({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 2048,
+            messages: [{ role: "user", content: [contentBlock, { type: "text", text: prompt }] }],
+            betas: ["files-api-2025-04-14"],
+          });
+
+          const textBlock = msg.content.find((b) => b.type === "text");
+          const answer = textBlock?.text ?? "Could not extract content from this document.";
+
+          return {
+            content: [{ type: "text" as const, text: `**${doc.name}**\n\n${answer}` }],
           };
         },
       );

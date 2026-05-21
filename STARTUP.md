@@ -33,20 +33,18 @@ curl -s -o /dev/null -w "%{http_code}" \
   -d '{"query":"SELECT 1"}' | grep -q "^2" && echo "Supabase REST ✓" || echo "Supabase REST ✗ — check PAT in .mcp.json"
 
 echo ""
-echo "── Lever MCP tools (10 expected) ──────────────────"
+echo "── Lever MCP tools (11 expected) ──────────────────"
 curl -s -X POST http://localhost:3000/api/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
-  | grep -o '"name":"[^"]*"' | wc -l | xargs -I{} sh -c '[ {} -eq 10 ] && echo "MCP tools ✓ ({} tools)" || echo "MCP tools ✗ ({} tools — expected 10, dev server may need restart)"'
+  | grep -o '"name":"[^"]*"' | wc -l | xargs -I{} sh -c '[ {} -eq 11 ] && echo "MCP tools ✓ ({} tools)" || echo "MCP tools ✗ ({} tools — expected 11, dev server may need restart)"'
 
 echo ""
 echo "── Git state ──────────────────────────────────────"
 git branch --show-current
 git status --short | head -5
 ```
-
----
 
 ---
 
@@ -123,12 +121,12 @@ Offer a single recommendation with a one-sentence rationale. Example: _"Based on
 | Dev server | `{"status":"ok"}` | `npm run dev` in a separate terminal |
 | `.mcp.json` | File exists, 3 servers present (lever, supabase, userjot) | Copy `.mcp.json.example`, fill in Supabase PAT and project ref. PAT from: [Supabase Dashboard → Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
 | Supabase REST | HTTP 200/201 | Check PAT is valid and not expired. Project ref: `avzhlaxhopzmrjnmregc` |
-| Lever MCP tools | 10 tools listed | Restart dev server (`npm run dev`). If tools are missing, check `app/api/mcp/route.ts` for compile errors |
+| Lever MCP tools | 11 tools listed | Restart dev server (`npm run dev`). If tools are missing, check `app/api/mcp/route.ts` for compile errors |
 | Git branch | `main` or feature branch | Normal — just know what branch you're on before making changes |
 
 ---
 
-## MCP tools that must be present (10 total)
+## MCP tools that must be present (11 total)
 
 If any of these are missing after the server starts, the feature that depends on them is broken:
 
@@ -142,7 +140,8 @@ If any of these are missing after the server starts, the feature that depends on
 | `add_account` | Onboarding / ongoing — Claude adds financial accounts |
 | `update_account_balance` | Claude updates an existing account balance |
 | `create_what_if_plan` | Claude clones a plan with changed parameters for comparison |
-| `get_document_summaries` | Claude reads Claude's summaries of uploaded financial docs for plan context |
+| `get_document_summaries` | Claude reads stored summaries of all uploaded financial docs for plan context |
+| `read_document` | Claude re-reads a specific document in full to answer detailed questions; refreshes expired Anthropic file_id automatically |
 | `get_onboarding_status` | Claude checks setup progress; drives the onboarding flow |
 
 ---
