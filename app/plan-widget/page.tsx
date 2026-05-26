@@ -34,11 +34,11 @@ export default function PlanWidget() {
   useEffect(() => {
     const mcpApp = new App({ name: "Lever Plan Dashboard", version: "1.0.0" });
     appRef.current = mcpApp;
-    mcpApp.connect();
     mcpApp.ontoolresult = (result) => {
       const text = result.content?.find((c) => c.type === "text")?.text;
       if (text) setPlan(JSON.parse(text));
     };
+    mcpApp.connect().catch(() => {/* no MCP host — widget will wait for ontoolresult */});
   }, []);
 
   const openScenario = async () => {

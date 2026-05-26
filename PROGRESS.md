@@ -144,7 +144,7 @@ These are ordered by what unlocks the most value next. Each builds on the one be
 Recharts `ComposedChart` spanning full card width. Year-by-year curve from `projectBalance()`. Teal when on track, red when shortfall. Dashed goal line at `targetBalance`. Teal `ReferenceLine` at today's age, `ReferenceDot` at current balance and retirement endpoint. Summary row above chart shows projected, today, target, surplus/shortfall. Legend below. Chart turns red automatically when projected < target — no extra logic needed, just the color prop.
 
 ### ~~1. DB-backed what-if scenarios~~ ✅ Done (2026-05-21)
-`create_what_if_plan` MCP tool clones the primary plan with overrides (retirement age, contribution, current balance, risk tolerance, target monthly income, narrative). What-if plans appear in sidebar under WHAT-IF SCENARIOS. Clicking one shows a side-by-side comparison panel: amber metric card vs teal primary metric card, dual-curve `ComparisonChart` (amber solid = what-if, teal dashed = primary), difference callout in amber. 0 errors. Note: the `run_what_if` widget (`/scenario-widget`) still uses hardcoded sliders — wiring it to plan data is in the known issues list.
+`create_what_if_plan` MCP tool clones the primary plan with overrides (retirement age, contribution, current balance, risk tolerance, target monthly income, narrative). What-if plans appear in sidebar under WHAT-IF SCENARIOS. Clicking one shows a side-by-side comparison panel: amber metric card vs teal primary metric card, dual-curve `ComparisonChart` (amber solid = what-if, teal dashed = primary), difference callout in amber. 0 errors. The `run_what_if` widget (`/scenario-widget`) initializes sliders from real plan data via `ontoolresult`; slider range extended to 50–80 to cover all valid retirement ages.
 
 ### ~~1. Onboarding flow~~ ✅ Done (2026-05-21)
 Hard-gate blur overlay on the dashboard (`hasPlans === false`). Shows the full app blurred behind — user sees what they're missing. 3-step card: (1) copy personalised MCP URL, (2) copy onboarding prompt to paste into Claude, (3) "I'm done →" polls for plan creation. `get_onboarding_status` MCP tool (tool #8) returns JSON with `completedSteps`, `nextSteps`, `isComplete`, and step-by-step `action` instructions so Claude knows exactly where to resume. Tab toggle between Claude.ai (URL copy) and Claude Desktop (`.mcpb` download from `/api/mcp-extension`). Gate disappears automatically once a plan is created.
@@ -244,7 +244,7 @@ This means `read_document` works indefinitely as long as the file is in Supabase
 4. Claude generates a recommendation, call `queue_recommendation` to save as draft
 5. Back in `/admin/users/[id]`, review the draft and approve or discard
 
-### ~~6. Push notification delivery~~ ✅ Done (2026-05-26)
+### ~~6. Push notification delivery~~ ✅ Done (2026-05-26, end-to-end verified)
 
 Admin approves a notification → it fires as a push to the user's phone immediately. No cron needed yet — the manual workflow drives it.
 
@@ -254,8 +254,12 @@ Admin approves a notification → it fires as a push to the user's phone immedia
 - `PATCH /api/admin/notifications/[id]` updated: on `approved`, looks up the user's push token, calls Expo Push API (`https://exp.host/--/api/v2/push/send`), marks notification `sent` if push delivered or `approved` if no token registered yet
 - Mobile: `expo-notifications` installed; `registerPushToken()` called once per session on login; foreground handler shows banners while app is open
 
+**End-to-end verified (2026-05-26):** Token registers on app open → admin sends from compose box → push arrives on phone in ~1s → DB shows status `sent`.
+
+**Deployment note:** `EXPO_PUBLIC_API_URL` in `mobile/.env.local` points to `https://lever-claude.vercel.app`. The `/api/push-tokens` endpoint must be deployed to Vercel before tokens can register. All routes are now live.
+
 **Known limitation — Expo Go vs development build:**
-`expo-notifications` remote push was removed from Expo Go in SDK 53. The app loads and permission prompt fires in Expo Go, but the Expo Push Token returned is a mock — pushes from the server will not arrive. To test the full end-to-end push flow you need a **development build** (see testing instructions below).
+`expo-notifications` remote push for Android was removed from Expo Go in SDK 53. iOS push still works in Expo Go via Expo's APNs proxy. Android users need a development build for push delivery.
 
 ---
 
@@ -351,8 +355,7 @@ The core differentiator from a static spreadsheet: lever watches the world for t
 | Issue | Severity | Fix |
 |---|---|---|
 | Stripe Checkout requires cardholder name + ZIP (not documented in test flow) | Low | Always fill "Demo User" and "10001" in playwright tests |
-| `run_what_if` widget uses hardcoded sliders, not plan data | Medium | Wire widget to real plan context |
-| `show_financial_plan` widget (`/plan-widget`) renders static demo data | Medium | Wire to fetch from Supabase using the plan ID |
+| Scenario widget slider range was capped at 72 — retirement ages up to 80 now supported | Fixed 2026-05-26 | Extended `min=50` `max=80` in SliderRow; `ontoolresult` wires sliders to real plan data |
 | `get_onboarding_status` still referenced "go to dashboard" in action string | Fixed 2026-05-21 | Updated to reference `create_plan` tool |
 | Google OAuth redirect doesn't reliably return to Expo Go on iOS — Safari opens instead of handing back to the app | Low | Use email/password login for Expo Go testing; full OAuth works in a dev build |
 | No Jest tests for financial math functions | Medium | Add discrete tests for `projectBalance`, `resolveContextDefaults`, `ageFromDOB` |

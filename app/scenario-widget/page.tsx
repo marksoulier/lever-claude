@@ -98,7 +98,6 @@ export default function ScenarioWidget() {
   useEffect(() => {
     const mcpApp = new App({ name: "Lever Scenario Modeler", version: "1.0.0" });
     appRef.current = mcpApp;
-    mcpApp.connect();
     mcpApp.ontoolresult = (result) => {
       const text = result.content?.find((c) => c.type === "text")?.text;
       if (!text) return;
@@ -108,6 +107,7 @@ export default function ScenarioWidget() {
       setMonthly(plan.monthlyContribution);
       setReturnRate(plan.assumedReturn);
     };
+    mcpApp.connect().catch(() => {/* no MCP host — widget will wait for ontoolresult */});
   }, []);
 
   const projected = useCallback((): number => {
@@ -154,8 +154,8 @@ export default function ScenarioWidget() {
         <SliderRow
           label="Retirement Age"
           value={retireAge}
-          min={52}
-          max={72}
+          min={50}
+          max={80}
           step={1}
           display={`${retireAge}`}
           onChange={setRetireAge}
