@@ -9,15 +9,21 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { supabase } from "../lib/supabase";
 
 const TEAL = "#4bc3c8";
 
+// Required for OAuth session completion on iOS
+WebBrowser.maybeCompleteAuthSession();
+
 export default function LoginScreen() {
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError]         = useState<string | null>(null);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -26,12 +32,41 @@ export default function LoginScreen() {
     }
     setLoading(true);
     setError(null);
-
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) setError(error.message);
-    // On success, AuthContext detects the new session and re-renders the app
   };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError(null);
+    try {
+      // redirectTo must match what's in Supabase → Auth → URL Configuration
+      const redirectTo = Linking.createURL("/");
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+
+      if (error || !data.url) throw error ?? new Error("No auth URL returned");
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+      if (result.type === "success") {
+        // supabase-js exchanges the PKCE code and writes the session to AsyncStorage
+        const { error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
+        if (sessionError) throw sessionError;
+        // AuthContext detects the new session and re-renders automatically
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message ?? "Google sign-in failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const anyLoading = loading || googleLoading;
 
   return (
     <KeyboardAvoidingView
@@ -42,6 +77,30 @@ export default function LoginScreen() {
       <Text style={styles.subtitle}>AI-powered retirement planning</Text>
 
       <View style={styles.form}>
+        {/* Google */}
+        <TouchableOpacity
+          style={[styles.googleButton, anyLoading && styles.buttonDisabled]}
+          onPress={handleGoogleSignIn}
+          disabled={anyLoading}
+        >
+          {googleLoading ? (
+            <ActivityIndicator color="#3c4043" />
+          ) : (
+            <>
+              <Text style={styles.googleG}>G</Text>
+              <Text style={styles.googleText}>Continue with Google</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Email / password */}
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -65,9 +124,9 @@ export default function LoginScreen() {
         {error && <Text style={styles.error}>{error}</Text>}
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.button, anyLoading && styles.buttonDisabled]}
           onPress={handleSignIn}
-          disabled={loading}
+          disabled={anyLoading}
         >
           {loading
             ? <ActivityIndicator color="#fff" />
@@ -102,6 +161,43 @@ const styles = StyleSheet.create({
   form: {
     width: "100%",
     gap: 12,
+  },
+  googleButton: {
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e4e4e7",
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  googleG: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#4285F4",
+    lineHeight: 20,
+  },
+  googleText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#3c4043",
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginVertical: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#e4e4e7",
+  },
+  dividerText: {
+    fontSize: 12,
+    color: "#a1a1aa",
   },
   input: {
     height: 48,

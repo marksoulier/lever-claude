@@ -2,6 +2,7 @@
   "expo": {
     "name": "Lever",
     "slug": "lever",
+    "scheme": "lever",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,6 +27,17 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4bc3c8",
+          "sounds": []
+        }
+      ],
+      "expo-web-browser"
+    ],
     "extra": {
       "eas": {
         "projectId": "125e292a-5534-4a3a-9fcb-9b208cb292cb"

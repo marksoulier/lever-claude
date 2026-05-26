@@ -9,6 +9,8 @@
 
 These accounts exist in the Supabase database. Do not delete them — they are the only test accounts.
 
+**Phone testing (Expo Go):** always use `demo@lever.dev` / `demo1234`. Google OAuth does not reliably redirect back to Expo Go on iOS. Email + password works. When giving the user tasks that require phone validation, always include these credentials explicitly.
+
 ---
 
 ## Signing in during tests

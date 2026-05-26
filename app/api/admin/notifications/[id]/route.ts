@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin-auth";
+import { sendPushToUser } from "@/lib/expo-push";
 import { z } from "zod";
 
 const PatchNotification = z.object({
@@ -30,11 +31,46 @@ export async function PATCH(
   }
 
   const now = new Date().toISOString();
+  const admin = createAdminClient();
+
+  // On approve: look up the notification, try to push, then write final status
+  if (parsed.data.status === "approved") {
+    const { data: notif } = await admin
+      .from("notifications")
+      .select("user_id, message")
+      .eq("id", id)
+      .single();
+
+    let finalStatus = "approved";
+    const patch: Record<string, string> = { status: "approved", approved_at: now };
+
+    if (notif) {
+      const result = await sendPushToUser(notif.user_id, notif.message);
+      if (result === "sent") {
+        finalStatus = "sent";
+        patch.status = "sent";
+        patch.sent_at = now;
+      }
+    }
+
+    const { data, error } = await admin
+      .from("notifications")
+      .update(patch)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: error?.message ?? "Update failed" }, { status: 500 });
+    }
+
+    return Response.json({ ...data, _pushed: finalStatus === "sent" });
+  }
+
+  // discard / manual sent
   const patch: Record<string, string> = { status: parsed.data.status };
-  if (parsed.data.status === "approved") patch.approved_at = now;
   if (parsed.data.status === "sent") patch.sent_at = now;
 
-  const admin = createAdminClient();
   const { data, error } = await admin
     .from("notifications")
     .update(patch)

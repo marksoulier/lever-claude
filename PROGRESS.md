@@ -244,15 +244,105 @@ This means `read_document` works indefinitely as long as the file is in Supabase
 4. Claude generates a recommendation, call `queue_recommendation` to save as draft
 5. Back in `/admin/users/[id]`, review the draft and approve or discard
 
-### 6. Background monitoring + notifications
+### ~~6. Push notification delivery~~ ✅ Done (2026-05-26)
+
+Admin approves a notification → it fires as a push to the user's phone immediately. No cron needed yet — the manual workflow drives it.
+
+**What was built:**
+- `push_tokens` table (user_id PK, token, updated_at) with RLS
+- `POST /api/push-tokens` — mobile registers its Expo push token with a Bearer JWT; upserts on re-login
+- `PATCH /api/admin/notifications/[id]` updated: on `approved`, looks up the user's push token, calls Expo Push API (`https://exp.host/--/api/v2/push/send`), marks notification `sent` if push delivered or `approved` if no token registered yet
+- Mobile: `expo-notifications` installed; `registerPushToken()` called once per session on login; foreground handler shows banners while app is open
+
+**Known limitation — Expo Go vs development build:**
+`expo-notifications` remote push was removed from Expo Go in SDK 53. The app loads and permission prompt fires in Expo Go, but the Expo Push Token returned is a mock — pushes from the server will not arrive. To test the full end-to-end push flow you need a **development build** (see testing instructions below).
+
+---
+
+### How to test push notifications end-to-end
+
+#### Option A — Development build (full test, required for real pushes)
+
+1. Install EAS CLI: `npm install -g eas-cli`
+2. From `mobile/`: `eas build --profile development --platform ios` (or `android`)
+3. Install the resulting `.ipa` / `.apk` on your device
+4. In the dev build, sign in — the permission dialog fires and a real Expo token is registered
+5. In Claude Code, call `get_user_context` for your account email, generate a recommendation, call `queue_recommendation`
+6. Open [http://localhost:3000/admin/users/\<your-user-id\>](http://localhost:3000/admin)
+7. Find the draft notification and click **Approve**
+8. The push arrives on your phone within 1–2 seconds; the notification status badge flips to **sent**
+
+#### Option B — Expo Go (verifies app loads, Google sign-in, plans — no push delivery)
+
+**One-time Supabase config (required before Google sign-in works on mobile):**
+
+```
+Service: Supabase Dashboard
+What: Add mobile redirect URLs to the OAuth allow-list
+Where: Authentication → URL Configuration → Additional Redirect URLs
+Values to add (one per line):
+  lever://**
+  exp://**
+Why: The mobile app deep-links back to these schemes after Google OAuth
+```
+
+1. Open [Supabase Dashboard → Auth → URL Configuration](https://supabase.com/dashboard/project/avzhlaxhopzmrjnmregc/auth/url-configuration)
+2. Under **Additional Redirect URLs**, add:
+   ```
+   lever://**
+   exp://**
+   ```
+3. Save
+
+**Prerequisites:**
+- Install [Expo Go](https://expo.dev/go) on your phone (iOS or Android)
+- Phone and dev machine must have internet access (tunnel used because WSL2 can't expose a LAN port)
+
+**Start the dev server (run once per session from `mobile/`):**
+```bash
+cd mobile && npx expo start --tunnel
+```
+
+**Get the current tunnel URL (changes each session):**
+```bash
+curl -s http://localhost:4040/api/tunnels | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['tunnels'][0]['public_url'])"
+```
+This gives you something like `https://rn1aos8-marksoulier-8081.exp.direct`.
+
+**Connect your phone:**
+Open Expo Go → scan the QR code shown in the terminal, or tap **Enter URL manually** and paste:
+```
+exp://rn1aos8-marksoulier-8081.exp.direct
+```
+(Use your actual tunnel hostname from the curl above — it changes each session.)
+
+**What to validate in Expo Go:**
+
+| Step | Expected |
+|---|---|
+| App loads | Login screen: "lever" logo, "Continue with Google" button, email/password fields |
+| Tap "Continue with Google" | Browser opens → Google account picker → select `marksoulkid@gmail.com` |
+| After Google approval | Browser closes, app shows plans screen automatically |
+| Notification permission | iOS/Android permission dialog appears (tap Allow) |
+| Plans screen | Your real plans load with name, projected balance, success % |
+| Sign out | Returns to login screen |
+
+**What you CANNOT verify in Expo Go:**
+- Actual push delivery (token is a mock in Expo Go SDK 53+)
+- Notification banners arriving from the server
+
+**To fully validate push delivery:** use a development build (Option A above).
+
+---
+
+### 7. Background monitoring (future)
 The core differentiator from a static spreadsheet: lever watches the world for the user.
 
-**Build:**
-- Supabase Edge Function on a cron schedule
-- Checks for: interest rate changes, new government programs, legislative changes relevant to user's plan
-- Generates a plain-text notification via Claude API
-- Sends via push notification (mobile) or email
-- Admin panel can preview and approve notifications before they go out
+**Build (when manual workflow is proven):**
+- Vercel Cron job on a daily schedule
+- For each user: call `get_user_context`, run the opportunity scan prompt (see `PROGRESS.md` step 2), call `queue_recommendation`
+- Admin approval step stays — drafts queue up overnight, you review in the morning
+- Push fires automatically on approve (already wired)
 
 ---
 
@@ -264,7 +354,7 @@ The core differentiator from a static spreadsheet: lever watches the world for t
 | `run_what_if` widget uses hardcoded sliders, not plan data | Medium | Wire widget to real plan context |
 | `show_financial_plan` widget (`/plan-widget`) renders static demo data | Medium | Wire to fetch from Supabase using the plan ID |
 | `get_onboarding_status` still referenced "go to dashboard" in action string | Fixed 2026-05-21 | Updated to reference `create_plan` tool |
-| Mobile app is a scaffold only | Low | Not blocking web MVP |
+| Google OAuth redirect doesn't reliably return to Expo Go on iOS — Safari opens instead of handing back to the app | Low | Use email/password login for Expo Go testing; full OAuth works in a dev build |
 | No Jest tests for financial math functions | Medium | Add discrete tests for `projectBalance`, `resolveContextDefaults`, `ageFromDOB` |
 
 ---

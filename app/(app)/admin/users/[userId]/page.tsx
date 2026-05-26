@@ -36,6 +36,10 @@ export default function AdminUserPage({ params }: { params: Promise<{ userId: st
   const [error, setError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState<string | null>(null);
 
+  const [composeMessage, setComposeMessage] = useState("");
+  const [composeSending, setComposeSending] = useState(false);
+  const [composeResult, setComposeResult] = useState<{ ok: boolean; text: string } | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/admin/users/${userId}`)
@@ -45,6 +49,35 @@ export default function AdminUserPage({ params }: { params: Promise<{ userId: st
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [userId]);
+
+  async function sendNotification() {
+    if (!composeMessage.trim() || !detail) return;
+    setComposeSending(true);
+    setComposeResult(null);
+    try {
+      const res = await fetch("/api/admin/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: detail.id, message: composeMessage.trim(), send: true }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const pushed = data._pushed as boolean;
+      setComposeResult({
+        ok: true,
+        text: pushed ? "Sent to phone." : "Saved — no push token registered yet.",
+      });
+      setComposeMessage("");
+      setDetail((prev) => prev ? {
+        ...prev,
+        notifications: [{ ...data, approvedAt: data.approved_at, createdAt: data.created_at }, ...prev.notifications],
+      } : prev);
+    } catch (err) {
+      setComposeResult({ ok: false, text: (err as Error).message });
+    } finally {
+      setComposeSending(false);
+    }
+  }
 
   async function patchNotification(id: string, status: "approved" | "discarded") {
     setActionPending(id);
@@ -219,6 +252,35 @@ export default function AdminUserPage({ params }: { params: Promise<{ userId: st
       {/* Notifications */}
       <section>
         <h2 className="text-sm font-black text-zinc-900 mb-3">Notifications</h2>
+
+        {/* Compose */}
+        <div className="rounded-2xl bg-white border border-zinc-100 shadow-sm px-5 py-4 flex flex-col gap-3 mb-3">
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Send notification</p>
+          <textarea
+            rows={3}
+            placeholder="Write a message to send to this user's phone…"
+            value={composeMessage}
+            onChange={(e) => { setComposeMessage(e.target.value); setComposeResult(null); }}
+            className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
+          />
+          <div className="flex items-center justify-between gap-3">
+            {composeResult ? (
+              <p className={`text-xs font-medium ${composeResult.ok ? "text-teal-dark" : "text-red-500"}`}>
+                {composeResult.text}
+              </p>
+            ) : (
+              <span />
+            )}
+            <button
+              onClick={sendNotification}
+              disabled={composeSending || !composeMessage.trim()}
+              className="text-xs font-semibold text-white bg-teal hover:bg-teal-dark px-4 py-2 rounded-full transition-colors disabled:opacity-40"
+            >
+              {composeSending ? "Sending…" : "Send"}
+            </button>
+          </div>
+        </div>
+
         {detail.notifications.length === 0 ? (
           <div className="rounded-2xl bg-zinc-50 border border-zinc-100 px-5 py-6 text-center">
             <p className="text-sm text-zinc-400">No notifications yet.</p>
