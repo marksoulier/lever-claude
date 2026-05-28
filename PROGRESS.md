@@ -339,14 +339,24 @@ exp://rn1aos8-marksoulier-8081.exp.direct
 
 ---
 
-### 7. Background monitoring (future)
-The core differentiator from a static spreadsheet: lever watches the world for the user.
+---
 
-**Build (when manual workflow is proven):**
-- Vercel Cron job on a daily schedule
-- For each user: call `get_user_context`, run the opportunity scan prompt (see `PROGRESS.md` step 2), call `queue_recommendation`
-- Admin approval step stays — drafts queue up overnight, you review in the morning
-- Push fires automatically on approve (already wired)
+## Next priorities — go-to-market cycle
+
+The product is feature-complete enough to put in front of real users. The focus now is: **get users → test with them → get feedback → iterate**. Background automation (cron-based monitoring) is parked until the core loop is proven with real usage.
+
+### 7. Get the product to market
+
+**Goal:** real users using the product, generating real feedback.
+
+**Steps (in order):**
+1. **Polish and harden the onboarding** — the first 5 minutes must be smooth. Test the full flow with LLM personas and fix every friction point before inviting real users.
+2. **LLM user testing** — simulate realistic user personas (different ages, incomes, goals) end-to-end with playwright-cli + MCP tools. Capture where they get stuck or confused. Fix those issues before human testing.
+3. **Invite beta users** — share with a small set of real people (friends, target demographic). Use the manual recommendation workflow to deliver value to each one personally.
+4. **Collect and triage feedback** — UserJot is wired; direct users there. Review feedback in every session and address the highest-signal items.
+5. **Iterate** — fix what's broken, improve what's confusing, add what's missing based on real usage patterns. Repeat.
+
+**What "done" looks like for this phase:** at least 3 non-test users have completed onboarding, created a plan, and received a notification they found useful.
 
 ---
 

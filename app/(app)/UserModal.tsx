@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
@@ -35,9 +35,9 @@ export default function UserModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const overlayRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<User | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
   const subscriptionStatus = useSubscription();
 
   useEffect(() => {
@@ -77,16 +77,12 @@ export default function UserModal({
     .slice(0, 2) || "?";
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-start sm:pl-4 sm:pb-4"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/20" />
+    <>
+      {/* Transparent click-outside trap */}
+      <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative z-10 w-72 rounded-2xl bg-white border border-zinc-200 shadow-xl overflow-hidden mb-4 sm:mb-0">
+      {/* Modal — anchored above the user button at bottom of sidebar */}
+      <div className="fixed bottom-[68px] left-2 z-50 w-72 rounded-2xl bg-white border border-zinc-200 shadow-xl overflow-hidden">
         {/* Profile header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
           {avatarUrl ? (
@@ -120,13 +116,22 @@ export default function UserModal({
               <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-500">
                 Free plan
               </span>
-              <a
-                href="/connect"
-                className="text-xs font-semibold text-teal hover:text-teal-dark transition-colors"
-                onClick={onClose}
+              <button
+                disabled={upgrading}
+                onClick={async () => {
+                  setUpgrading(true);
+                  try {
+                    const res = await fetch("/api/stripe/checkout", { method: "POST" });
+                    const { url } = await res.json();
+                    window.location.href = url;
+                  } catch {
+                    setUpgrading(false);
+                  }
+                }}
+                className="text-xs font-semibold text-teal hover:text-teal-dark transition-colors disabled:opacity-50"
               >
-                Upgrade →
-              </a>
+                {upgrading ? "Redirecting…" : "Upgrade →"}
+              </button>
             </div>
           )}
         </div>
@@ -145,6 +150,6 @@ export default function UserModal({
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }

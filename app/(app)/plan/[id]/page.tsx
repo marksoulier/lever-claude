@@ -44,10 +44,10 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   const shortfall = plan.projectedBalance - plan.targetBalance;
 
   const metrics = [
-    { label: "Projected balance",     value: fmtBalance(plan.projectedBalance) },
-    { label: "Monthly income",        value: `$${plan.monthlyIncomeAtRetirement.toLocaleString()}` },
-    { label: "Shortfall / surplus",   value: `${shortfall >= 0 ? "+" : ""}${fmtBalance(Math.abs(shortfall))}` },
-    { label: "Probability of success", value: `${plan.successProbability}%` },
+    { label: "Projected balance",      subtitle: "at retirement",       value: fmtBalance(plan.projectedBalance) },
+    { label: "Monthly income",         subtitle: "in retirement",       value: `$${plan.monthlyIncomeAtRetirement.toLocaleString()}` },
+    { label: "Shortfall / surplus",    subtitle: "vs target balance",   value: `${shortfall >= 0 ? "+" : "-"}${fmtBalance(Math.abs(shortfall))}` },
+    { label: "Probability of success", subtitle: "of reaching goal",    value: `${plan.successProbability}%` },
   ];
 
   const scenarios = scenariosByRetirementAge[plan.retirementAge] ?? [];
@@ -145,9 +145,10 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
       {/* Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {metrics.map((m) => (
-          <div key={m.label} className="rounded-2xl bg-white border border-zinc-100 p-5 flex flex-col gap-1 shadow-sm">
+          <div key={m.label} className="rounded-2xl bg-white border border-zinc-100 p-5 flex flex-col gap-0.5 shadow-sm">
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{m.label}</span>
             <span className="text-2xl font-black text-zinc-900">{m.value}</span>
+            <span className="text-[10px] text-zinc-400">{m.subtitle}</span>
           </div>
         ))}
       </div>
@@ -195,11 +196,13 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
         <div>
           <p className="font-bold text-white">Ask Claude about this plan</p>
           <p className="text-sm text-white/70 mt-1">
-            Use the lever MCP connector in Claude to update contributions, model new scenarios, and get personalized insights.
+            Open a Claude conversation with Lever connected to model new scenarios, update your plan, and get personalised insights.
           </p>
         </div>
         <a
-          href="#"
+          href="https://claude.ai"
+          target="_blank"
+          rel="noopener noreferrer"
           className="shrink-0 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-teal hover:bg-zinc-100 transition-colors"
         >
           Open in Claude
@@ -224,7 +227,7 @@ function ContextPanel({ context }: { context: PlanContext }) {
     <div className="rounded-2xl border border-zinc-100 bg-white shadow-sm px-6 py-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-black text-zinc-900">Plan context</p>
-        <span className="text-xs text-zinc-400">Set via Claude · edit with <code className="bg-zinc-100 px-1 rounded">update_plan_context</code></span>
+        <span className="text-xs text-zinc-400">Set via Claude · to update, ask Claude</span>
       </div>
       {items.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

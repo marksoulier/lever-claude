@@ -66,7 +66,21 @@ export default function WhatIfPanel({
 }) {
   if (!isPremium) return <UpgradeCTA />;
 
-  if (scenarios.length === 0) return null;
+  if (scenarios.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-6 py-5 text-sm text-zinc-500">
+        No curated scenarios for this retirement age yet.{" "}
+        <a
+          href="https://claude.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-teal font-semibold hover:underline"
+        >
+          Ask Claude to model one →
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">

@@ -35,6 +35,14 @@ function DocumentIcon({ size = 15 }: { size?: number }) {
   );
 }
 
+function FeedbackIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H6l-3 2V3z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 function AdminIcon({ size = 15 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -242,6 +250,22 @@ export default function Sidebar() {
               New plan
             </Link>
           )}
+        </div>
+
+        {/* Feedback */}
+        <div className="px-2 py-2 border-t border-zinc-200">
+          <a
+            href="https://lever.userjot.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            title={collapsed ? "Give feedback" : undefined}
+            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200 transition-colors ${
+              collapsed ? "justify-center" : ""
+            }`}
+          >
+            <FeedbackIcon />
+            {!collapsed && <span>Give feedback</span>}
+          </a>
         </div>
 
         {/* User button */}

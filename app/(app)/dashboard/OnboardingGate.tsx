@@ -43,6 +43,7 @@ export default function OnboardingGate() {
   const [mcpUrl, setMcpUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState(true);
   const [checking, setChecking] = useState(false);
+  const [checkError, setCheckError] = useState(false);
   const [tab, setTab] = useState<"web" | "desktop">("web");
 
   useEffect(() => {
@@ -55,13 +56,14 @@ export default function OnboardingGate() {
 
   const checkForPlan = useCallback(async () => {
     setChecking(true);
+    setCheckError(false);
     try {
       const res = await fetch("/api/plans");
       const plans = await res.json();
       if (Array.isArray(plans) && plans.length > 0) {
         router.refresh();
       } else {
-        alert("No plan found yet — finish the conversation with Claude first, then click Check again.");
+        setCheckError(true);
       }
     } finally {
       setChecking(false);
@@ -87,7 +89,7 @@ export default function OnboardingGate() {
           </div>
           <h1 className="text-xl font-black text-zinc-900">Set up your financial plan</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Lever works through Claude — connect once, then Claude walks you through everything.
+            Lever runs inside Claude — give Claude access to your data once, then it walks you through everything.
           </p>
         </div>
 
@@ -98,7 +100,10 @@ export default function OnboardingGate() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <StepNumber n={1} />
-              <p className="text-sm font-bold text-zinc-800">Add the Lever connector to Claude</p>
+              <div>
+                <p className="text-sm font-bold text-zinc-800">Give Claude access to your Lever data</p>
+                <p className="text-xs text-zinc-400 mt-0.5">Free Claude.ai works — no paid plan needed</p>
+              </div>
             </div>
 
             {/* Web / Desktop tabs */}
@@ -122,9 +127,9 @@ export default function OnboardingGate() {
               {tab === "web" && (
                 <div className="flex flex-col gap-2 text-xs text-zinc-500">
                   <p>
-                    In Claude.ai → <span className="font-bold text-zinc-700">Settings → Connectors → +</span>
+                    Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="font-bold text-teal hover:underline">claude.ai</a> → <span className="font-bold text-zinc-700">Settings → Integrations → Add integration</span>
                   </p>
-                  <p>Paste this URL as the connector:</p>
+                  <p>Paste this URL and name it <span className="font-semibold text-zinc-600">"Lever"</span>:</p>
                   <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2">
                     <code className="flex-1 text-[11px] text-zinc-600 break-all">
                       {mcpDisplayUrl}
@@ -132,7 +137,7 @@ export default function OnboardingGate() {
                     {mcpUrl && <CopyButton text={mcpUrl} label="Copy URL" />}
                   </div>
                   <p className="text-zinc-400">
-                    Name it <span className="font-semibold text-zinc-600">"Lever"</span>. No auth fields needed.
+                    No password or auth fields needed — just the URL.
                   </p>
                 </div>
               )}
@@ -181,27 +186,44 @@ export default function OnboardingGate() {
           <div className="border-t border-zinc-100" />
 
           {/* Step 3 — come back */}
-          <div className="flex items-center gap-3">
-            <StepNumber n={3} />
-            <div className="flex-1">
-              <p className="text-sm font-bold text-zinc-800">Come back here once Claude creates your plan</p>
-              <p className="text-xs text-zinc-400 mt-0.5">Claude will guide you. When done, click below.</p>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <StepNumber n={3} />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-zinc-800">Come back here once Claude creates your plan</p>
+                <p className="text-xs text-zinc-400 mt-0.5">Claude will guide you. When done, click below.</p>
+              </div>
+              <button
+                onClick={checkForPlan}
+                disabled={checking}
+                className="shrink-0 rounded-full bg-teal px-5 py-2 text-sm font-bold text-white hover:bg-teal-dark transition-colors disabled:opacity-50 disabled:cursor-wait"
+              >
+                {checking ? "Checking…" : "I'm done →"}
+              </button>
             </div>
-            <button
-              onClick={checkForPlan}
-              disabled={checking}
-              className="shrink-0 rounded-full bg-teal px-5 py-2 text-sm font-bold text-white hover:bg-teal-dark transition-colors disabled:opacity-50 disabled:cursor-wait"
-            >
-              {checking ? "Checking…" : "I'm done →"}
-            </button>
+            {checkError && (
+              <p className="ml-9 text-xs text-red-500">
+                No plan found yet — finish the conversation with Claude first, then try again.
+              </p>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-7 py-4 bg-zinc-50 border-t border-zinc-100">
+        <div className="px-7 py-4 bg-zinc-50 border-t border-zinc-100 flex flex-col gap-1.5">
           <p className="text-xs text-zinc-400 text-center">
-            Your MCP URL is unique to you — it connects your Claude account to your Lever data.
-            {" "}Keep it private.
+            Your URL is unique to you — it connects Claude to your Lever data. Keep it private.
+          </p>
+          <p className="text-xs text-zinc-400 text-center">
+            Questions or feedback?{" "}
+            <a
+              href="https://lever.userjot.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal hover:underline font-medium"
+            >
+              Share it here
+            </a>
           </p>
         </div>
       </div>
