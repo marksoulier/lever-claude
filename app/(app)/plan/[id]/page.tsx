@@ -2,12 +2,14 @@ import { notFound } from "next/navigation";
 import ContributionForm from "./ContributionForm";
 import WhatIfPanel from "./WhatIfPanel";
 import PlanSettingsMenu from "./PlanSettingsMenu";
-import GrowthProjectionChart from "./GrowthProjectionChart";
+import GrowthProjectionChart, { type SimPoint } from "./GrowthProjectionChart";
 import ComparisonChart from "./ComparisonChart";
 import { createServerClient } from "@/lib/supabase/server";
 import { planFromRow, type DbPlanRow } from "@/lib/supabase/mappers";
 import { isPremium } from "@/lib/supabase/subscription";
+import { projectBalance } from "@/lib/store";
 import type { PlanContext } from "@/lib/plan-context";
+import type { PlanData } from "@/lib/simulator/types";
 
 const RISK_LABEL: Record<string, string> = { low: "Low (5%)", medium: "Medium (7%)", high: "High (9%)" };
 
@@ -30,6 +32,16 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
 
   const plan = planFromRow(data as DbPlanRow);
 
+  // Extract plan_data for event-based simulation results (B-1)
+  const planData = (data as any).plan_data as PlanData | null;
+  // Simulation stores snapshots every 365 days (not 365.25), so use /365 to get exact integer ages.
+  const simulationPoints: SimPoint[] | null = planData?.simulation_results && planData.birth_date
+    ? planData.simulation_results.map((r) => ({
+        age: Math.round(r.date / 365),
+        value: r.value,
+      }))
+    : null;
+
   // For what-if plans, also fetch the primary plan for comparison
   let primaryPlan: ReturnType<typeof planFromRow> | null = null;
   if (!plan.isPrimary) {
@@ -47,10 +59,12 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
     { label: "Projected balance",      subtitle: "at retirement",       value: fmtBalance(plan.projectedBalance) },
     { label: "Monthly income",         subtitle: "in retirement",       value: `$${plan.monthlyIncomeAtRetirement.toLocaleString()}` },
     { label: "Shortfall / surplus",    subtitle: "vs target balance",   value: `${shortfall >= 0 ? "+" : "-"}${fmtBalance(Math.abs(shortfall))}` },
-    { label: "Probability of success", subtitle: "of reaching goal",    value: `${plan.successProbability}%` },
+    { label: "Probability of success", subtitle: "of reaching goal",    value: `${plan.successProbability}%`,
+      tooltip: "Estimates how close your projected balance is to your retirement target. Not a Monte Carlo simulation." },
   ];
 
-  const scenarios = scenariosByRetirementAge[plan.retirementAge] ?? [];
+  // B-3: dynamic what-if scenarios using real plan numbers
+  const scenarios = buildScenarios(plan);
 
   return (
     <div className="flex flex-col gap-8 px-8 py-8 max-w-3xl mx-auto w-full">
@@ -149,6 +163,9 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{m.label}</span>
             <span className="text-2xl font-black text-zinc-900">{m.value}</span>
             <span className="text-[10px] text-zinc-400">{m.subtitle}</span>
+            {"tooltip" in m && (
+              <span className="text-[10px] text-zinc-300 mt-1 leading-tight">{(m as any).tooltip}</span>
+            )}
           </div>
         ))}
       </div>
@@ -181,6 +198,7 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
             targetBalance={plan.targetBalance}
             currentAge={plan.currentAge}
             retirementAge={plan.retirementAge}
+            simulationPoints={simulationPoints}
           />
         </div>
       </div>
@@ -248,15 +266,64 @@ function ContextPanel({ context }: { context: PlanContext }) {
 
 type Scenario = { label: string; description: string; delta: string; positive: boolean };
 
-const scenariosByRetirementAge: Record<number, Scenario[]> = {
-  65: [
-    { label: "Increase monthly savings by $500", description: "From $3,200 to $3,700/mo", delta: "+$124K at retirement", positive: true },
-    { label: "Market downturn of 30% in 2030",   description: "One-time shock, then recovery", delta: "-$89K at retirement", positive: false },
-    { label: "Retire two years earlier (age 63)", description: "Shorter accumulation phase",   delta: "-$201K at retirement", positive: false },
-  ],
-  60: [
-    { label: "Increase monthly savings by $1,000",         description: "From $3,200 to $4,200/mo",          delta: "+$198K at retirement", positive: true },
-    { label: "Part-time income of $2K/mo until 65",        description: "Bridge income reduces withdrawals", delta: "+$310K at retirement", positive: true },
-    { label: "Healthcare costs increase by $500/mo",        description: "Pre-Medicare gap coverage",         delta: "-$78K at retirement",  positive: false },
-  ],
-};
+// B-3: dynamic scenarios derived from the plan's actual numbers.
+function buildScenarios(plan: ReturnType<typeof planFromRow>): Scenario[] {
+  const { currentBalance, monthlyContribution, assumedReturn, targetBalance, currentAge, retirementAge } = plan;
+  const years = retirementAge - currentAge;
+  if (years <= 0) return [];
+
+  const base = projectBalance(currentBalance, monthlyContribution, assumedReturn, years);
+  const fmt = (n: number) => n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : `$${Math.round(Math.abs(n) / 1000)}K`;
+  const delta = (n: number) => `${n >= 0 ? "+" : "-"}${fmt(n)} at retirement`;
+
+  // Scenario 1: increase savings by $500/mo
+  const withMore = projectBalance(currentBalance, monthlyContribution + 500, assumedReturn, years) - base;
+
+  // Scenario 2: retire 2 years later (more accumulation)
+  const withLater = years >= 2
+    ? projectBalance(currentBalance, monthlyContribution, assumedReturn, years + 2) - base
+    : null;
+
+  // Scenario 3: retire 2 years earlier (less accumulation)
+  const withEarlier = years >= 3
+    ? projectBalance(currentBalance, monthlyContribution, assumedReturn, years - 2) - base
+    : null;
+
+  // Scenario 4: lower return (market headwind, 2% less)
+  const withLowerReturn = projectBalance(currentBalance, monthlyContribution, Math.max(0, assumedReturn - 2), years) - base;
+
+  const scenarios: Scenario[] = [
+    {
+      label: "Increase monthly savings by $500",
+      description: `From $${monthlyContribution.toLocaleString()} to $${(monthlyContribution + 500).toLocaleString()}/mo`,
+      delta: delta(withMore),
+      positive: withMore >= 0,
+    },
+    {
+      label: `Lower market return (${Math.max(0, assumedReturn - 2)}% instead of ${assumedReturn}%)`,
+      description: "Headwind scenario — conservative market",
+      delta: delta(withLowerReturn),
+      positive: false,
+    },
+  ];
+
+  if (withEarlier !== null) {
+    scenarios.push({
+      label: `Retire two years earlier (age ${retirementAge - 2})`,
+      description: "Shorter accumulation phase",
+      delta: delta(withEarlier),
+      positive: false,
+    });
+  }
+
+  if (withLater !== null) {
+    scenarios.push({
+      label: `Retire two years later (age ${retirementAge + 2})`,
+      description: "Extra accumulation time",
+      delta: delta(withLater),
+      positive: true,
+    });
+  }
+
+  return scenarios;
+}

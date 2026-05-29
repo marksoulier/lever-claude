@@ -17,6 +17,9 @@ import {
 } from "recharts";
 import { projectBalance } from "@/lib/store";
 
+// A simulation point from plan_data.simulation_results, pre-converted to age.
+export type SimPoint = { age: number; value: number };
+
 type Props = {
   currentBalance: number;
   monthlyContribution: number;
@@ -24,6 +27,8 @@ type Props = {
   targetBalance: number;
   currentAge: number;
   retirementAge: number;
+  // When provided, use event-based simulation results instead of the simple formula.
+  simulationPoints?: SimPoint[] | null;
 };
 
 type DataPoint = {
@@ -40,23 +45,50 @@ function fmt(n: number): string {
   return `$${n.toLocaleString()}`;
 }
 
-function buildCurve(props: Props): DataPoint[] {
+// Fallback: simple compound-interest formula when no simulation results exist.
+function buildCurveFromFormula(props: Props): DataPoint[] {
   const { currentBalance, monthlyContribution, assumedReturn, targetBalance, currentAge, retirementAge } = props;
   const currentYear = new Date().getFullYear();
-  const points: DataPoint[] = [];
-
-  for (let age = currentAge; age <= retirementAge; age++) {
-    const years = age - currentAge;
-    const projected = projectBalance(currentBalance, monthlyContribution, assumedReturn, years);
-    points.push({
-      year: currentYear + years,
+  return Array.from({ length: retirementAge - currentAge + 1 }, (_, i) => {
+    const age = currentAge + i;
+    return {
+      year: currentYear + i,
       age,
-      projected,
+      projected: projectBalance(currentBalance, monthlyContribution, assumedReturn, i),
       target: targetBalance,
       isToday: age === currentAge,
-    });
+    };
+  });
+}
+
+// Primary: build chart data from event-based simulation results.
+function buildCurveFromSimulation(points: SimPoint[], props: Props): DataPoint[] {
+  const { targetBalance, currentAge, retirementAge } = props;
+  const currentYear = new Date().getFullYear();
+
+  // Deduplicate by age (keep last entry per age), then fill range.
+  const byAge = new Map<number, number>();
+  for (const p of points) {
+    if (p.age >= currentAge && p.age <= retirementAge) byAge.set(p.age, p.value);
   }
-  return points;
+
+  return Array.from({ length: retirementAge - currentAge + 1 }, (_, i) => {
+    const age = currentAge + i;
+    return {
+      year: currentYear + i,
+      age,
+      projected: Math.round(byAge.get(age) ?? 0),
+      target: targetBalance,
+      isToday: age === currentAge,
+    };
+  });
+}
+
+function buildCurve(props: Props): DataPoint[] {
+  if (props.simulationPoints && props.simulationPoints.length > 1) {
+    return buildCurveFromSimulation(props.simulationPoints, props);
+  }
+  return buildCurveFromFormula(props);
 }
 
 function CustomTooltip({

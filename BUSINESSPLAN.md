@@ -31,6 +31,10 @@ Software stack
 A single next JS application will act for both the MCP server which will be a mcp app (https://modelcontextprotocol.io/extensions/apps/overview) endpoints with the help of mcp-handler (https://vercel.com/docs/mcp/deploy-mcp-servers-to-vercel). Have not come up with a plan for phone app, like the idea of monolith repo for project but still to be decided most popular way to do this.
 
 
+The interaction with Claude + MCP should be used to test brainstrm ideas and talk through construcution of plan
+The main purpose of the web interface is just to see the plan and the long lasting nature of it
+
+
 Debugging tools
 Claude Code will be connected to everything on the software stack, utilizing skills in supabase and playwright the claude code agent can execute commands directly to introspect on the database up to check the UI and take screenshots of the UX/UI. 
 
@@ -45,3 +49,4 @@ Large scale notification Test and Evaluation framework BrainTrust
 Considerations for where I think users will go in the future. I believe that the future of software is connectors to AI chats such as Claude, ChatGPT, etc. A user will connect all their software to these technologies for context about their entire online presence. Web apps will mostly be a very visual interface they can interact with visual and a bit gamified displays (scrolling, gaming, beautiful dashboards, maps). There will be a lot less form filling out even onboarding will be an exciting journey of inspiration.
 
 This software is important because it provideds the financial simulator that can run a persons finanial decisions as "what-if" events, ran though a deterministic MCP for financial plan simulation the AI can be sure that its getting accourate responses. The simulator is built of modular life financial events that the person can add to their plan like buying a house, car, refinancing, job salary, having a kid, paying rent, paint monthly expenses, buying a boat, transfering money to retirement, etc.
+

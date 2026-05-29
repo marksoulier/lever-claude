@@ -8,9 +8,12 @@ import NetWorthGraph from "./NetWorthGraph";
 import CreatePlanForm from "./CreatePlanForm";
 import AccountsPanel from "./AccountsPanel";
 import OnboardingGate from "./OnboardingGate";
+import type { Plan } from "@/lib/store";
 
 export default function DashboardPage() {
   const [hasPlans, setHasPlans] = useState<boolean | null>(null); // null = loading
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
 
   const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>([]);
   const [snapshotsLoading, setSnapshotsLoading] = useState(true);
@@ -52,13 +55,22 @@ export default function DashboardPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Check for existing plans to decide whether to show the onboarding gate
+  // Load plans — drives both the onboarding gate and the plan cards
   useEffect(() => {
     let cancelled = false;
     fetch("/api/plans")
       .then((r) => r.json())
-      .then((data) => { if (!cancelled) setHasPlans(Array.isArray(data) && data.length > 0); })
-      .catch(() => { if (!cancelled) setHasPlans(true); }); // on error, don't block
+      .then((data: Plan[]) => {
+        if (!cancelled) {
+          const list = Array.isArray(data) ? data : [];
+          setPlans(list);
+          setHasPlans(list.length > 0);
+          setPlansLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) { setHasPlans(true); setPlansLoading(false); }
+      });
     return () => { cancelled = true; };
   }, []);
 
@@ -160,15 +172,73 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Plans quick-create */}
+      {/* Plans */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-black text-zinc-900">Plans</h2>
+          <h2 className="text-base font-black text-zinc-900">Your plans</h2>
           <CreatePlanForm />
         </div>
-        <div className="rounded-2xl bg-teal-light border border-teal-mid px-5 py-4 text-sm text-zinc-600">
-          Select a plan from the sidebar to view its detail and run what-if scenarios.
-        </div>
+
+        {plansLoading ? (
+          <div className="flex flex-col gap-3">
+            {[0, 1].map((i) => (
+              <div key={i} className="rounded-2xl border border-zinc-100 px-6 py-5 shadow-sm flex items-center justify-between">
+                <div className="flex flex-col gap-2">
+                  <div className="h-4 w-36 rounded bg-zinc-100" />
+                  <div className="h-3 w-48 rounded bg-zinc-100" />
+                </div>
+                <div className="h-3 w-20 rounded bg-zinc-100" />
+              </div>
+            ))}
+          </div>
+        ) : plans.length === 0 ? (
+          <div className="rounded-2xl bg-teal-light border border-teal-mid px-5 py-4 text-sm text-zinc-600">
+            No plans yet — connect Claude with the Lever connector and ask it to create your first plan.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {plans.map((p) => {
+              const fmtBalance = (n: number) =>
+                n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : `$${Math.round(n / 1_000)}K`;
+              const onTrack = p.projectedBalance >= p.targetBalance;
+              return (
+                <Link
+                  key={p.id}
+                  href={`/plan/${p.id}`}
+                  className="rounded-2xl border border-zinc-100 bg-white shadow-sm px-6 py-5 flex items-center justify-between gap-4 hover:border-teal hover:shadow-md transition-all group"
+                >
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-zinc-900 truncate">{p.name}</span>
+                      {p.isPrimary && (
+                        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-teal-light px-2 py-0.5 text-[10px] font-bold text-teal-dark">
+                          <span className="w-1.5 h-1.5 rounded-full bg-teal" />
+                          Primary
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-400">
+                      Retire at {p.retirementAge} · {fmtBalance(p.monthlyContribution)}/mo
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="text-right">
+                      <p className="text-sm font-black text-zinc-900">{fmtBalance(p.projectedBalance)}</p>
+                      <p className={`text-[10px] font-semibold ${onTrack ? "text-teal-dark" : "text-red-400"}`}>
+                        {p.successProbability}% success
+                      </p>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden
+                      className="text-zinc-300 group-hover:text-teal transition-colors">
+                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5"
+                        strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Documents teaser */}

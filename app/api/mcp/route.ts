@@ -26,9 +26,16 @@ import {
   type AccountType,
 } from "@/lib/accounts";
 import { upsertNetWorthSnapshot } from "@/lib/supabase/net-worth-snapshot";
+// Simulator infrastructure — see STEERING.md → Simulator infrastructure
+import { getEventList, getEventSchema, isValidEventType, nextEventId } from "@/lib/simulator/schema";
+import { getHardErrors } from "@/lib/simulator/schema-checker";
+import { runSimulation, DEFAULT_ACCOUNTS } from "@/lib/simulator/runner";
+import { simulationToScalars, simulationBounds } from "@/lib/simulator/bridge";
+import type { PlanData, SimEvent, Parameter } from "@/lib/simulator/types";
 
 const PLAN_DASHBOARD_URI = "ui://lever/plan-dashboard";
-const SCENARIO_URI = "ui://lever/scenario-modeler";
+const SCENARIO_URI      = "ui://lever/scenario-modeler";
+const CASHFLOW_URI      = "ui://lever/cash-flow";
 
 async function fetchWidgetHtml(path: string): Promise<string> {
   const res = await fetch(`${baseURL}${path}`);
@@ -114,6 +121,28 @@ async function handleMcp(request: Request) {
         },
       );
 
+      registerAppResource(
+        server,
+        "cash-flow",
+        CASHFLOW_URI,
+        { mimeType: RESOURCE_MIME_TYPE },
+        async () => {
+          const html = await fetchWidgetHtml("/cashflow-widget");
+          return {
+            contents: [
+              {
+                uri: CASHFLOW_URI,
+                mimeType: RESOURCE_MIME_TYPE,
+                text: html,
+                _meta: {
+                  ui: { csp: { connectDomains: [baseURL], resourceDomains: [baseURL] } },
+                },
+              },
+            ],
+          };
+        },
+      );
+
       // ── Tools ──────────────────────────────────────────────────────────────
 
       registerAppTool(
@@ -177,6 +206,95 @@ async function handleMcp(request: Request) {
             };
           }
           return { content: [{ type: "text" as const, text: JSON.stringify(plan) }] };
+        },
+      );
+
+      registerAppTool(
+        server,
+        "show_cash_flow",
+        {
+          title: "Cash Flow Visualization",
+          description:
+            "Show an interactive chart of the user's annual net worth growth from today to retirement. Each bar represents one year of net worth change, broken down by cash, retirement, and investment accounts. Use this when the user asks about their year-by-year financial trajectory, annual growth, or wants to see how their wealth builds over time.",
+          inputSchema: {
+            plan_id: z
+              .string()
+              .optional()
+              .describe("UUID of the plan to visualize. Omit to use the most recent plan."),
+          },
+          _meta: { ui: { resourceUri: CASHFLOW_URI } },
+        },
+        async ({ plan_id }: { plan_id?: string }) => {
+          const plans = await fetchPlans(plan_id);
+          const plan = plans[0];
+          if (!plan) {
+            return { content: [{ type: "text" as const, text: "No plan found. Create a plan first." }] };
+          }
+
+          // Fetch plan_data for simulation results
+          const { data: raw } = await admin.from("plans").select("plan_data").eq("id", plan.id).single();
+          const planData = (raw as any)?.plan_data as import("@/lib/simulator/types").PlanData | null;
+
+          if (!planData?.simulation_results || planData.simulation_results.length < 2) {
+            return {
+              content: [{
+                type: "text" as const,
+                text: JSON.stringify({
+                  planName: plan.name,
+                  currentAge: plan.currentAge,
+                  retirementAge: plan.retirementAge,
+                  birthDate: planData?.birth_date ?? "",
+                  points: [],
+                }),
+              }],
+            };
+          }
+
+          const results = planData.simulation_results;
+          const CASH_CATEGORIES = new Set(["Cash"]);
+          const RETIREMENT_CATEGORIES = new Set(["Retirement"]);
+          const INVESTMENT_CATEGORIES = new Set(["Investments"]);
+
+          // Build account→category map from planData.accounts
+          const accountCategory: Record<string, string> = {};
+          for (const acc of planData.accounts ?? []) {
+            accountCategory[acc.name] = acc.category;
+          }
+
+          const points = results.map((r, i) => {
+            const age = Math.floor(r.date / 365.25);
+            const prior = i > 0 ? results[i - 1] : null;
+            const annualGrowth = prior ? r.value - prior.value : 0;
+
+            // Sum balances by category from parts
+            let cash = 0, retirement = 0, investment = 0;
+            for (const [name, balance] of Object.entries(r.parts ?? {})) {
+              const cat = accountCategory[name] ?? "";
+              if (CASH_CATEGORIES.has(cat)) cash += balance;
+              else if (RETIREMENT_CATEGORIES.has(cat)) retirement += balance;
+              else if (INVESTMENT_CATEGORIES.has(cat)) investment += balance;
+            }
+
+            return {
+              year: new Date().getFullYear() - (plan.currentAge - age),
+              age,
+              netWorth: Math.round(r.value),
+              annualGrowth: Math.round(annualGrowth),
+              cashBalance: Math.round(cash),
+              retirementBalance: Math.round(retirement),
+              investmentBalance: Math.round(investment),
+            };
+          });
+
+          const payload = {
+            planName: plan.name,
+            currentAge: plan.currentAge,
+            retirementAge: plan.retirementAge,
+            birthDate: planData.birth_date,
+            points,
+          };
+
+          return { content: [{ type: "text" as const, text: JSON.stringify(payload) }] };
         },
       );
 
@@ -611,6 +729,10 @@ async function handleMcp(request: Request) {
           const base = basePlans[0];
           if (!base) return { content: [{ type: "text" as const, text: "No base plan found. Create a primary plan first." }] };
 
+          // Fetch plan_data from the base plan so the what-if inherits the full event model (B-12)
+          const { data: baseRaw } = await admin.from("plans").select("plan_data").eq("id", base.id).single();
+          const basePlanData = (baseRaw as any)?.plan_data ?? null;
+
           // Merge context overrides
           const baseCtx = base.context ?? {};
           const mergedCtx: PlanContext = {
@@ -660,6 +782,7 @@ async function handleMcp(request: Request) {
             is_primary:                   false,
             context:                      mergedCtx,
             allocation,
+            plan_data:                    basePlanData, // inherit event model from base plan (B-12)
           }).select().single();
 
           if (error || !data) {
@@ -947,6 +1070,303 @@ async function handleMcp(request: Request) {
           return {
             content: [{ type: "text" as const, text: JSON.stringify(status, null, 2) }],
           };
+        },
+      );
+
+      // ── Simulator tools ───────────────────────────────────────────────────
+      // These three tools give Claude direct access to the event-based planning
+      // engine described in STEERING.md. They operate on plan_data (JSONB) and
+      // keep the legacy scalar columns in sync via the bridge after each run.
+
+      server.tool(
+        "get_event_schema",
+        "Browse the financial event library. Without arguments, returns every available event type with its display name, description, and category — use this to discover what events exist before building a plan. Pass event_type to get the full parameter specification for a specific event (names, types, units, descriptions) so you know exactly what to provide when calling update_plan. Always call this before adding an event you haven't used before.",
+        {
+          event_type: z
+            .string()
+            .optional()
+            .describe("Event type identifier, e.g. 'get_job', 'buy_house', 'outflow'. Omit to list all available event types."),
+        },
+        async ({ event_type }: { event_type?: string }) => {
+          if (event_type) {
+            const detail = getEventSchema(event_type);
+            if (!detail) {
+              return {
+                content: [{
+                  type: "text" as const,
+                  text: `Unknown event type "${event_type}". Call get_event_schema with no arguments to see all valid types.`,
+                }],
+              };
+            }
+            return { content: [{ type: "text" as const, text: JSON.stringify(detail, null, 2) }] };
+          }
+
+          const list = getEventList();
+          const grouped = list.reduce<Record<string, typeof list>>((acc, e) => {
+            (acc[e.category] ??= []).push(e);
+            return acc;
+          }, {});
+
+          const lines = Object.entries(grouped).map(([category, events]) =>
+            [`## ${category}`, ...events.map((e) => `  ${e.type} — ${e.display_name}: ${e.description}`)].join("\n")
+          );
+
+          return {
+            content: [{
+              type: "text" as const,
+              text: `${list.length} event types available:\n\n${lines.join("\n\n")}\n\nCall get_event_schema with event_type="<type>" to see full parameter details for any event.`,
+            }],
+          };
+        },
+      );
+
+      server.tool(
+        "get_plan_data",
+        "Read the full plan_data for a plan — the rich event-based representation including all life events, accounts, and the latest simulation results. Use this to understand the current state of a plan before adding or modifying events, or to show the user what's in their plan. The simulation_results field contains the day-by-day net worth timeline.",
+        {
+          plan_id: z
+            .string()
+            .optional()
+            .describe("UUID of the plan to read. Omit to read the most recent plan."),
+        },
+        async ({ plan_id }: { plan_id?: string }) => {
+          if (!userId) return { content: [{ type: "text" as const, text: "Not authenticated." }] };
+
+          const plans = await fetchPlans(plan_id);
+          const plan = plans[0];
+          if (!plan) return { content: [{ type: "text" as const, text: "No plan found." }] };
+
+          const { data } = await admin.from("plans").select("plan_data").eq("id", plan.id).single();
+          const planData = (data as { plan_data: PlanData | null })?.plan_data;
+
+          if (!planData) {
+            return {
+              content: [{
+                type: "text" as const,
+                text: `Plan "${plan.name}" has no plan_data yet. Use update_plan to start adding events. Available accounts after initialization: ${DEFAULT_ACCOUNTS.map((a) => a.name).join(", ")}.`,
+              }],
+            };
+          }
+
+          // Return plan_data without simulation_results to keep response concise
+          const { simulation_results, ...rest } = planData;
+          const summary = {
+            ...rest,
+            simulation_results_count: simulation_results?.length ?? 0,
+            latest_net_worth: simulation_results?.at(-1)?.value ?? null,
+          };
+
+          return { content: [{ type: "text" as const, text: JSON.stringify(summary, null, 2) }] };
+        },
+      );
+
+      server.tool(
+        "update_plan",
+        `Modify the event-based plan_data for a plan. Three operations:
+
+• add_event — add a life event from the event library. Always call get_event_schema with the event_type first to confirm which parameters are required. Provide parameters as an array of {type, value} objects. Dates use ISO format (YYYY-MM-DD). Account references (to_key, from_key, etc.) must match account names in the plan — call get_plan_data to see available accounts.
+
+• remove_event — remove an event by its numeric id. Get the id from get_plan_data.
+
+• update_field — change a single parameter value on an existing event. Provide the event_id, param_type (the parameter's type string), and the new value.
+
+After every operation the plan is validated, the simulator runs, and the scalar columns (projected_balance, success_probability) are updated so the dashboard stays current. Validation errors are returned as text — correct them and retry.
+
+Default accounts available in a new plan: Checking, Savings, 401k, Roth IRA, Investment, Federal Withholdings, State Withholdings, Local Withholdings, Taxable Income.`,
+        {
+          plan_id: z
+            .string()
+            .optional()
+            .describe("UUID of the plan to modify. Omit to modify the most recent plan."),
+          op: z
+            .enum(["add_event", "remove_event", "update_field"])
+            .describe("Operation to perform."),
+          // add_event fields
+          event_type: z
+            .string()
+            .optional()
+            .describe("add_event: the event type to add, e.g. 'get_job'. Call get_event_schema first."),
+          title: z
+            .string()
+            .optional()
+            .describe("add_event: human-readable title for this event, e.g. 'Software Engineer at Acme'."),
+          is_recurring: z
+            .boolean()
+            .optional()
+            .describe("add_event: whether this event repeats on a schedule (requires frequency_days parameter)."),
+          parameters: z
+            .array(z.object({ type: z.string(), value: z.union([z.string(), z.number()]) }))
+            .optional()
+            .describe("add_event: event parameters as [{type, value}] pairs. Use ISO dates for date values."),
+          event_functions: z
+            .array(z.object({ type: z.string(), enabled: z.boolean() }))
+            .optional()
+            .describe("add_event: optional toggles for event sub-behaviors, e.g. [{type: 'enable_401k', enabled: true}]."),
+          // remove_event / update_field fields
+          event_id: z
+            .number()
+            .int()
+            .optional()
+            .describe("remove_event / update_field: numeric id of the event to target. Get from get_plan_data."),
+          // update_field fields
+          param_type: z
+            .string()
+            .optional()
+            .describe("update_field: the parameter type string to update, e.g. 'salary', 'end_time'."),
+          param_value: z
+            .union([z.string(), z.number()])
+            .optional()
+            .describe("update_field: new value for the parameter."),
+        },
+        async ({
+          plan_id, op, event_type, title, is_recurring, parameters, event_functions,
+          event_id, param_type, param_value,
+        }: {
+          plan_id?: string; op: "add_event" | "remove_event" | "update_field";
+          event_type?: string; title?: string; is_recurring?: boolean;
+          parameters?: { type: string; value: string | number }[];
+          event_functions?: { type: string; enabled: boolean }[];
+          event_id?: number; param_type?: string; param_value?: string | number;
+        }) => {
+          if (!userId) return { content: [{ type: "text" as const, text: "Not authenticated." }] };
+
+          const plans = await fetchPlans(plan_id);
+          const plan = plans[0];
+          if (!plan) return { content: [{ type: "text" as const, text: "No plan found." }] };
+
+          // Load or initialize plan_data
+          const { data: row } = await admin.from("plans").select("plan_data, context, retirement_age, target_balance").eq("id", plan.id).single();
+          const stored = (row as any);
+
+          let planData: PlanData = stored?.plan_data ?? {
+            birth_date: (stored?.context as PlanContext | null)?.dateOfBirth ?? "1990-01-01",
+            inflation_rate: 0.03,
+            adjust_for_inflation: true,
+            accounts: DEFAULT_ACCOUNTS,
+            events: [],
+          };
+
+          // ── Apply operation ──────────────────────────────────────────────
+
+          if (op === "add_event") {
+            if (!event_type) return { content: [{ type: "text" as const, text: "add_event requires event_type." }] };
+            if (!isValidEventType(event_type)) {
+              return { content: [{ type: "text" as const, text: `Unknown event type "${event_type}". Call get_event_schema to see valid types.` }] };
+            }
+
+            const schema = getEventSchema(event_type);
+            const newEvent: SimEvent = {
+              id: nextEventId(planData.events),
+              type: event_type,
+              title: title ?? (schema as any)?.default_title ?? event_type,
+              description: "",
+              is_recurring: is_recurring ?? false,
+              parameters: (parameters ?? []).map((p, i) => ({ id: i, type: p.type, value: p.value } as Parameter)),
+              event_functions: (event_functions ?? []).map((f) => ({ type: f.type, title: f.type, enabled: f.enabled })),
+              updating_events: [],
+            };
+            planData = { ...planData, events: [...planData.events, newEvent] };
+
+          } else if (op === "remove_event") {
+            if (event_id == null) return { content: [{ type: "text" as const, text: "remove_event requires event_id." }] };
+            const before = planData.events.length;
+            planData = { ...planData, events: planData.events.filter((e) => e.id !== event_id) };
+            if (planData.events.length === before) {
+              return { content: [{ type: "text" as const, text: `No event with id ${event_id} found.` }] };
+            }
+
+          } else if (op === "update_field") {
+            if (event_id == null || !param_type || param_value === undefined) {
+              return { content: [{ type: "text" as const, text: "update_field requires event_id, param_type, and param_value." }] };
+            }
+            const events = planData.events.map((e) => {
+              if (e.id !== event_id) return e;
+              const existing = e.parameters.find((p) => p.type === param_type);
+              const updated: Parameter[] = existing
+                ? e.parameters.map((p) => p.type === param_type ? { ...p, value: param_value } : p)
+                : [...e.parameters, { id: (e.parameters.at(-1)?.id ?? -1) + 1, type: param_type, value: param_value }];
+              return { ...e, parameters: updated };
+            });
+            planData = { ...planData, events };
+          }
+
+          // ── Validate ─────────────────────────────────────────────────────
+
+          const errors = getHardErrors(planData);
+          if (errors.length > 0) {
+            return {
+              content: [{
+                type: "text" as const,
+                text: `Plan validation failed:\n${errors.map((e) => `• ${e}`).join("\n")}\n\nFix these errors and retry.`,
+              }],
+            };
+          }
+
+          // ── Run simulation ────────────────────────────────────────────────
+
+          let scalars: { projected_balance: number; success_probability: number; monthly_income_at_retirement: number } | null = null;
+          let simulationResultCount = 0;
+
+          try {
+            const { startDay, endDay } = simulationBounds(planData, plan.retirementAge);
+            const results = await runSimulation(planData, startDay, endDay);
+            simulationResultCount = results.length;
+
+            scalars = simulationToScalars(
+              results,
+              planData,
+              plan.retirementAge,
+              plan.targetBalance,
+            );
+
+            // Store results back in plan_data (trim to ~yearly snapshots to keep DB size sane)
+            const yearly = results.filter((_, i) => i % 365 === 0);
+            planData = { ...planData, simulation_results: yearly };
+          } catch (err) {
+            // Simulation errors don't block the save — the plan structure is valid
+            console.error("[update_plan] simulation error:", err);
+          }
+
+          // ── Persist ───────────────────────────────────────────────────────
+
+          const update: Record<string, unknown> = { plan_data: planData };
+          if (scalars) {
+            update.projected_balance = scalars.projected_balance;
+            update.success_probability = scalars.success_probability;
+            update.monthly_income_at_retirement = scalars.monthly_income_at_retirement;
+          }
+
+          const { error: saveErr } = await admin.from("plans").update(update).eq("id", plan.id);
+          if (saveErr) {
+            return { content: [{ type: "text" as const, text: `Failed to save: ${saveErr.message}` }] };
+          }
+
+          // ── Response ──────────────────────────────────────────────────────
+
+          const eventCount = planData.events.length;
+          const accountList = planData.accounts.map((a) => a.name).join(", ");
+
+          const lines: string[] = [
+            `✓ ${op} applied to "${plan.name}".`,
+            ``,
+            `Plan now has ${eventCount} event(s). Available accounts: ${accountList}.`,
+          ];
+
+          if (scalars) {
+            lines.push(
+              ``,
+              `Simulation ran over ${simulationResultCount} days:`,
+              `• Projected balance at retirement (age ${plan.retirementAge}): $${scalars.projected_balance.toLocaleString()}`,
+              `• Monthly income at retirement: $${scalars.monthly_income_at_retirement.toLocaleString()}`,
+              `• Probability of success: ${scalars.success_probability}%`,
+            );
+          }
+
+          if (op === "add_event") {
+            lines.push(``, `Next: use update_plan with op="add_event" to add more events, or get_plan_data to review the current state.`);
+          }
+
+          return { content: [{ type: "text" as const, text: lines.join("\n") }] };
         },
       );
 

@@ -25,8 +25,8 @@ type PlanSnapshot = {
 
 type DataPoint = {
   age: number;
-  whatif: number;
-  primary: number;
+  whatif?: number;   // undefined before the what-if plan's current age — renders as gap
+  primary?: number;  // undefined before the primary plan's current age — renders as gap
 };
 
 function fmt(n: number): string {
@@ -45,8 +45,9 @@ function buildData(whatif: PlanSnapshot, primary: PlanSnapshot): DataPoint[] {
     const prYears = age - primary.currentAge;
     points.push({
       age,
-      whatif:  wiYears >= 0 ? projectBalance(whatif.currentBalance, whatif.monthlyContribution, whatif.assumedReturn, wiYears)  : 0,
-      primary: prYears >= 0 ? projectBalance(primary.currentBalance, primary.monthlyContribution, primary.assumedReturn, prYears) : 0,
+      // undefined before plan start → recharts renders a gap instead of a flat zero line (B-4)
+      whatif:  wiYears >= 0 ? projectBalance(whatif.currentBalance, whatif.monthlyContribution, whatif.assumedReturn, wiYears)  : undefined,
+      primary: prYears >= 0 ? projectBalance(primary.currentBalance, primary.monthlyContribution, primary.assumedReturn, prYears) : undefined,
     });
   }
   return points;

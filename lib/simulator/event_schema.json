@@ -1,0 +1,5163 @@
+{
+  "inflation_rate": 0.03,
+  "adjust_for_inflation": true,
+  "default_envelopes": [
+    {
+      "name": "Cash",
+      "category": "Cash",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Checking Account",
+      "category": "Cash",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "High Yield Savings",
+      "category": "Savings",
+      "growth": "Daily Compound",
+      "rate": 0.02,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Investment Account",
+      "category": "Investments",
+      "growth": "Daily Compound",
+      "rate": 0.07,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Roth IRA Account",
+      "category": "Retirement",
+      "growth": "Yearly Compound",
+      "rate": 0.07,
+      "account_type": "regular",
+      "tax_account_type": "usa_rothira"
+    },
+    {
+      "name": "Traditional IRA Account",
+      "category": "Retirement",
+      "growth": "Yearly Compound",
+      "rate": 0.07,
+      "account_type": "regular",
+      "tax_account_type": "usa_traditionalira"
+    },
+    {
+      "name": "401K Account",
+      "category": "Retirement",
+      "growth": "Yearly Compound",
+      "rate": 0.07,
+      "account_type": "regular",
+      "tax_account_type": "usa_401k"
+    },
+    {
+      "name": "House Equity",
+      "category": "Assets",
+      "growth": "Appreciation",
+      "rate": 0.03,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Car Value",
+      "category": "Assets",
+      "growth": "Depreciation",
+      "rate": 0.15,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "House",
+      "category": "Assets",
+      "growth": "Appreciation",
+      "rate": 0.03,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Car",
+      "category": "Assets",
+      "growth": "Depreciation",
+      "rate": 0.15,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Other (Cash)",
+      "category": "Cash",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Other (Assets)",
+      "category": "Assets",
+      "growth": "Appreciation",
+      "rate": 0.03,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Other (Debt)",
+      "category": "Debt",
+      "growth": "Monthly Compound",
+      "rate": 0.04,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Other (Savings)",
+      "category": "Savings",
+      "growth": "Daily Compound",
+      "rate": 0.001,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Other (Investments)",
+      "category": "Investments",
+      "growth": "Yearly Compound",
+      "rate": 0.07,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Other (Retirement)",
+      "category": "Retirement",
+      "growth": "Yearly Compound",
+      "rate": 0.06,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Laptop",
+      "category": "Assets",
+      "growth": "Depreciation (Days)",
+      "days_of_usefulness": 1460,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Car Loan",
+      "category": "Debt",
+      "growth": "Monthly Compound",
+      "rate": 0.05,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Home Mortgage",
+      "category": "Debt",
+      "growth": "Monthly Compound",
+      "rate": 0.05,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Personal Loan",
+      "category": "Debt",
+      "growth": "Monthly Compound",
+      "rate": 0.1,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Student Loans Subsidized (During School)",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0.0,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Student Loans",
+      "category": "Debt",
+      "growth": "Monthly Compound",
+      "rate": 0.065,
+      "account_type": "regular",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Taxable Income",
+      "category": "Tax",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "401K Taxes",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "system-controlled",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Federal Withholdings",
+      "category": "Tax",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "State Withholdings",
+      "category": "Tax",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Local Withholdings",
+      "category": "Tax",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "401K Withdraw Withholding",
+      "category": "Tax",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "401K Withdraw",
+      "category": "Tax",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "401K Penalty",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "system-controlled",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "ROTH IRA Withdraw",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "ROTH IRA Principle",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "ROTH IRA Penalty",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "system-controlled",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Short Term Capital Gains",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    },
+    {
+      "name": "Long Term Capital Gains",
+      "category": "Debt",
+      "growth": "None",
+      "rate": 0,
+      "account_type": "non-networth-account",
+      "tax_account_type": "none"
+    }
+  ],
+  "tax_account_types": [
+    {
+      "name": "None",
+      "value": "none"
+    },
+    {
+      "name": "ROTH IRA",
+      "value": "usa_rothira"
+    },
+    {
+      "name": "Traditional IRA",
+      "value": "usa_traditionalira"
+    },
+    {
+      "name": "401K",
+      "value": "usa_401k"
+    }
+  ],
+  "account_types": [
+    "regular",
+    "system-controlled",
+    "non-networth-account"
+  ],
+  "birth_date": "2001-09-11",
+  "location": "New York",
+  "degree": "Bachelor's",
+  "occupation": "Software Engineer",
+  "goals": "Retire at 65",
+  "categories": [
+    "Cash",
+    "Debt",
+    "Assets",
+    "Savings",
+    "Investments",
+    "Retirement",
+    "Tax"
+  ],
+  "parameter_units_list": [
+    "usd",
+    "apy",
+    "date",
+    "envelope",
+    "days",
+    "hours",
+    "years",
+    "number_per_year",
+    "quantity",
+    "percentage",
+    "enum",
+    "icon"
+  ],
+  "events": [
+    {
+      "type": "life_event",
+      "display_type": "Life Event",
+      "onboarding_stage": "updating_events",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "System",
+      "description": "A life event placed onto the graph.",
+      "default_title": "Life Event",
+      "icon": "life-event",
+      "disclaimer": "This event is used to place a life event onto the graph. It does not simulate any financial events.",
+      "parameters": [
+        {
+          "type": "icon",
+          "display_name": "Icon",
+          "parameter_units": "icon",
+          "description": "Icon to display on the graph",
+          "default": "life-event",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "start_time",
+          "display_name": "Date",
+          "parameter_units": "date",
+          "description": "When the life event occurs",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "inflow",
+      "display_type": "Income",
+      "onboarding_stage": "basics",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "System",
+      "description": "A simple income into an account.",
+      "default_title": "Money Inflow",
+      "icon": "arrow-up",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Inflow",
+          "description": "Move money into the destination account",
+          "icon": "arrow-up",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Date",
+          "parameter_units": "date",
+          "description": "When the recurring income begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring income ends ",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each income ",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Amount",
+          "parameter_units": "usd",
+          "description": "Amount of money received",
+          "default": 20,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where the money is deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "final_recurring_inflow",
+          "display_name": "Final Recurring Income",
+          "parameter_units": "date",
+          "description": "When the final recurring income occurs",
+          "default": 3650,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "number_of_recurring_inflows",
+          "display_name": "Number of Recurring Incomes",
+          "parameter_units": "quantity",
+          "description": "Number of times the recurring income occurs",
+          "default": 12,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "total_inflow",
+          "display_name": "Total Income",
+          "parameter_units": "usd",
+          "description": "Total amount of money received",
+          "default": 0,
+          "editable": false,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "update_amount",
+          "display_type": "Update Reocurring Amount",
+          "onboarding_stage": "declare_accounts",
+          "display_event": false,
+          "is_recurring": false,
+          "can_be_reocurring": false,
+          "icon": "arrow-up",
+          "description": "Update the amount of the recurring income.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Start Date",
+              "parameter_units": "date",
+              "description": "When the recurring income begins",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Amount",
+              "parameter_units": "usd",
+              "description": "Amount received each interval.",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "increment_amount",
+          "display_type": "Increment Reocurring Amount",
+          "onboarding_stage": "declare_accounts",
+          "display_event": false,
+          "is_recurring": false,
+          "can_be_reocurring": true,
+          "icon": "arrow-up",
+          "description": "Increment the amount of the recurring inflow.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Start Date",
+              "parameter_units": "date",
+              "description": "When the additional inflow occurs",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "End Date",
+              "parameter_units": "date",
+              "description": "When the additional inflow ends ",
+              "default": 3650,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "frequency_days",
+              "display_name": "Frequency (Days)",
+              "parameter_units": "days",
+              "description": "Number of days between each additional inflow ",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Amount",
+              "parameter_units": "usd",
+              "description": "Amount of money received",
+              "default": 5,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "additional_inflow",
+          "display_type": "One-time Income",
+          "onboarding_stage": "declare_accounts",
+          "display_event": true,
+          "is_recurring": false,
+          "can_be_reocurring": true,
+          "icon": "arrow-up",
+          "description": "A one-time income or windfall added on top of your existing income.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Start Date",
+              "parameter_units": "date",
+              "description": "When the additional inflow occurs",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "End Date",
+              "parameter_units": "date",
+              "description": "When the additional inflow ends ",
+              "default": 3650,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "frequency_days",
+              "display_name": "Frequency (Days)",
+              "parameter_units": "days",
+              "description": "Number of days between each additional inflow ",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Amount",
+              "parameter_units": "usd",
+              "description": "Amount of money received",
+              "default": 5,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "outflow",
+      "display_type": "Expense",
+      "onboarding_stage": "basics",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "System",
+      "description": "A simple outflow of money from an account.",
+      "default_title": "Money Outflow",
+      "icon": "arrow-down",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Expense",
+          "description": "Take money from the source account",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Date",
+          "parameter_units": "date",
+          "description": "When the expense occurs",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring expenses ends ",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each expense ",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Amount",
+          "parameter_units": "usd",
+          "description": "Amount of money spent",
+          "default": 20,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account from which the money is withdrawn",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "final_recurring_outflow",
+          "display_name": "Final Recurring Expense",
+          "parameter_units": "date",
+          "description": "When the final recurring expense occurs",
+          "default": 3650,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "number_of_recurring_outflows",
+          "display_name": "Number of Recurring Expenses",
+          "parameter_units": "quantity",
+          "description": "Number of times the recurring expense occurs",
+          "default": 12,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "total_outflow",
+          "display_name": "Total Expense",
+          "parameter_units": "usd",
+          "description": "Total amount of money spent",
+          "default": 0,
+          "editable": false,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "update_amount",
+          "display_type": "Update Amount",
+          "onboarding_stage": "declare_accounts",
+          "display_event": false,
+          "is_recurring": false,
+          "weight": 80,
+          "can_be_reocurring": true,
+          "icon": "arrow-down",
+          "description": "Update the amount of the recurring expense.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Start Date",
+              "parameter_units": "date",
+              "description": "When the recurring expense begins",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Amount",
+              "parameter_units": "usd",
+              "description": "Amount spent each interval.",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "declare_accounts",
+      "display_type": "Declare Accounts",
+      "onboarding_stage": "declare_accounts",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "System",
+      "description": "Declare the initial balances of up to five financial accounts at a specific time.",
+      "default_title": "Initial Account Balances",
+      "icon": "list",
+      "disclaimer": "This event is used to set the starting balances for up to five accounts. Use this on todays date to set the account balance for your accounts.",
+      "event_functions_parts": [
+        {
+          "type": "alter_account_balance",
+          "title": "Enforce Account Balance",
+          "description": "Enforce the account balances listed",
+          "icon": "list",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Declaration Date",
+          "parameter_units": "date",
+          "description": "When the account balances are declared",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount1",
+          "display_name": "Amount 1",
+          "parameter_units": "usd",
+          "description": "Initial balance for Account 1.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "account1",
+          "display_name": "Account 1",
+          "parameter_units": "envelope",
+          "description": "First account name.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount2",
+          "display_name": "Amount 2",
+          "parameter_units": "usd",
+          "description": "Initial balance for Account 2.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "account2",
+          "display_name": "Account 2",
+          "parameter_units": "envelope",
+          "description": "Second account name.",
+          "default": "Other (Savings)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount3",
+          "display_name": "Amount 3",
+          "parameter_units": "usd",
+          "description": "Initial balance for Account 3.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "account3",
+          "display_name": "Account 3",
+          "parameter_units": "envelope",
+          "description": "Third account name.",
+          "default": "Other (Investments)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount4",
+          "display_name": "Amount 4",
+          "parameter_units": "usd",
+          "description": "Initial balance for Account 4.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "account4",
+          "display_name": "Account 4",
+          "parameter_units": "envelope",
+          "description": "Fourth account name.",
+          "default": "Other (Retirement)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount5",
+          "display_name": "Amount 5",
+          "parameter_units": "usd",
+          "description": "Initial balance for Account 5.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "account5",
+          "display_name": "Account 5",
+          "parameter_units": "envelope",
+          "description": "Fifth account name.",
+          "default": "Other (Debt)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "transfer_money",
+      "display_type": "Money Transfer",
+      "onboarding_stage": "declare_accounts",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "System",
+      "description": "Transfer money between accounts with optional growth rate for destination.",
+      "default_title": "Money Transfer",
+      "icon": "arrow-right-arrow-left",
+      "disclaimer": "This event transfers a specified amount between accounts. It does not simulate transfer fees, delays, or currency conversion.",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Inflow",
+          "description": "Move money into the destination account",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "outflow",
+          "title": "Outflow",
+          "description": "Take money from the source account",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Transfer Date",
+          "parameter_units": "date",
+          "description": "When the transfer occurs",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring transfer ends ",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each transfer ",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Transfer Amount",
+          "parameter_units": "usd",
+          "description": "Amount of money to transfer",
+          "default": 20,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Source account for the transfer",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Destination account for the transfer",
+          "default": "Other (Investments)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "final_transfer",
+          "display_name": "Final Transfer",
+          "parameter_units": "date",
+          "description": "When the final transfer occurs",
+          "default": 3650,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "number_of_transfers",
+          "display_name": "Number of Transfers",
+          "parameter_units": "quantity",
+          "description": "Number of times the transfer occurs",
+          "default": 12,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "total_transfer",
+          "display_name": "Total Transfer",
+          "parameter_units": "usd",
+          "description": "Total amount of money transferred",
+          "default": 0,
+          "editable": false,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "update_amount",
+          "display_type": "Update Amount",
+          "onboarding_stage": "declare_accounts",
+          "display_event": false,
+          "is_recurring": false,
+          "can_be_reocurring": true,
+          "icon": "arrow-right-arrow-left",
+          "description": "Update the amount of the recurring outflow.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Start Date",
+              "parameter_units": "date",
+              "description": "When the transaction amount changes",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Amount",
+              "parameter_units": "usd",
+              "description": "Amount transfered.",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "income_with_changing_parameters",
+      "display_type": "Income",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": true,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Income & Employment",
+      "description": "Receive a recurring income at a specified interval. The frequency and amount can be updated over time.",
+      "icon": "repeat",
+      "disclaimer": "This event simulates recurring income deposits at set intervals. It does not account for missed payments, taxes, or income changes.",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Inflow",
+          "description": "Move money into the destination account",
+          "icon": "arrow-up",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the recurring income begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring income ends.",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each income payment.",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Amount",
+          "parameter_units": "usd",
+          "description": "Amount received each interval.",
+          "default": 20,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where income is deposited.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "update_amount",
+          "display_type": "Update Amount",
+          "onboarding_stage": "full",
+          "display_event": true,
+          "is_recurring": false,
+          "can_be_reocurring": false,
+          "icon": "repeat",
+          "description": "Update the amount of the recurring income.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Start Date",
+              "parameter_units": "date",
+              "description": "When the recurring income begins",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "End Date",
+              "parameter_units": "date",
+              "description": "When the recurring update ends ",
+              "default": 3650,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "frequency_days",
+              "display_name": "Frequency (Days)",
+              "parameter_units": "days",
+              "description": "Number of days between each update ",
+              "default": 365,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Amount",
+              "parameter_units": "usd",
+              "description": "Amount received each interval.",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "manual_correction",
+      "display_type": "Manual Adjustment",
+      "onboarding_stage": "declare_accounts",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 85,
+      "category": "System",
+      "description": "Manually adjust the value of an account for tracking accuracy.",
+      "icon": "edit",
+      "disclaimer": "This event allows manual adjustment of an account's value. This is used to correct an account to a specific amount.",
+      "event_functions_parts": [
+        {
+          "type": "alter_account_balance",
+          "title": "Enforce Account Balance",
+          "description": "Enforce the account balance to the specified amount",
+          "icon": "edit",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Adjustment Date",
+          "parameter_units": "date",
+          "description": "When the correction is applied",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Adjustment Amount",
+          "parameter_units": "usd",
+          "description": "The value added or subtracted (negative values allowed).",
+          "default": 50,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "Target Account",
+          "parameter_units": "envelope",
+          "description": "Account to be adjusted.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "payment_schedule",
+      "display_type": "Debt Repayment",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Debt",
+      "description": "Pay off a loan with reocurring payments.",
+      "icon": "credit-card",
+      "disclaimer": "This event takes the balance declared then pays off until the final day.",
+      "event_functions_parts": [
+        {
+          "type": "pay_off_loan",
+          "title": "Pay Off Loan",
+          "description": "Simulate the debt being paid off by your debt payments",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "debt_payments",
+          "title": "Debt Payments",
+          "description": "Simulate reocurring debt payments out of the From Account on an amoratization schedule",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "deposit_debt",
+          "title": "Deposit Debt",
+          "description": "Simulate the loan being deposited into the From Account",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "final_payment_correction",
+          "title": "Final Payment Correction",
+          "description": "Simulate a small correction on the final payment due to ammoratization schedule inaccuracies",
+          "icon": "credit-card",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the loan starts",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring loan ends",
+          "default": 3650,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each loan payment",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "payment",
+          "display_name": "Payment Amount",
+          "parameter_units": "usd",
+          "description": "Amount of each loan payment",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "The loan that you are paying off",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "From what account are you paying off the loan",
+          "default": "Other (Debt)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "loan_amortization",
+      "display_type": "Personal Loan",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Debt",
+      "description": "Take a personal loan over a specified period. Payed back in monthly payments.",
+      "icon": "credit-card",
+      "disclaimer": "This event uses loan amortization, calculating monthly payments and interest. It does not account for missed payments, prepayments, or changes in interest rates.",
+      "event_functions_parts": [
+        {
+          "type": "pay_off_loan",
+          "title": "Pay Off Loan",
+          "description": "Simulate the debt being paid off by your debt payments",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "debt_payments",
+          "title": "Debt Payments",
+          "description": "Simulate reocurring debt payments out of the From Account on an amoratization schedule",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "deposit_debt",
+          "title": "Deposit Debt",
+          "description": "Simulate the loan being deposited into the From Account",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "final_payment_correction",
+          "title": "Final Payment Correction",
+          "description": "Simulate a small correction on the final payment due to ammoratization schedule inaccuracies",
+          "icon": "credit-card",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the loan starts",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring loan ends ",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each loan occurrence ",
+          "default": 365,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "principal",
+          "display_name": "Principal",
+          "parameter_units": "usd",
+          "description": "Principal amount of the loan",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "interest_rate",
+          "display_name": "Interest Rate (APR%)",
+          "parameter_units": "percentage",
+          "description": "Interest rate of the loan",
+          "default": 0.05,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "loan_term_years",
+          "display_name": "Loan Term (Years)",
+          "parameter_units": "years",
+          "description": "Number of years to pay off the loan",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where the loan is deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Debt Account for tracking debt",
+          "default": "Other (Debt)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "loan",
+      "display_type": "Loan",
+      "onboarding_stage": "assets",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Debt",
+      "description": "Take a personal loan over a specified period. Payed back in monthly payments.",
+      "default_title": "Personal Loan",
+      "icon": "credit-card",
+      "disclaimer": "This event uses loan amortization, calculating monthly payments and interest. It does not account for missed payments, prepayments, or changes in interest rates.",
+      "event_functions_parts": [
+        {
+          "type": "pay_off_loan",
+          "title": "Pay Off Loan",
+          "description": "Simulate the debt being paid off by your debt payments",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "debt_payments",
+          "title": "Debt Payments",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "deposit_debt",
+          "title": "Deposit Debt",
+          "description": "Simulate the loan being deposited into the Account",
+          "icon": "credit-card",
+          "default_state": true
+        },
+        {
+          "type": "final_payment_correction",
+          "title": "Final Payment Correction",
+          "description": "Simulate a small correction on the final payment due to ammoratization schedule inaccuracies",
+          "icon": "credit-card",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the loan starts",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring loan ends ",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each loan occurrence ",
+          "default": 365,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "principal",
+          "display_name": "Principal",
+          "parameter_units": "usd",
+          "description": "Principal amount of the loan",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "loan_term_years",
+          "display_name": "Loan Term (Years)",
+          "parameter_units": "years",
+          "description": "Number of years to pay off the loan",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where the loan is deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Debt Account for tracking debt",
+          "default": "Other (Debt)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "purchase",
+      "display_type": "Purchase",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "category": "Living Expenses",
+      "weight": 100,
+      "description": "Basic purchase or spending of money",
+      "default_title": "Purchase",
+      "icon": "shopping-cart",
+      "disclaimer": "This event records a one-time purchase or expense from a selected account. It does not account for recurring costs, taxes, or the impact on other accounts.",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Outflow",
+          "description": "Take money from the source account",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Purchase Date",
+          "parameter_units": "date",
+          "description": "When the purchase occurs",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring purchase ends ",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each purchase ",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "money",
+          "display_name": "Amount",
+          "parameter_units": "usd",
+          "description": "Amount of money spent",
+          "default": 20,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Which account the money comes from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "gift",
+      "display_type": "Gift",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Living Expenses",
+      "description": " gift of money from something",
+      "default_title": "Gift",
+      "icon": "gift",
+      "disclaimer": "This event adds a one-time monetary gift to a chosen account. It does not simulate taxes, recurring gifts, or non-cash gifts.",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Inflow",
+          "description": "Move money into the destination account",
+          "icon": "arrow-up",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Gift Date",
+          "parameter_units": "date",
+          "description": "When the gift is recieved",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring gift ends ",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each gift ",
+          "default": 365,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "money",
+          "display_name": "Amount",
+          "parameter_units": "usd",
+          "description": "Amount of money gained",
+          "default": 20,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Which account the money goes to",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "monthly_budgeting",
+      "display_type": "Monthly Expenses",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": true,
+      "category": "Living Expenses",
+      "weight": 100,
+      "description": "Set your typical monthly budget for common expense categories.",
+      "icon": "dollar-bill",
+      "disclaimer": "This event allows you to set up recurring monthly expenses for common budget categories.",
+      "event_functions_parts": [
+        {
+          "type": "update_budget_with_inflation",
+          "title": "Update Budget with Inflation",
+          "description": "Update the monthly budget to increase over time with system inflation. If turned off then will simulate monthly budget staying the same.",
+          "icon": "dollar-sign",
+          "default_state": true
+        },
+        {
+          "type": "outflow_groceries",
+          "title": "Outflow Groceries",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_utilities",
+          "title": "Outflow Utilities",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_rent",
+          "title": "Outflow Rent",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_transportation",
+          "title": "Outflow Transportation",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_insurance",
+          "title": "Outflow Insurance",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_healthcare",
+          "title": "Outflow Healthcare",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_dining_out",
+          "title": "Outflow Dining Out",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_entertainment",
+          "title": "Outflow Entertainment",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_personal_care",
+          "title": "Outflow Personal Care",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "outflow_miscellaneous",
+          "title": "Outflow Miscellaneous",
+          "description": "Simulate reocurring transfer of money out of the Account",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the monthly budgeting starts.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the monthly budgeting ends.",
+          "default": 29200,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each budgeting event.",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account from which funds are spent.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "groceries",
+          "display_name": "Groceries",
+          "parameter_units": "usd",
+          "description": "Monthly spending on groceries and food at home.",
+          "default": 600,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "utilities",
+          "display_name": "Utilities",
+          "parameter_units": "usd",
+          "description": "Monthly cost for electricity, water, gas, etc.",
+          "default": 200,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "rent",
+          "display_name": "Rent",
+          "parameter_units": "usd",
+          "description": "Monthly rent or housing payment.",
+          "default": 1200,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "transportation",
+          "display_name": "Transportation",
+          "parameter_units": "usd",
+          "description": "Monthly spending on public transit, gas, car payment, etc.",
+          "default": 300,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "insurance",
+          "display_name": "Insurance",
+          "parameter_units": "usd",
+          "description": "Monthly insurance premiums (health, auto, etc.).",
+          "default": 250,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "healthcare",
+          "display_name": "Healthcare",
+          "parameter_units": "usd",
+          "description": "Monthly out-of-pocket healthcare costs.",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "dining_out",
+          "display_name": "Dining Out",
+          "parameter_units": "usd",
+          "description": "Monthly spending on restaurants, takeout, and coffee shops.",
+          "default": 200,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "entertainment",
+          "display_name": "Entertainment",
+          "parameter_units": "usd",
+          "description": "Monthly spending on movies, streaming, events, etc.",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "personal_care",
+          "display_name": "Personal Care",
+          "parameter_units": "usd",
+          "description": "Monthly spending on haircuts, toiletries, gym, etc.",
+          "default": 75,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "miscellaneous",
+          "display_name": "Miscellaneous",
+          "parameter_units": "usd",
+          "description": "Other monthly expenses not listed above.",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "update_monthly_budget",
+          "display_type": "Update Monthly Budget",
+          "onboarding_stage": "full",
+          "is_recurring": false,
+          "can_be_reocurring": false,
+          "display_event": true,
+          "icon": "dollar-sign",
+          "description": "Update the monthly budget for a specific category.",
+          "default_title": "Update Monthly Budget",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Start Date",
+              "parameter_units": "date",
+              "description": "When the update starts",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "key",
+              "display_name": "Category",
+              "parameter_units": "enum",
+              "options": [
+                "groceries",
+                "utilities",
+                "rent",
+                "transportation",
+                "insurance",
+                "healthcare",
+                "dining_out",
+                "entertainment",
+                "personal_care",
+                "miscellaneous"
+              ],
+              "description": "Category to update.",
+              "default": "groceries",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "New Amount",
+              "parameter_units": "usd",
+              "description": "New amount for the category.",
+              "default": 600,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "get_job",
+      "display_type": "Full-time Job",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Income & Employment",
+      "description": "Start earning a salary from employment.",
+      "default_title": "First Job",
+      "icon": "briefcase",
+      "disclaimer": "This event simulates salaried employment, calculating net pay after taxes and 401k contributions. It does not model job loss, promotions, or non-salary compensation.",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Pay Day",
+          "description": "Paycheck being deposited in designated Account",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "tax_withholdings",
+          "title": "Tax Withholdings",
+          "description": "Taxes being withhled from the account according to the state and federal tax pecentage",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "p_401k_contribution",
+          "title": "401k Contribution",
+          "description": "401k contribution being taken out of Pay Check and placed in 401K account with math",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "salary_in_taxable_income",
+          "title": "Salary in Taxable Income",
+          "description": "Salary being added to Taxable Income",
+          "icon": "arrow-up",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the job starts",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the job ends",
+          "default": 14600,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "salary",
+          "display_name": "Annual Salary",
+          "parameter_units": "usd",
+          "description": "Annual salary before taxes.",
+          "default": 60000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "pay_period",
+          "display_name": "Pay Periods per Year",
+          "parameter_units": "number_per_year",
+          "description": "Number of pay periods per year.",
+          "default": 26,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "federal_income_tax",
+          "display_name": "Federal Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Federal income tax rate.",
+          "default": 0.12,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "state_income_tax",
+          "display_name": "State Tax Rate",
+          "parameter_units": "percentage",
+          "description": "State income tax rate.",
+          "default": 0.05,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "local_income_tax",
+          "display_name": "Local Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Local income tax rate.",
+          "default": 0.01,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "social_security_tax",
+          "display_name": "Social Security Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Social Security tax rate.",
+          "default": 0.062,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "medicare_tax",
+          "display_name": "Medicare Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Medicare tax rate.",
+          "default": 0.0145,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "p_401k_contribution",
+          "display_name": "401k Contribution Rate",
+          "parameter_units": "percentage",
+          "description": "Percent of salary contributed to 401k.",
+          "default": 0.05,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "p_401k_match",
+          "display_name": "401k Match Rate",
+          "parameter_units": "percentage",
+          "description": "Employer match percent for 401k.",
+          "default": 0.05,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "to_key",
+          "display_name": "Deposit Account",
+          "parameter_units": "envelope",
+          "description": "Account where salary is deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "p_401k_key",
+          "display_name": "401k Account",
+          "parameter_units": "envelope",
+          "description": "Account where 401k contributions are tracked",
+          "default": "Other (Retirement)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "taxable_income_key",
+          "display_name": "Taxable Income Account",
+          "parameter_units": "envelope",
+          "description": "Account where taxable income is tracked",
+          "default": "Taxable Income",
+          "editable": true,
+          "advanced_option": true,
+          "do_not_display_to_user": true
+        },
+        {
+          "type": "federal_withholdings_key",
+          "display_name": "Federal Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where federal withholdings are tracked",
+          "default": "Federal Withholdings",
+          "editable": true,
+          "advanced_option": true,
+          "do_not_display_to_user": true
+        },
+        {
+          "type": "state_withholdings_key",
+          "display_name": "State Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where state withholdings are tracked",
+          "default": "State Withholdings",
+          "editable": true,
+          "advanced_option": true,
+          "do_not_display_to_user": true
+        },
+        {
+          "type": "local_withholdings_key",
+          "display_name": "Local Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where local withholdings are tracked",
+          "default": "Local Withholdings",
+          "editable": true,
+          "advanced_option": true,
+          "do_not_display_to_user": true
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "get_a_raise",
+          "display_type": "Salary Raise",
+          "onboarding_stage": "full",
+          "display_event": true,
+          "is_recurring": false,
+          "can_be_reocurring": false,
+          "icon": "arrow-up",
+          "description": "Receive an increase in salary.",
+          "default_title": "Salary Raise",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Raise Effective Date",
+              "parameter_units": "date",
+              "description": "When the raise takes effect",
+              "default": 365,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "salary",
+              "display_name": "New Annual Salary",
+              "parameter_units": "usd",
+              "description": "New annual salary after raise.",
+              "default": 65000,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "reoccurring_raise",
+          "display_type": "Reoccurring Raise",
+          "onboarding_stage": "full",
+          "display_event": true,
+          "is_recurring": true,
+          "can_be_reocurring": true,
+          "icon": "arrow-up",
+          "description": "Receive a recurring raise",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Raise Effective Date",
+              "parameter_units": "date",
+              "description": "When the raise takes effect",
+              "default": 365,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "frequency_days",
+              "display_name": "Frequency (Days)",
+              "parameter_units": "days",
+              "description": "Number of days between each raise",
+              "default": 365,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "End Date",
+              "parameter_units": "date",
+              "description": "When the raise ends",
+              "default": 3650,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "salary_increase",
+              "display_name": "Salary Increase",
+              "parameter_units": "usd",
+              "description": "Salary increase amount.",
+              "default": 5000,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "get_a_bonus",
+          "display_type": "Bonus",
+          "onboarding_stage": "full",
+          "display_event": true,
+          "icon": "dollar-sign",
+          "description": "Receive a one-time cash bonus.",
+          "default_title": "Annual Bonus",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Bonus Date",
+              "parameter_units": "date",
+              "description": "When the bonus is received",
+              "default": 365,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "bonus",
+              "display_name": "Bonus Amount",
+              "parameter_units": "usd",
+              "description": "Bonus amount received.",
+              "default": 5000,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "change_401k_contribution",
+          "display_type": "Adjust 401k Contribution",
+          "onboarding_stage": "full",
+          "display_event": true,
+          "icon": "sliders-horizontal",
+          "description": "Adjust the percentage of income contributed to 401k.",
+          "default_title": "401k Adjustment",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Change Effective Date",
+              "parameter_units": "date",
+              "description": "When the new contribution rate takes effect",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "p_401k_contribution",
+              "display_name": "New 401k Contribution %",
+              "parameter_units": "percentage",
+              "description": "New 401k contribution percentage.",
+              "default": 0.1,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "get_wage_job",
+      "display_type": "Hourly / Part-time Job",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Income & Employment",
+      "description": "Start earning an hourly wage from employment.",
+      "icon": "clock",
+      "disclaimer": "This event simulates hourly wage employment, including taxes and 401k contributions. It does not account for overtime, tips, or job loss.",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Pay Day",
+          "description": "Paycheck being deposited in designated Account",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "tax_withholdings",
+          "title": "Tax Withholdings",
+          "description": "Taxes being withheld from the account according to the state and federal tax percentage",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "p_401k_contribution",
+          "title": "401k Contribution",
+          "description": "401k contribution being taken out of Pay Check and placed in 401K account with match",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "salary_in_taxable_income",
+          "title": "Include in Taxable Income",
+          "description": "Include wages in taxable income for tax tracking",
+          "icon": "arrow-up",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the job starts",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the job ends (optional)",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Number of days between each pay period",
+          "default": 14,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "hourly_wage",
+          "display_name": "Hourly Wage",
+          "parameter_units": "usd",
+          "description": "Hourly wage rate.",
+          "default": 25,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "hours_per_week",
+          "display_name": "Hours per Week",
+          "parameter_units": "hours",
+          "description": "Number of hours worked per week.",
+          "default": 40,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "pay_period",
+          "display_name": "Pay Periods per Year",
+          "parameter_units": "number_per_year",
+          "description": "Number of pay periods per year.",
+          "default": 26,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "federal_income_tax",
+          "display_name": "Federal Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Federal income tax rate.",
+          "default": 0.12,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "state_income_tax",
+          "display_name": "State Tax Rate",
+          "parameter_units": "percentage",
+          "description": "State income tax rate.",
+          "default": 0.05,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "social_security_tax",
+          "display_name": "Social Security Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Social Security tax rate.",
+          "default": 0.062,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "medicare_tax",
+          "display_name": "Medicare Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Medicare tax rate.",
+          "default": 0.0145,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "p_401k_contribution",
+          "display_name": "401k Contribution Rate",
+          "parameter_units": "percentage",
+          "description": "Percent of wages contributed to 401k.",
+          "default": 0.04,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "employer_match",
+          "display_name": "401k Match Rate",
+          "parameter_units": "percentage",
+          "description": "Employer match percent for 401k.",
+          "default": 0.04,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "to_key",
+          "display_name": "Deposit Account",
+          "parameter_units": "envelope",
+          "description": "Account where wages are deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "p_401k_key",
+          "display_name": "401k Account",
+          "parameter_units": "envelope",
+          "description": "Account where 401k contributions are tracked",
+          "default": "Other (Retirement)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "taxable_income_key",
+          "display_name": "Taxable Income Account",
+          "parameter_units": "envelope",
+          "description": "Account where taxable income is tracked",
+          "default": "Taxable Income",
+          "editable": true,
+          "advanced_option": false,
+          "do_not_display_to_user": true
+        },
+        {
+          "type": "federal_withholdings_key",
+          "display_name": "Federal Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where federal withholdings are tracked",
+          "default": "Federal Withholdings",
+          "editable": true,
+          "advanced_option": false,
+          "do_not_display_to_user": true
+        },
+        {
+          "type": "state_withholdings_key",
+          "display_name": "State Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where state withholdings are tracked",
+          "default": "State Withholdings",
+          "editable": true,
+          "advanced_option": false,
+          "do_not_display_to_user": true
+        },
+        {
+          "type": "local_withholdings_key",
+          "display_name": "Local Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where local withholdings are tracked",
+          "default": "Local Withholdings",
+          "editable": true,
+          "advanced_option": false,
+          "do_not_display_to_user": true
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "get_a_raise",
+          "display_type": "Raise",
+          "onboarding_stage": "full",
+          "display_event": true,
+          "icon": "arrow-up",
+          "description": "Receive an increase in hourly wage.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Raise Effective Date",
+              "parameter_units": "date",
+              "description": "When the raise takes effect",
+              "default": 365,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "new_hourly_wage",
+              "display_name": "New Hourly Wage",
+              "parameter_units": "usd",
+              "description": "New hourly wage rate after raise.",
+              "default": 27,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "change_hours",
+          "display_type": "Change Hours",
+          "onboarding_stage": "full",
+          "display_event": true,
+          "icon": "clock",
+          "description": "Change the number of hours worked per week.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Change Effective Date",
+              "parameter_units": "date",
+              "description": "When the new hours take effect",
+              "default": 365,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "new_hours",
+              "display_name": "New Hours per Week",
+              "parameter_units": "hours",
+              "description": "New number of hours per week.",
+              "default": 35,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "change_401k_contribution",
+          "display_type": "Adjust 401k Contribution",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "icon": "sliders-horizontal",
+          "description": "Adjust the percentage of wages contributed to 401k.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Change Effective Date",
+              "parameter_units": "date",
+              "description": "When the new contribution rate takes effect",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "p_401k_contribution",
+              "display_name": "New 401k Contribution %",
+              "parameter_units": "percentage",
+              "description": "New 401k contribution percentage.",
+              "default": 0.06,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "change_employer_match",
+          "display_type": "Update Employer Match",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "icon": "handshake",
+          "description": "Update the employer's 401k match rate.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Change Effective Date",
+              "parameter_units": "date",
+              "description": "When the new match rate takes effect",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "new_match_rate",
+              "display_name": "New Employer Match %",
+              "parameter_units": "percentage",
+              "description": "New employer match percentage.",
+              "default": 0.05,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "start_business",
+      "display_type": "Business",
+      "display_event": false,
+      "weight": 100,
+      "category": "Income & Employment",
+      "description": "Start your own business by investing capital.",
+      "icon": "factory",
+      "disclaimer": "This event models starting a business with an initial investment. It does not simulate business growth, profits, or operational expenses beyond initial setup.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the business starts",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "initial_investment",
+          "display_name": "Initial Investment",
+          "parameter_units": "usd",
+          "description": "Amount of money invested initially.",
+          "default": 50000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Which account the money comes from.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where business assets are tracked",
+          "default": "Other (Investments)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "business_income",
+          "display_type": "Business Income",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "icon": "bar-chart",
+          "description": "Start receiving business revenue.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Income Start Date",
+              "parameter_units": "date",
+              "description": "When business income starts",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "Income End Date",
+              "parameter_units": "date",
+              "description": "When business income ends",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "monthly_income",
+              "display_name": "Monthly Income",
+              "parameter_units": "usd",
+              "description": "Monthly income earned by the business.",
+              "default": 5000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "to_key",
+              "display_name": "Deposit Account",
+              "parameter_units": "envelope",
+              "description": "Account where business income is deposited",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "business_loss",
+          "display_type": "Business Loss",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "icon": "x-octagon",
+          "description": "Incur a business loss from operations.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Loss Date",
+              "parameter_units": "date",
+              "description": "When the loss occurs",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "loss_amount",
+              "display_name": "Loss Amount",
+              "parameter_units": "usd",
+              "description": "Amount lost due to business expense or failure.",
+              "default": 20000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where loss is deducted from",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "retirement",
+      "display_type": "Retirement",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": true,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Income & Employment",
+      "description": "Transition from employment to retirement with recurring transfers from 401K and ROTH IRA to cash, including taxable income tracking.",
+      "icon": "moon",
+      "disclaimer": "This event simulates regular transfers from a 401K and ROTH IRA retirement account to cash, with corresponding taxable income tracking. It does not account for complex tax implications or required minimum distributions. This does account for a 25% tax 401K withholding when transfering.",
+      "event_functions_parts": [
+        {
+          "type": "money_transfer",
+          "title": "Retirement Income",
+          "description": "Money being transferred from 401K to cash",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "money_transfer_roth_ira",
+          "title": "Retirement Income ROTH IRA",
+          "description": "Money being transferred from ROTH IRA to cash",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "withholding_money_401k",
+          "title": "Tax Withholding from 401K by Plan Administrator",
+          "description": "Money withheld for taxes by the 401K plan administrator when funds are withdrawn",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "401K_penalty",
+          "title": "401K Penalty",
+          "description": "If money is transfered before 59.5 years old, then a penalty is applied to the withdrawal",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "roth_ira_penalty",
+          "title": "ROTH IRA Penalty",
+          "description": "If money is transfered before 59.5 years old, then a penalty is applied to the withdrawal",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When retirement begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When retirement ends",
+          "default": 29200,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Transfer Amount from 401K",
+          "parameter_units": "usd",
+          "description": "Amount transferred from 401K to cash each period",
+          "default": 3000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount_roth_ira",
+          "display_name": "Transfer Amount from ROTH IRA",
+          "parameter_units": "usd",
+          "description": "Amount transferred from ROTH IRA to cash each period",
+          "default": 3000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Transfer Frequency",
+          "parameter_units": "days",
+          "description": "How often transfers happen",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "p_401k_key",
+          "display_name": "401K Account",
+          "parameter_units": "envelope",
+          "description": "401K account to transfer from",
+          "default": "Other (Retirement)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "roth_ira_key",
+          "display_name": "ROTH IRA Account",
+          "parameter_units": "envelope",
+          "description": "ROTH IRA account to transfer from",
+          "default": "RothIRA",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where transfers are deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "p_401k_withdraw_withholding_key",
+          "display_name": "401K Withdraw Withholding Account",
+          "parameter_units": "envelope",
+          "description": "Tax Account where 401K withdrawals are withheld",
+          "default": "401K Withdraw Withholding",
+          "editable": true,
+          "advanced_option": false,
+          "display_to_user": false
+        },
+        {
+          "type": "p_401k_withdraw_key",
+          "display_name": "401K Withdraw Account",
+          "parameter_units": "envelope",
+          "description": "Tax Account where 401K withdrawals are deposited",
+          "default": "401K Withdraw",
+          "editable": true,
+          "advanced_option": false,
+          "display_to_user": false
+        },
+        {
+          "type": "roth_ira_withdraw_key",
+          "display_name": "ROTH IRA Withdraw Account",
+          "parameter_units": "envelope",
+          "description": "Tax Account where ROTH IRA withdrawals are deposited",
+          "default": "ROTH IRA Withdraw",
+          "editable": true,
+          "advanced_option": false,
+          "display_to_user": false
+        },
+        {
+          "type": "roth_ira_principle_key",
+          "display_name": "ROTH IRA Principle Account",
+          "parameter_units": "envelope",
+          "description": "Tax Account where ROTH IRA principle is tracked",
+          "default": "ROTH IRA Principle",
+          "editable": true,
+          "advanced_option": false,
+          "display_to_user": false
+        }
+      ]
+    },
+    {
+      "type": "buy_house",
+      "display_type": "Home Purchase",
+      "onboarding_stage": "assets",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Major Purchases",
+      "description": "Purchase a home with mortgage terms.",
+      "icon": "home",
+      "disclaimer": "This event estimates the financial impact of purchasing a home based on key inputs including purchase price, down payment, mortgage term, interest rate, appreciation rate, and property tax rate. It generates a monthly payment and amortization schedule using standard fixed-rate mortgage formulas. The calculation does not account for additional homeownership costs such as HOA fees, maintenance, insurance, closing costs, or utilities.",
+      "event_functions_parts": [
+        {
+          "type": "downpayment",
+          "title": "Down Payment",
+          "description": "Money being taken out of account to place a downpayment on the home",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "mortgage_payment",
+          "title": "Mortgage Payment",
+          "description": "Morgage Payments payed on amoratization scheudle mortgage",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "property_tax",
+          "title": "Property Tax",
+          "description": "Property Tax being taken out in portions each month. Mortgage escrow",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "home_asset",
+          "title": "Home Asset",
+          "description": "Home being added to the asset account with appreciation rate",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "morgage_loan",
+          "title": "Morgage Loan",
+          "description": "A debt account simulating the morgage loan with APR rate specified into an amoratization schedule",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "final_home_payment_correction",
+          "title": "Final Home Payment Correction",
+          "description": "A small correction on the final payment due to amoratization schedule inaccuracies",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Purchase Date",
+          "parameter_units": "date",
+          "description": "When the house is purchased",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "home_value",
+          "display_name": "Home Value",
+          "parameter_units": "usd",
+          "description": "Total price of the house.",
+          "default": 300000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "loan_term_years",
+          "display_name": "Loan Term",
+          "parameter_units": "enum",
+          "description": "Length of mortgage in years.",
+          "options": [
+            "15",
+            "30"
+          ],
+          "default": "30",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "downpayment",
+          "display_name": "Down Payment",
+          "parameter_units": "usd",
+          "description": "Amount paid upfront.",
+          "default": 60000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where downpayment comes from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where house value is tracked",
+          "default": "House",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "mortgage_account",
+          "display_name": "Mortgage Account",
+          "parameter_units": "envelope",
+          "description": "Account where the home mortgage debt is tracked.",
+          "default": "Home Mortgage",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "property_tax_rate",
+          "display_name": "Property Tax Rate",
+          "parameter_units": "percentage",
+          "description": "Annual tax as a percentage of home value.",
+          "default": 0.015,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "Loan End Date",
+          "parameter_units": "date",
+          "description": "When the mortgage will be paid off (calculated automatically).",
+          "default": 0,
+          "editable": false,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "new_appraisal",
+          "display_type": "New Appraisal",
+          "display_event": true,
+          "icon": "clipboard-check",
+          "description": "New professional appraisal of home value.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Appraisal Date",
+              "parameter_units": "date",
+              "description": "When the new appraisal takes effect",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "appraised_value",
+              "display_name": "Appraised Value",
+              "parameter_units": "usd",
+              "description": "New home valuation.",
+              "default": 450000,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "extra_mortgage_payment",
+          "display_type": "Extra Mortgage Payment",
+          "display_event": true,
+          "icon": "plus",
+          "description": "Make an extra one-time payment toward principal.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Payment Date",
+              "parameter_units": "date",
+              "description": "When the extra payment is made",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Extra Payment Amount",
+              "parameter_units": "usd",
+              "description": "Extra amount paid.",
+              "default": 100,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where payment comes from",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "month_index",
+              "display_name": "Month Index",
+              "parameter_units": "days",
+              "description": "Which month the payment applies to.",
+              "default": 60,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "late_payment",
+          "display_type": "Late Payment",
+          "display_event": false,
+          "icon": "clock",
+          "description": "Make a mortgage payment late.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Late Payment Date",
+              "parameter_units": "date",
+              "description": "When the late payment occurs",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Missed Payment Amount",
+              "parameter_units": "usd",
+              "description": "Missed payment amount.",
+              "default": 1500,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where payment comes from",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "month_index",
+              "display_name": "Month Index",
+              "parameter_units": "days",
+              "description": "Which month was missed.",
+              "default": 85,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "sell_house",
+          "display_type": "Sell a Home",
+          "display_event": true,
+          "icon": "dollar-sign",
+          "description": "Sell your home and receive proceeds.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Sale Date",
+              "parameter_units": "date",
+              "description": "When the house is sold",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "sale_price",
+              "display_name": "Sale Price",
+              "parameter_units": "usd",
+              "description": "Final sale value of the house.",
+              "default": 400000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where house value is tracked",
+              "default": "Other (House)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "to_key",
+              "display_name": "To Account",
+              "parameter_units": "envelope",
+              "description": "Account where sale proceeds are deposited",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "refinance_home",
+          "display_type": "Refinance Home",
+          "display_event": true,
+          "icon": "repeat",
+          "description": "Refinance your home for a new loan amount and term.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Refinance Date",
+              "parameter_units": "date",
+              "description": "When the refinance takes effect",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "new_loan_term_years",
+              "display_name": "New Loan Term",
+              "parameter_units": "years",
+              "description": "Length of new mortgage in years.",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "new_home_mortgage_account",
+              "display_name": "New Mortgage Account",
+              "parameter_units": "envelope",
+              "description": "Account where the refinanced home mortgage debt is tracked.",
+              "default": "Refinanced Home Mortgage",
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "buy_car",
+      "display_type": "Car Purchase",
+      "onboarding_stage": "assets",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Major Purchases",
+      "description": "Purchase a car with or without a loan.",
+      "icon": "car",
+      "disclaimer": "This event models the purchase of a car, including loan terms and down payment. It does not include insurance, registration, maintenance, or resale value.",
+      "event_functions_parts": [
+        {
+          "type": "downpayment",
+          "title": "Down Payment",
+          "description": "Money being taken out of account to place a downpayment on the car",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "loan_payment",
+          "title": "Loan Payment",
+          "description": "Money being taken out of account to pay the loan",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "car_asset",
+          "title": "Car Asset",
+          "description": "Car being added to the asset account with depreciaation rate specifed by the account",
+          "icon": "arrow-up",
+          "default_state": true
+        },
+        {
+          "type": "car_loan",
+          "title": "Car Loan",
+          "description": "A debt account simulating the car loan with APR rate specified into an amoratization schedule",
+          "icon": "arrow-down",
+          "default_state": true
+        },
+        {
+          "type": "final_car_payment_correction",
+          "title": "Final Car Payment Correction",
+          "description": "A small correction on the final payment due to amoratization schedule inaccuracies",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Purchase Date",
+          "parameter_units": "date",
+          "description": "When the car is purchased",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the recurring purchase ends ",
+          "default": 3650,
+          "editable": false,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Car payment Schedule",
+          "parameter_units": "days",
+          "description": "Number of days between Car payments  ",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "car_value",
+          "display_name": "Car Value",
+          "parameter_units": "usd",
+          "description": "Price of the car.",
+          "default": 35000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "loan_term_years",
+          "display_name": "Loan Term",
+          "parameter_units": "years",
+          "description": "Length of car loan in years.",
+          "default": 5,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "downpayment",
+          "display_name": "Down Payment",
+          "parameter_units": "usd",
+          "description": "Upfront payment toward the car.",
+          "default": 7000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Which account the money comes from.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where car value is tracked",
+          "default": "Car",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "car_loan_account",
+          "display_name": "Car Loan Account",
+          "parameter_units": "envelope",
+          "description": "Account where the car loan debt is tracked.",
+          "default": "Car Loan",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "pay_loan_early",
+          "display_type": "Pay Car Loan Early",
+          "display_event": true,
+          "is_recurring": false,
+          "can_be_reocurring": true,
+          "icon": "badge-dollar-sign",
+          "description": "Pay off the car loan ahead of schedule.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Early Payment Date",
+              "parameter_units": "date",
+              "description": "When the early payment is made",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Payoff Amount",
+              "parameter_units": "usd",
+              "description": "Remaining balance paid off.",
+              "default": 20000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where payment comes from",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "car_repair",
+          "display_type": "Car Repair",
+          "display_event": false,
+          "is_recurring": false,
+          "can_be_reocurring": true,
+          "icon": "wrench",
+          "description": "Pay for major car repairs.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Repair Date",
+              "parameter_units": "date",
+              "description": "When the repair occurs",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "cost",
+              "display_name": "Repair Cost",
+              "parameter_units": "usd",
+              "description": "Repair bill total.",
+              "default": 3000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where repair cost is paid from",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "have_kid",
+      "display_type": "Having a Child",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Life Events",
+      "description": "Have a child and incur related early-life costs.",
+      "icon": "baby",
+      "disclaimer": "This event records the birth of a child and initial costs. It does not simulate ongoing expenses, tax credits, or changes in household income.",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Initial Costs",
+          "description": "Money being taken out of account to pay the initial costs",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Birth Date",
+          "parameter_units": "date",
+          "description": "When the child is born",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "initial_costs",
+          "display_name": "Initial Costs",
+          "parameter_units": "usd",
+          "description": "One-time costs for childbirth, setup, etc.",
+          "default": 15000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Which account the cost is paid from.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "childcare_costs",
+          "display_type": "Childcare Costs",
+          "display_event": true,
+          "is_recurring": true,
+          "can_be_reocurring": true,
+          "icon": "hand-coins",
+          "description": "Monthly childcare expenses after birth.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Childcare Start Date",
+              "parameter_units": "date",
+              "description": "When childcare costs begin",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "monthly_cost",
+              "display_name": "Monthly Childcare Cost",
+              "parameter_units": "usd",
+              "description": "Monthly cost for daycare or other care.",
+              "default": 1200,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where childcare costs are paid from",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "End Date",
+              "parameter_units": "date",
+              "description": "When childcare costs end.",
+              "default": 2190,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "college_fund",
+          "display_type": "College Fund",
+          "display_event": true,
+          "is_recurring": true,
+          "can_be_reocurring": true,
+          "icon": "graduation-cap",
+          "description": "Start saving for your child's college education.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Contribution Start Date",
+              "parameter_units": "date",
+              "description": "When college fund contributions begin",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "initial_contribution",
+              "display_name": "Initial Contribution",
+              "parameter_units": "usd",
+              "description": "Starting amount deposited.",
+              "default": 5000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "monthly_contribution",
+              "display_name": "Monthly Contribution",
+              "parameter_units": "usd",
+              "description": "Recurring monthly contribution.",
+              "default": 200,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account where contributions come from",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "to_key",
+              "display_name": "To Account",
+              "parameter_units": "envelope",
+              "description": "Account where college fund is tracked",
+              "default": "Other (Savings)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "End Date",
+              "parameter_units": "date",
+              "description": "End of contribution period.",
+              "default": 6570,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "marriage",
+      "display_type": "Marriage / Partner Finances",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Life Events",
+      "description": "Get married and incur event-related expenses.",
+      "icon": "ring",
+      "disclaimer": "This event logs a one-time marriage cost. It does not affect taxes, household size, or simulate ongoing marital expenses.",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Wedding Cost",
+          "description": "Money being taken out of account to pay the wedding cost",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Wedding Date",
+          "parameter_units": "date",
+          "description": "When the marriage occurs",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "cost",
+          "display_name": "Wedding Cost",
+          "parameter_units": "usd",
+          "description": "Total cost of wedding and related expenses.",
+          "default": 30000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where wedding costs are paid from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "divorce",
+      "display_type": "Divorce",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Life Events",
+      "description": "Divorce settlement and legal costs.",
+      "icon": "split",
+      "disclaimer": "This event records a one-time divorce settlement and legal fees. It does not simulate asset division, custody, or ongoing support payments.",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Divorce Cost",
+          "description": "Money being taken out of account to pay the divorce cost",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Divorce Date",
+          "parameter_units": "date",
+          "description": "When the divorce occurs",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "settlement_amount",
+          "display_name": "Settlement Amount",
+          "parameter_units": "usd",
+          "description": "Lump sum paid in settlement.",
+          "default": 25000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "attorney_fees",
+          "display_name": "Attorney Fees",
+          "parameter_units": "usd",
+          "description": "Legal costs paid to attorneys.",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where divorce costs are paid from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "pass_away",
+      "display_type": "Death",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Life Events",
+      "description": "Death of the individual and end-of-life costs.",
+      "icon": "skull",
+      "disclaimer": "This event marks the end of the simulation for the individual. It does not model estate distribution, survivor benefits, or funeral costs.",
+      "event_functions_parts": [
+        {
+          "type": "declare_accounts",
+          "title": "Declare Accounts to 0",
+          "description": "All Accounts are set to 0",
+          "icon": "list",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Date of Death",
+          "parameter_units": "date",
+          "description": "When death occurs",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "buy_health_insurance",
+      "display_type": "Health Insurance",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Health & Insurance",
+      "description": "Purchase a health insurance plan with monthly payments.",
+      "icon": "stethoscope",
+      "disclaimer": "This event simulates purchasing health insurance with monthly premiums and deductible. It does not model provider networks, claim denials, or out-of-network costs.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When health insurance coverage begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "monthly_premium",
+          "display_name": "Monthly Premium",
+          "parameter_units": "usd",
+          "description": "Cost of health insurance per month.",
+          "default": 500,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "deductible",
+          "display_name": "Deductible",
+          "parameter_units": "usd",
+          "description": "Amount paid out-of-pocket before insurance applies.",
+          "default": 2000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "coverage_percentage",
+          "display_name": "Coverage Percentage",
+          "parameter_units": "percentage",
+          "description": "Percent of expenses covered after deductible.",
+          "default": 0.8,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where premiums are paid from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "medical_expense",
+          "display_type": "Medical Expense",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "is_recurring": false,
+          "can_be_reocurring": true,
+          "icon": "pill",
+          "description": "Major medical procedure or cost covered by insurance.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Expense Date",
+              "parameter_units": "date",
+              "description": "When the medical expense occurs",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "total_cost",
+              "display_name": "Total Cost",
+              "parameter_units": "usd",
+              "description": "Full amount billed by the hospital or provider.",
+              "default": 25000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "from_key",
+              "display_name": "From Account",
+              "parameter_units": "envelope",
+              "description": "Account to cover the out-of-pocket portion.",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "insurance_coverage",
+              "display_name": "Insurance Coverage %",
+              "parameter_units": "percentage",
+              "description": "Insurance reimbursement percentage.",
+              "default": 0.8,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "deductible",
+              "display_name": "Deductible",
+              "parameter_units": "usd",
+              "description": "How much must be paid first by the user.",
+              "default": 2000,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "buy_life_insurance",
+      "display_type": "Life Insurance",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Health & Insurance",
+      "description": "Buy term life insurance to protect dependents.",
+      "icon": "heart-pulse",
+      "disclaimer": "This event models purchasing term life insurance with a fixed premium and payout. It does not simulate underwriting, policy lapses, or variable coverage.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When life insurance coverage begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "coverage_amount",
+          "display_name": "Coverage Amount",
+          "parameter_units": "usd",
+          "description": "Total coverage paid out upon death.",
+          "default": 500000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "monthly_premium",
+          "display_name": "Monthly Premium",
+          "parameter_units": "usd",
+          "description": "Recurring payment for the policy.",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "term_years",
+          "display_name": "Term Length",
+          "parameter_units": "years",
+          "description": "Duration of the term policy in years.",
+          "default": 20,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Funding account for premium payments.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "increase_coverage",
+          "display_type": "Increase Coverage",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "is_recurring": false,
+          "can_be_reocurring": false,
+          "icon": "plus-circle",
+          "description": "Change to a higher coverage amount and premium.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Coverage Increase Date",
+              "parameter_units": "date",
+              "description": "When the coverage increase takes effect",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "new_coverage_amount",
+              "display_name": "New Coverage Amount",
+              "parameter_units": "usd",
+              "description": "Updated payout amount.",
+              "default": 750000,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "new_monthly_premium",
+              "display_name": "New Monthly Premium",
+              "parameter_units": "usd",
+              "description": "New monthly cost of policy.",
+              "default": 150,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "receive_government_aid",
+      "display_type": "Government Aid",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Taxes & Government",
+      "description": "Regular cash benefits from government programs.",
+      "icon": "hand-coins",
+      "disclaimer": "This event simulates receiving regular government aid payments. It does not account for eligibility changes, taxes, or benefit reductions.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When government aid begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Benefit Amount",
+          "parameter_units": "usd",
+          "description": "Amount received per interval.",
+          "default": 600,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Payment Frequency",
+          "parameter_units": "days",
+          "description": "Number of days between each benefit payment.",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where aid payments are received",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the payments end.",
+          "default": 730,
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "invest_money",
+      "display_type": "Investment / Savings Goal",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Investments & Assets",
+      "description": "Invest a lump sum into the stock market or similar vehicle.",
+      "icon": "trending-up",
+      "disclaimer": "This event models a lump-sum investment with an expected return. It does not simulate market volatility, taxes, or investment fees.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Investment Date",
+          "parameter_units": "date",
+          "description": "When the investment is made",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the investment ends",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Investment Frequency",
+          "parameter_units": "days",
+          "description": "Number of days between each investment.",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Investment Amount",
+          "parameter_units": "usd",
+          "description": "Amount of money to invest.",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where funds come from.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account to which the investment is applied.",
+          "default": "Other (Investments)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "Reoccuring Dividend Payout",
+          "display_type": "Dividend Payout",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "is_recurring": true,
+          "can_be_reocurring": true,
+          "icon": "badge-dollar-sign",
+          "description": "Receive dividend payments from invested stocks.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Dividend Start Date",
+              "parameter_units": "date",
+              "description": "When dividend payments begin",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "end_time",
+              "display_name": "Dividend End Date",
+              "parameter_units": "date",
+              "description": "When dividend payments end",
+              "default": 3650,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "frequency_days",
+              "display_name": "Dividend Frequency",
+              "parameter_units": "days",
+              "description": "Number of days between each dividend payment.",
+              "default": 30,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Dividend Amount",
+              "parameter_units": "usd",
+              "description": "Dividend amount received.",
+              "default": 200,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "transfer_out",
+          "display_type": "Transfer Out",
+          "onboarding_stage": "full",
+          "display_event": false,
+          "is_recurring": false,
+          "can_be_reocurring": false,
+          "icon": "arrow-right",
+          "description": "Transfer money out of an account to another account.",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Transfer Date",
+              "parameter_units": "date",
+              "description": "When the transfer occurs",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "Transfer Amount",
+              "parameter_units": "usd",
+              "description": "Amount to transfer.",
+              "default": 100,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "to_key",
+              "display_name": "To Account",
+              "parameter_units": "envelope",
+              "description": "Account to which the transfer is applied.",
+              "default": "Other (Cash)",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "short_term_capital_gains_account",
+              "display_name": "Short Term Capital Gains Account",
+              "parameter_units": "envelope",
+              "description": "Account to track short term capital gains.",
+              "default": "Short Term Capital Gains",
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "long_term_capital_gains_account",
+              "display_name": "Long Term Capital Gains Account",
+              "parameter_units": "envelope",
+              "description": "Account to track long term capital gains.",
+              "default": "Long Term Capital Gains",
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        },
+        {
+          "type": "sell_all",
+          "display_type": "Sell All",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Sale Date",
+              "parameter_units": "date",
+              "default": 0
+            },
+            {
+              "type": "to_key",
+              "display_name": "To Account",
+              "parameter_units": "envelope",
+              "default": "Other (Cash)"
+            },
+            {
+              "type": "short_term_capital_gains_account",
+              "display_name": "Short Term Gains Account",
+              "parameter_units": "envelope",
+              "default": "Short Term Capital Gains"
+            },
+            {
+              "type": "long_term_capital_gains_account",
+              "display_name": "Long Term Gains Account",
+              "parameter_units": "envelope",
+              "default": "Long Term Capital Gains"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "high_yield_savings_account",
+      "display_type": "High Yield Savings",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Investments & Assets",
+      "description": "Open a high-yield savings account that earns daily interest.",
+      "icon": "banknote",
+      "disclaimer": "This event simulates opening a high-yield savings account with a fixed interest rate. It does not account for rate changes, fees, or withdrawal limits.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the savings account is opened",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "interest_rate",
+          "display_name": "Interest Rate",
+          "parameter_units": "apy",
+          "description": "Annual percentage yield (APY).",
+          "default": 0.045,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Initial Deposit",
+          "parameter_units": "usd",
+          "description": "Initial deposit into the account.",
+          "default": 100,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where funds originate.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account for savings balance.",
+          "default": "Other (Savings)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "buy_groceries",
+      "display_type": "Grocery Purchase",
+      "display_event": false,
+      "is_recurring": true,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Living Expenses",
+      "description": "Spend a recurring amount on monthly groceries.",
+      "icon": "shopping-cart",
+      "disclaimer": "This event simulates recurring grocery expenses. It does not account for price changes, dietary needs, or non-food purchases.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When grocery expenses begin",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "monthly_amount",
+          "display_name": "Monthly Amount",
+          "parameter_units": "usd",
+          "description": "Average grocery bill each month.",
+          "default": 800,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where grocery costs are paid from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the expense stops recurring.",
+          "default": 29200,
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": []
+    },
+    {
+      "type": "roth_ira_contribution",
+      "display_type": "Retirement Contributions",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": true,
+      "category": "Retirement",
+      "weight": 100,
+      "description": "Contribute to a Roth IRA account.",
+      "icon": "banknote",
+      "disclaimer": "This event simulates a Roth IRA contribution. Contribution limits and eligibility are not enforced.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the contribution starts.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When the contribution ends.",
+          "default": 29200,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Contribution Frequency",
+          "parameter_units": "days",
+          "description": "Number of days between each contribution.",
+          "default": 365,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Contribution Amount",
+          "parameter_units": "usd",
+          "description": "Amount to contribute.",
+          "default": 6000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account from which funds are contributed.",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where Roth IRA is tracked.",
+          "default": "RothIRA",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "roth_ira_principle_key",
+          "display_name": "ROTH IRA Principle Account",
+          "parameter_units": "envelope",
+          "description": "Account where ROTH IRA principle is tracked.",
+          "default": "ROTH IRA Principle",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "federal_subsidized_loan",
+      "display_type": "Student Loan (Federal Subsidized)",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Debt",
+      "description": "Federal subsidized student loan with no interest accrual during school. Payments begin 6 months after graduation with 10-year amortization.",
+      "icon": "graduation-cap",
+      "disclaimer": "Interest does not accrue while enrolled in school at least half-time. Standard 10-year repayment schedule begins 6 months after graduation.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Loan Origination Date",
+          "parameter_units": "date",
+          "description": "When the loan is first disbursed",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "Loan Origination Date",
+          "parameter_units": "date",
+          "description": "When the loan is payed off",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Loan Amount",
+          "parameter_units": "usd",
+          "description": "Total amount borrowed",
+          "default": 25000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "graduation_date",
+          "display_name": "Graduation Date",
+          "parameter_units": "date",
+          "description": "Number of days from start when graduation occurs",
+          "default": 1460,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "loan_term_years",
+          "display_name": "Loan Term (Years)",
+          "parameter_units": "years",
+          "description": "Number of years after graduation to repay the loan",
+          "default": 10,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where loan funds are received",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "Loan Tracking Account",
+          "parameter_units": "envelope",
+          "description": "Account where loan balance is tracked during school. No interest",
+          "default": "Student Loans Subsidized (During School)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "after_school_key",
+          "display_name": "After School Loan Tracking Account",
+          "parameter_units": "envelope",
+          "description": "Account where loan balance is tracked after school",
+          "default": "Student Loans",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "federal_unsubsidized_loan",
+      "display_type": "Student Loan (Federal Unsubsidized)",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Debt",
+      "description": "Federal unsubsidized student loan with interest accruing from disbursement. Payments begin 6 months after graduation.",
+      "icon": "graduation-cap",
+      "disclaimer": "Interest accrues from the date of disbursement. Interest may be capitalized when repayment begins.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Loan Origination Date",
+          "parameter_units": "date",
+          "description": "When the loan is first disbursed",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "Loan Origination Date",
+          "parameter_units": "date",
+          "description": "When the loan is payed off",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Loan Amount",
+          "parameter_units": "usd",
+          "description": "Total amount borrowed",
+          "default": 30000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "graduation_date",
+          "display_name": "Graduation Date",
+          "parameter_units": "date",
+          "description": "Number of days from start when graduation occurs",
+          "default": 1460,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "loan_term_years",
+          "display_name": "Loan Term (Years)",
+          "parameter_units": "years",
+          "description": "Number of years after graduation to repay the loan",
+          "default": 10,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where loan funds are received",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "Loan Tracking Account",
+          "parameter_units": "envelope",
+          "description": "Account where loan balance is tracked",
+          "default": "Student Loans",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "private_student_loan",
+      "display_type": "Student Loan (Private)",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Debt",
+      "description": "Private student loan with interest accruing during school. Payments begin 6 months after graduation.",
+      "icon": "graduation-cap",
+      "disclaimer": "Interest accrues from disbursement throughout school and grace period. Terms vary by lender.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Loan Origination Date",
+          "parameter_units": "date",
+          "description": "When the loan is first disbursed",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "Loan Origination Date",
+          "parameter_units": "date",
+          "description": "When the loan is payed off",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Loan Amount",
+          "parameter_units": "usd",
+          "description": "Total amount borrowed",
+          "default": 40000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "graduation_date",
+          "display_name": "Graduation Date",
+          "parameter_units": "date",
+          "description": "Number of days from start when graduation occurs",
+          "default": 1460,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "loan_term_years",
+          "display_name": "Loan Term (Years)",
+          "parameter_units": "years",
+          "description": "Number of years after graduation to repay the loan",
+          "default": 10,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account where loan funds are received",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "Loan Tracking Account",
+          "parameter_units": "envelope",
+          "description": "Account where loan balance is tracked",
+          "default": "Student Loans",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "usa_tax_system",
+      "display_type": "USA Tax System",
+      "onboarding_stage": "full",
+      "display_event": false,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Tax",
+      "description": "Manage USA tax-related accounts including taxable income, 401K penalties, and taxes.",
+      "icon": "dollar-sign",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the tax system starts",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "taxable_income_key",
+          "display_name": "Taxable Income Account",
+          "parameter_units": "envelope",
+          "description": "Account where taxable income is tracked",
+          "default": "Taxable Income",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "penalty_401k_key",
+          "display_name": "401K Penalty Account",
+          "parameter_units": "envelope",
+          "description": "Account where 401K penalties are tracked",
+          "default": "401K Penalty",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "taxes_401k_key",
+          "display_name": "401K Taxes Account",
+          "parameter_units": "envelope",
+          "description": "Account where 401K taxes are tracked",
+          "default": "401K Taxes",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "roth_key",
+          "display_name": "ROTH Account",
+          "parameter_units": "envelope",
+          "description": "Account where ROTH contributions are tracked",
+          "default": "RothIRA",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "p_401k_key",
+          "display_name": "401K Account",
+          "parameter_units": "envelope",
+          "description": "Account where 401K contributions are tracked",
+          "default": "Other (Retirement)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "taxable_home_value_key",
+          "display_name": "Taxable Home Value Account",
+          "parameter_units": "envelope",
+          "description": "Account where taxable home value is tracked",
+          "default": "House",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "federal_withholdings_key",
+          "display_name": "Federal Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where federal withholdings are tracked",
+          "default": "Federal Withholdings",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "state_withholdings_key",
+          "display_name": "State Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where state withholdings are tracked",
+          "default": "State Withholdings",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "local_withholdings_key",
+          "display_name": "Local Withholdings Account",
+          "parameter_units": "envelope",
+          "description": "Account where local withholdings are tracked",
+          "default": "Local Withholdings",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "ira_contributions_key",
+          "display_name": "IRA Contributions Account",
+          "parameter_units": "envelope",
+          "description": "Account where IRA contributions are tracked",
+          "default": "IRA Contributions",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "p_401k_withdraw_withholding_key",
+          "display_name": "401K Withdraw Withholding Account",
+          "parameter_units": "envelope",
+          "description": "Account where 401K withdrawals taxes are withheld",
+          "default": "401K Withdraw Withholding",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "p_401k_withdraw_key",
+          "display_name": "401K Withdraw Account",
+          "parameter_units": "envelope",
+          "description": "Account where 401K withdrawals are deposited",
+          "default": "401K Withdraw",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "roth_ira_withdraw_key",
+          "display_name": "ROTH IRA Withdraw Account",
+          "parameter_units": "envelope",
+          "description": "Account where ROTH IRA withdrawals are deposited",
+          "default": "ROTH IRA Withdraw",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "roth_ira_principle_key",
+          "display_name": "ROTH IRA Principle Account",
+          "parameter_units": "envelope",
+          "description": "Account where ROTH IRA principle is tracked",
+          "default": "ROTH IRA Principle",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "penalty_roth_key",
+          "display_name": "ROTH IRA Penalty Account",
+          "parameter_units": "envelope",
+          "description": "Account where ROTH IRA penalties are tracked",
+          "default": "ROTH IRA Penalty",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "irs_registered_account_key",
+          "display_name": "IRS Registered Account Account",
+          "parameter_units": "envelope",
+          "description": "Account where IRS registered account is tracked",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "long_term_capital_gains_key",
+          "display_name": "Long Term Gains Account",
+          "parameter_units": "envelope",
+          "description": "Account where long term capital gains are tracked",
+          "default": "Long Term Capital Gains",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "short_term_capital_gains_key",
+          "display_name": "Short Term Gains Account",
+          "parameter_units": "envelope",
+          "description": "Account where short term capital gains are tracked",
+          "default": "Short Term Capital Gains",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "filing_status",
+          "display_name": "Filing Status",
+          "parameter_units": "enum",
+          "description": "Tax filing status.",
+          "default": "Single",
+          "options": [
+            "Single",
+            "Married Filing Jointly",
+            "Married Filing Separately",
+            "Head of Household",
+            "Qualifying Widow(er)"
+          ],
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "dependents",
+          "display_name": "Number of Dependents",
+          "parameter_units": "number",
+          "description": "Number of dependents claimed.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "location",
+          "display_name": "Location",
+          "parameter_units": "string",
+          "description": "Location in the format 'City, State' for tax purposes.",
+          "default": "City, State",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "rent_payment",
+      "display_type": "Rent / Housing Cost",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": false,
+      "weight": 90,
+      "category": "Living Expenses",
+      "description": "Track your monthly rent or housing costs.",
+      "default_title": "Rent / Housing Cost",
+      "icon": "home",
+      "disclaimer": "This event tracks recurring rent or housing payments. It does not include utilities or renter's insurance unless added separately.",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Rent Payment",
+          "description": "Monthly rent or housing cost deducted from your account",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When rent payments begin",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When rent payments end (e.g., when you move or buy a home)",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "monthly_amount",
+          "display_name": "Monthly Rent",
+          "parameter_units": "usd",
+          "description": "How much you pay per month for rent or housing",
+          "default": 1500,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account rent is paid from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "freelance_income",
+      "display_type": "Freelance / Side Income",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": true,
+      "weight": 85,
+      "category": "Income & Employment",
+      "description": "Income from freelance work, side gigs, consulting, or other self-employment.",
+      "default_title": "Freelance / Side Income",
+      "icon": "briefcase",
+      "disclaimer": "Self-employment income may be subject to self-employment tax. Consult a tax professional for guidance.",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Freelance Income",
+          "description": "Money received from freelance or side work",
+          "icon": "arrow-up",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When freelance income begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When freelance income ends",
+          "default": 3650,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "How often you receive freelance income (e.g., 30 for monthly)",
+          "default": 30,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Amount",
+          "parameter_units": "usd",
+          "description": "Amount earned per payment",
+          "default": 1000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where freelance income is deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "windfall",
+      "display_type": "Windfall / Inheritance",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 80,
+      "category": "Income & Employment",
+      "description": "A one-time lump sum received as an inheritance, gift, bonus, or other unexpected income.",
+      "default_title": "Windfall / Inheritance",
+      "icon": "gift",
+      "disclaimer": "Inheritances and gifts above certain thresholds may be subject to estate or gift taxes. Consult a tax professional.",
+      "event_functions_parts": [
+        {
+          "type": "inflow",
+          "title": "Windfall",
+          "description": "One-time lump sum deposited into your account",
+          "icon": "arrow-up",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Date Received",
+          "parameter_units": "date",
+          "description": "When the windfall or inheritance is received",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Amount",
+          "parameter_units": "usd",
+          "description": "Total amount received",
+          "default": 50000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "To Account",
+          "parameter_units": "envelope",
+          "description": "Account where the windfall is deposited",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "moving_costs",
+      "display_type": "Moving Costs",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 75,
+      "category": "Living Expenses",
+      "description": "One-time costs associated with moving to a new home, city, or state.",
+      "default_title": "Moving Costs",
+      "icon": "arrow-right",
+      "disclaimer": "Moving costs vary widely based on distance and volume. Some moving expenses may be tax-deductible for active-duty military.",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Moving Expense",
+          "description": "One-time costs paid for moving",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Moving Date",
+          "parameter_units": "date",
+          "description": "When the move takes place",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "amount",
+          "display_name": "Total Moving Cost",
+          "parameter_units": "usd",
+          "description": "Total cost of the move (movers, truck rental, deposits, etc.)",
+          "default": 3000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account moving costs are paid from",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ]
+    },
+    {
+      "type": "career_break",
+      "display_type": "Career Break",
+      "display_event": true,
+      "is_recurring": false,
+      "can_be_reocurring": false,
+      "weight": 70,
+      "category": "Life Events",
+      "description": "A planned period of time away from paid work, such as a sabbatical, parental leave, or personal break.",
+      "default_title": "Career Break",
+      "icon": "moon",
+      "disclaimer": "A career break will pause employment income. Ensure you have sufficient savings or alternative income during this period.",
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When the career break begins",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When you plan to return to work",
+          "default": 365,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "monthly_expenses",
+          "display_name": "Monthly Living Expenses",
+          "parameter_units": "usd",
+          "description": "Estimated monthly expenses during the break",
+          "default": 3000,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account used to cover living expenses during the break",
+          "default": "Other (Cash)",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Living Expenses",
+          "description": "Monthly living expenses during the career break",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ]
+    }
+  ]
+}
