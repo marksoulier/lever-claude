@@ -14,7 +14,11 @@ export default function CopyPromptButton({ prompt, label = "Copy prompt" }: { pr
   return (
     <button
       onClick={handleCopy}
-      className="text-xs font-semibold text-teal hover:text-teal-dark transition-colors"
+      className={`text-xs font-semibold transition-all ${
+        copied
+          ? "text-teal bg-teal/10 px-2 py-0.5 rounded-full"
+          : "text-teal hover:text-teal-dark"
+      }`}
     >
       {copied ? "✓ Copied!" : label}
     </button>

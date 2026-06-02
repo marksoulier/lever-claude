@@ -264,9 +264,16 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
       </div>
 
       {/* Events in this plan */}
-      {planData?.events && planData.events.filter(e => !e.hide).length > 0 && (
+      {planData?.events && planData.events.filter(e => !e.hide).length > 0 ? (
         <EventsSummary events={planData.events.filter(e => !e.hide)} />
-      )}
+      ) : planData != null ? (
+        <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-6 py-4">
+          <p className="text-sm font-bold text-zinc-700">No events modeled yet</p>
+          <p className="text-xs text-zinc-400 mt-1">
+            Your plan uses a simple projection. Ask Claude to build your full event model — income, rent, mortgage, retirement contributions — for a simulation that reflects your real life.
+          </p>
+        </div>
+      ) : null}
 
       {/* Claude CTA */}
       <div className="rounded-2xl bg-teal p-6 flex flex-col gap-4">
@@ -360,11 +367,18 @@ function getEventSummary(event: { type: string; parameters: { type: string; valu
   switch (event.type) {
     case "get_job": case "get_wage_job": case "income_with_changing_parameters":
       return [fmtMoney(p.salary ?? p.annual_salary), "salary"].filter(Boolean).join(" ");
-    case "inflow": case "rent_payment": case "outflow": case "monthly_budgeting":
+    case "inflow": case "rent_payment": case "outflow":
     case "childcare_expense": case "buy_groceries": case "freelance_income":
       return [fmtMoney(p.amount ?? p.monthly_cost), fmtFreq(p.frequency_days)].filter(Boolean).join(" ");
-    case "existing_mortgage":
+    case "payment_schedule": case "existing_mortgage":
       return [fmtMoney(p.payment), "monthly"].filter(Boolean).join(" ");
+    case "monthly_budgeting": {
+      // sum all category fields since there is no single `amount`
+      const cats = ["groceries","utilities","rent","transportation","insurance",
+                    "healthcare","dining_out","entertainment","personal_care","miscellaneous"];
+      const total = cats.reduce((sum, k) => sum + (Number(p[k]) || 0), 0);
+      return total > 0 ? `$${total.toLocaleString()} monthly` : "";
+    }
     case "buy_house": case "loan_amortization": case "federal_subsidized_loan":
     case "federal_unsubsidized_loan": case "private_student_loan":
       return [fmtMoney(p.principal), p.interest_rate != null ? `@ ${(Number(p.interest_rate) * 100).toFixed(1)}%` : null].filter(Boolean).join(" ");
