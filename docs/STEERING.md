@@ -216,7 +216,20 @@ Errors surface in the MCP tool response. The AI corrects and retries. The simula
 
 ## Quality requirements
 
-### Simulator — Jest unit tests per event handler
+### The simulator is professional, industry-grade software
+
+The financial simulator is the core technical asset of Lever — the thing that makes every projection, probability, and what-if trustworthy. It must be built and maintained to the standard of professional financial software:
+
+- **Correctness over convenience.** Every handler produces mathematically verifiable outputs. No approximations, no hardcoded magic numbers, no "close enough." The mortgage amortization math must match a bank's calculation. The 401k withholding must match a payroll processor's output.
+- **Fully tested.** Every handler has Vitest tests with known inputs and asserted outputs. Integration tests cover multi-event life plans over real time horizons. The test suite is the contract — if a test breaks, the code broke, full stop.
+- **Typed strictly.** TypeScript strict mode, zero `any`, all simulator types in `lib/simulator/types.ts`. The type system enforces the data contract between plan storage, simulation, and UI.
+- **Documented clearly.** Non-obvious invariants (negative balance for debt, day-0 single-fire behavior, nominal vs real output) have one-line comments explaining why. The SIMULATOR_EVAL.md tracks known gaps and design decisions.
+- **Deterministic provably.** Determinism is tested — two runs of the same plan produce bit-identical results. This is the foundation of trustworthy what-if comparisons.
+- **Performant measurably.** There are performance benchmarks. Single simulation runs in <100ms. Monte Carlo 500 iterations runs in <5s. If a change breaks a benchmark, it is treated as a bug.
+
+This standard is not aspirational — it is the current requirement. A simulator that is "probably right" is worse than useless for financial planning; it produces confident wrong numbers.
+
+### Simulator — Vitest tests per event handler
 
 Every event handler must have unit tests with known inputs and asserted outputs. Tests are what make "deterministic" a real claim.
 
