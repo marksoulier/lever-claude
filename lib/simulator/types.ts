@@ -57,6 +57,21 @@ export interface SimulationResult {
   nonNetworthParts?: Record<string, number>;  // non-networth account balances
 }
 
+export interface MonteCarloResults {
+  iterations: number;
+  success_rate: number;         // % of runs where retirement balance >= target
+  p5: number;                   // 5th percentile balance at retirement
+  p10: number;
+  p25: number;
+  p50: number;                  // median
+  p75: number;
+  p90: number;
+  p95: number;
+  mean_return_used: number;     // annualized mean return assumption
+  std_dev_used: number;         // annualized std dev assumption
+  computed_at: string;          // ISO timestamp
+}
+
 export interface PlanData {
   birth_date: string;           // ISO date, e.g. "1995-03-12"
   location?: string;
@@ -67,6 +82,7 @@ export interface PlanData {
   accounts: Account[];
   events: SimEvent[];
   simulation_results?: SimulationResult[];
+  monte_carlo?: MonteCarloResults;
 }
 
 // ── Simulator-internal types (after parseEventsForSimulation) ─────────────

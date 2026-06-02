@@ -31,6 +31,7 @@ import { getEventList, getEventSchema, isValidEventType, nextEventId } from "@/l
 import { getHardErrors } from "@/lib/simulator/schema-checker";
 import { runSimulation, DEFAULT_ACCOUNTS } from "@/lib/simulator/runner";
 import { simulationToScalars, simulationBounds } from "@/lib/simulator/bridge";
+import { runMonteCarlo } from "@/lib/simulator/monte-carlo";
 import type { PlanData, SimEvent, Parameter } from "@/lib/simulator/types";
 
 const PLAN_DASHBOARD_URI = "ui://lever/plan-dashboard";
@@ -1377,6 +1378,95 @@ Default accounts available in a new plan: Checking, Savings, 401k, Roth IRA, Inv
           if (op === "add_event") {
             lines.push(``, `Next: use update_plan with op="add_event" to add more events, or get_plan_data to review the current state.`);
           }
+
+          return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+        },
+      );
+
+      // ── Monte Carlo ───────────────────────────────────────────────────────
+
+      server.tool(
+        "run_monte_carlo",
+        `Run a Monte Carlo simulation on the user's primary plan (or a specified plan) to estimate the probability distribution of outcomes at retirement.
+
+Call this when the user asks questions like "what are my chances of retiring comfortably?", "how bad could it get in a downturn?", or "what's my real probability of success?". Do NOT call it for routine plan updates — it's compute-intensive and is only meaningful for uncertainty questions.
+
+The simulation runs 500 iterations, each with an annual return rate sampled from a historical distribution (mean 7%, σ 12% for a balanced portfolio). Returns real probability percentiles — not the simplified linear estimate shown on the plan page.
+
+After calling this tool, always surface:
+• The success_rate (% of scenarios where the user hits their target)
+• The p10 and p90 range (the likely spread of outcomes)
+• The p5 worst case (what a bad market decade looks like)
+• Compare to the current projected_balance (p50 ≈ deterministic result)`,
+        {
+          plan_id: z.string().optional().describe("UUID of the plan to simulate. Omit to use the primary plan."),
+          iterations: z.number().int().min(100).max(2000).optional().describe("Number of Monte Carlo iterations. Default 500. Use 1000+ for more precise tail estimates."),
+          mean_return: z.number().min(-0.2).max(0.3).optional().describe("Override the assumed mean annual return. Default 0.07 (7%)."),
+          std_dev: z.number().min(0.01).max(0.5).optional().describe("Override the assumed annual std deviation. Default 0.12 (12%)."),
+        },
+        async ({
+          plan_id,
+          iterations,
+          mean_return,
+          std_dev,
+        }: {
+          plan_id?: string;
+          iterations?: number;
+          mean_return?: number;
+          std_dev?: number;
+        }) => {
+          if (!userId) return { content: [{ type: "text" as const, text: "Not authenticated." }] };
+
+          // Find the target plan
+          const all = await fetchPlans();
+          let plan = plan_id
+            ? all.find(p => p.id === plan_id)
+            : all.find(p => p.isPrimary) ?? all[0];
+          if (!plan) return { content: [{ type: "text" as const, text: "No plan found. Create a plan first." }] };
+
+          const { data: raw } = await admin.from("plans").select("plan_data, target_balance").eq("id", plan.id).single();
+          const planData = (raw as any)?.plan_data as PlanData | null;
+          if (!planData?.birth_date) {
+            return { content: [{ type: "text" as const, text: `Plan "${plan.name}" has no simulation data yet. Use update_plan to add events first.` }] };
+          }
+
+          const targetBalance = plan.targetBalance;
+
+          const mc = await runMonteCarlo({
+            planData,
+            retirementAge: plan.retirementAge,
+            targetBalance,
+            iterations:  iterations ?? 500,
+            meanReturn:  mean_return,
+            stdDev:      std_dev,
+          });
+
+          // Persist Monte Carlo results into plan_data so the UI can show them
+          const updatedPlanData = { ...planData, monte_carlo: mc };
+          await admin.from("plans").update({
+            plan_data: updatedPlanData,
+            success_probability: mc.success_rate,
+          }).eq("id", plan.id);
+
+          const fmt = (n: number) => n >= 1_000_000
+            ? `$${(n / 1_000_000).toFixed(2)}M`
+            : `$${Math.round(n / 1000)}K`;
+
+          const lines = [
+            `Monte Carlo simulation complete — ${mc.iterations} scenarios run for "${plan.name}":`,
+            ``,
+            `📊 Probability of success: **${mc.success_rate}%** (reaching $${fmt(targetBalance)} target)`,
+            ``,
+            `Outcome range at retirement (age ${plan.retirementAge}):`,
+            `• Best case (p90):   ${fmt(mc.p90)}`,
+            `• Expected (p50):    ${fmt(mc.p50)}`,
+            `• Cautious (p25):    ${fmt(mc.p25)}`,
+            `• Worst case (p5):   ${fmt(mc.p5)}`,
+            ``,
+            `Assumptions: ${((mc.mean_return_used) * 100).toFixed(0)}% mean annual return, ±${(mc.std_dev_used * 100).toFixed(0)}% standard deviation (historical balanced portfolio).`,
+            ``,
+            `The plan page now shows the real probability. To improve your odds, consider increasing contributions or adjusting your retirement age.`,
+          ];
 
           return { content: [{ type: "text" as const, text: lines.join("\n") }] };
         },

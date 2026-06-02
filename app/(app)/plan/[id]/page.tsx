@@ -62,9 +62,17 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   const monthlyIncomeAtRetirement = simProjectedBalance != null
     ? Math.round((simProjectedBalance * 0.04) / 12)
     : plan.monthlyIncomeAtRetirement;
-  const successProbability = simProjectedBalance != null
-    ? Math.min(99, Math.max(10, Math.round(50 + (simProjectedBalance / plan.targetBalance) * 40)))
-    : plan.successProbability;
+
+  // Use Monte Carlo success rate when available; fall back to the linear estimate.
+  const monteCarlo = planData?.monte_carlo ?? null;
+  const successProbability = monteCarlo
+    ? monteCarlo.success_rate
+    : simProjectedBalance != null
+      ? Math.min(99, Math.max(10, Math.round(50 + (simProjectedBalance / plan.targetBalance) * 40)))
+      : plan.successProbability;
+  const successTooltip = monteCarlo
+    ? `Monte Carlo result: ${monteCarlo.iterations} scenarios run on ${new Date(monteCarlo.computed_at).toLocaleDateString()}. Range: $${(monteCarlo.p10 / 1e6).toFixed(1)}M–$${(monteCarlo.p90 / 1e6).toFixed(1)}M (p10–p90). Assumes ${(monteCarlo.mean_return_used * 100).toFixed(0)}% mean return, ±${(monteCarlo.std_dev_used * 100).toFixed(0)}% std dev.`
+    : "Estimates how close your projected balance is to your retirement target. Not a Monte Carlo simulation — ask Claude to run one for a real probability.";
 
   const shortfall = projectedBalance - plan.targetBalance;
 
@@ -72,8 +80,8 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
     { label: "Projected balance",      subtitle: "at retirement",       value: fmtBalance(projectedBalance) },
     { label: "Monthly income",         subtitle: "in retirement",       value: `$${monthlyIncomeAtRetirement.toLocaleString()}` },
     { label: "Shortfall / surplus",    subtitle: "vs target balance",   value: `${shortfall >= 0 ? "+" : "-"}${fmtBalance(Math.abs(shortfall))}` },
-    { label: "Probability of success", subtitle: "of reaching goal",    value: `${successProbability}%`,
-      tooltip: "Estimates how close your projected balance is to your retirement target. Not a Monte Carlo simulation." },
+    { label: "Probability of success", subtitle: monteCarlo ? "Monte Carlo" : "of reaching goal", value: `${successProbability}%`,
+      tooltip: successTooltip },
   ];
 
   // B-3: dynamic what-if scenarios using real plan numbers
