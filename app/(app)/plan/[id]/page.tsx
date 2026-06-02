@@ -5,6 +5,7 @@ import PlanSettingsMenu from "./PlanSettingsMenu";
 import GrowthProjectionChart, { type SimPoint } from "./GrowthProjectionChart";
 import ComparisonChart from "./ComparisonChart";
 import CopyPromptButton from "./CopyPromptButton";
+import TrajectoryChart from "./TrajectoryChart";
 import { createServerClient } from "@/lib/supabase/server";
 import { planFromRow, type DbPlanRow } from "@/lib/supabase/mappers";
 import { isPremium } from "@/lib/supabase/subscription";
@@ -225,6 +226,9 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
           </div>
         </div>
       )}
+
+      {/* Projection trajectory — history of how this plan's projected balance has changed */}
+      <TrajectoryChart planId={id} />
 
       {/* Allocation + projection */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

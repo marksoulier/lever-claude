@@ -158,7 +158,79 @@ Personal finance YouTube (Graham Stephan, Andrei Jikh, etc.) have audiences that
 
 ## Immediate Next Actions
 
-1. Fix Monte Carlo (credibility prerequisite for any serious positioning)
+1. Fix Monte Carlo ✅ done — year-by-year sampling, real probability
 2. Build advisor tier (existing admin panel → revenue-generating product)
 3. Write one genuine post for r/financialindependence when product is solid enough
 4. Add financial health score concept to backlog
+
+---
+
+## Financial Tool Connections — Future Brainstorm
+
+### The opportunity
+
+Lever currently requires users to manually enter their financial situation through conversation. The natural next step is connecting to real financial data sources so the plan reflects what's actually happening — not what the user remembers.
+
+**What connections would unlock:**
+- Automatic account balance sync → net worth history builds itself without manual "Log it" entries
+- Real income tracking → salary events stay accurate without manual updates
+- Spending data → monthly budgeting events reflect actual behavior, not estimates
+- Investment performance → 401k and portfolio accounts update automatically, feeding the simulator with real growth rates
+- Document ingestion from financial institutions → W-2s, 1099s, statements auto-imported
+
+**Services to connect:**
+
+| Service | What it provides | Complexity |
+|---|---|---|
+| **Plaid** | Bank/investment account balances, transactions | Medium — requires compliance review |
+| **Finicity** (Mastercard) | Same as Plaid, different institution coverage | Medium |
+| **Yodlee** | Broadest institution coverage, used by large banks | High |
+| **IRS e-Services / Income Verification Express Service** | Official income verification | High — gated API |
+| **Zillow / Redfin API** | Real-time home valuation | Low — public API |
+| **FRED (Federal Reserve)** | Interest rates, CPI, unemployment | Low — free, public |
+| **Morningstar / Alpha Vantage** | Investment price feeds | Low–Medium |
+
+**Staged approach:**
+1. **Phase 1 (now viable):** FRED for economic data (rates, inflation, CPI). Free, no compliance. Feeds the simulator's assumed return and inflation rate with real market data instead of static defaults.
+2. **Phase 2:** Zillow API for home valuations. Free tier, no financial regulation. Updates the home asset in the plan automatically.
+3. **Phase 3:** Plaid or Finicity for account balance sync. This is where significant complexity begins.
+
+### ⚠️ Legal disclaimer — financial planner territory
+
+**This is where Lever could unintentionally become a regulated financial planning tool and attract legal liability.**
+
+Connecting to real account data and providing advice based on that data is precisely what triggers financial regulation:
+
+- **Investment Adviser Act of 1940 (US):** If Lever provides personalized investment advice for compensation, it becomes an Investment Adviser and must register with the SEC or state regulators.
+- **FINRA regulations:** Brokerage-adjacent features (buy/sell signals, portfolio rebalancing recommendations) require broker-dealer registration.
+- **CFPB oversight:** Consumer financial data aggregation is under CFPB scrutiny, especially post-Dodd-Frank Section 1033 (open banking rules).
+- **State-level regulations:** Many states have their own financial advisor registration requirements that trigger at lower thresholds than federal law.
+
+**What keeps Lever outside regulated territory (the current model):**
+- "This is not financial advice" disclaimer (necessary but not sufficient alone)
+- Sandbox framing — the plan is explicitly a simulation, not a recommendation
+- No execution capability — Lever cannot move money, buy securities, or execute transactions
+- No compensation linked to specific financial outcomes or product recommendations
+
+**What would push Lever into regulated territory:**
+- Real-time account data with AI-driven buy/sell or rebalancing suggestions
+- Affiliate revenue tied to recommending specific financial products (e.g., "based on your plan, you should buy this ETF from our partner")
+- Managing accounts on behalf of users (even passively)
+- Taking custody of or having authority over user funds
+
+**The pragmatic line to stay on:**
+- Connect to data for *display and planning context only* — never for instruction or execution
+- Always present outputs as projections, not recommendations
+- Add Plaid only for *reading* balances, not enabling transactions
+- Any affiliate links must be clearly disclosed and not tied to algorithmic recommendations about specific products
+- Consult a securities attorney before Phase 3 (Plaid integration)
+
+**Era Financial's approach:** Era allows read-write access to accounts (can execute transfers). They've navigated this by positioning as "infrastructure" rather than "advice" — the AI is the advisor, Era is just the pipe. This distinction is legally fragile and will likely face regulatory scrutiny as agentic finance matures. Lever's current model (simulation sandbox, no execution) is safer.
+
+### Plan projection history — connected opportunity
+
+One implementation of "connected data" that carries zero regulatory risk: recording how the plan's *projection* changes over time. This requires no external data connections — just storing our own output at regular intervals.
+
+Snapshots of projected retirement balance over weeks/months show users whether their trajectory is improving. "Your projected balance increased $140K this quarter because you added your 401k contributions to the plan." This is motivating, safe, and differentiating.
+
+This is being built now (see implementation below).

@@ -33,6 +33,7 @@ import { runSimulation, DEFAULT_ACCOUNTS } from "@/lib/simulator/runner";
 import { simulationToScalars, simulationBounds } from "@/lib/simulator/bridge";
 import { runMonteCarlo } from "@/lib/simulator/monte-carlo";
 import { track } from "@/lib/posthog";
+import { recordPlanSnapshot } from "@/lib/supabase/plan-snapshot";
 import type { PlanData, SimEvent, Parameter } from "@/lib/simulator/types";
 
 const PLAN_DASHBOARD_URI = "ui://lever/plan-dashboard";
@@ -388,6 +389,18 @@ async function handleMcp(request: Request) {
             success_probability: prob,
           });
 
+          recordPlanSnapshot(admin, {
+            planId: (data as any).id,
+            userId,
+            projectedBalance:          projected,
+            successProbability:        prob,
+            monthlyIncomeAtRetirement: income,
+            monthlyContribution:       monthly_contribution,
+            eventCount:                0,
+            triggerSource:             "create_plan",
+            snapshotNote:              `Plan created: "${name}"`,
+          });
+
           const lines = [
             `Created plan "${name}"${makePrimary ? " (set as your primary plan)" : ""}.`,
             ``,
@@ -503,6 +516,17 @@ async function handleMcp(request: Request) {
             has_target_income: !!merged.targetMonthlyIncome,
             projected_balance: projected,
             success_probability: prob,
+          });
+
+          if (userId) recordPlanSnapshot(admin, {
+            planId:                    plan.id,
+            userId,
+            projectedBalance:          projected,
+            successProbability:        prob,
+            monthlyIncomeAtRetirement: income,
+            monthlyContribution:       plan.monthlyContribution,
+            triggerSource:             "update_context",
+            snapshotNote:              "Personal context updated",
           });
 
           const lines = [
@@ -1395,6 +1419,18 @@ Default accounts available in a new plan: Checking, Savings, 401k, Roth IRA, Inv
             simulation_ran: !!scalars,
             projected_balance: scalars?.projected_balance,
             success_probability: scalars?.success_probability,
+          });
+
+          if (scalars) recordPlanSnapshot(admin, {
+            planId:                    plan.id,
+            userId,
+            projectedBalance:          scalars.projected_balance,
+            successProbability:        scalars.success_probability,
+            monthlyIncomeAtRetirement: scalars.monthly_income_at_retirement,
+            monthlyContribution:       plan.monthlyContribution,
+            eventCount:                planData.events.length,
+            triggerSource:             "update_plan",
+            snapshotNote:              `${op} applied`,
           });
 
           const eventCount = planData.events.length;
