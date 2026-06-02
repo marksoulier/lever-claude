@@ -78,8 +78,9 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   const shortfall = projectedBalance - plan.targetBalance;
 
   const metrics = [
-    { label: "Projected balance",      subtitle: "at retirement",       value: fmtBalance(projectedBalance) },
-    { label: "Monthly income",         subtitle: "in retirement",       value: `$${monthlyIncomeAtRetirement.toLocaleString()}` },
+    { label: "Projected balance",      subtitle: "at retirement · nominal",  value: fmtBalance(projectedBalance),
+      tooltip: "Shown in future (nominal) dollars, not adjusted for inflation. At 2.5% inflation, $1M in 30 years is worth roughly $480K today." },
+    { label: "Monthly income",         subtitle: "in retirement · nominal",  value: `$${monthlyIncomeAtRetirement.toLocaleString()}` },
     { label: "Shortfall / surplus",    subtitle: "vs target balance",   value: `${shortfall >= 0 ? "+" : "-"}${fmtBalance(Math.abs(shortfall))}` },
     { label: "Probability of success", subtitle: monteCarlo ? "Monte Carlo" : "of reaching goal", value: `${successProbability}%`,
       tooltip: successTooltip },
