@@ -4,6 +4,7 @@ import WhatIfPanel from "./WhatIfPanel";
 import PlanSettingsMenu from "./PlanSettingsMenu";
 import GrowthProjectionChart, { type SimPoint } from "./GrowthProjectionChart";
 import ComparisonChart from "./ComparisonChart";
+import CopyPromptButton from "./CopyPromptButton";
 import { createServerClient } from "@/lib/supabase/server";
 import { planFromRow, type DbPlanRow } from "@/lib/supabase/mappers";
 import { isPremium } from "@/lib/supabase/subscription";
@@ -87,6 +88,11 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
   // B-3: dynamic what-if scenarios using real plan numbers
   const scenarios = buildScenarios(plan);
 
+  // Prompts for Claude deep-links — give users something concrete to paste
+  const setupPrompt = `Set up my Lever financial plan called "${plan.name}". Ask me for my date of birth, annual income, desired monthly retirement income, and risk tolerance — then update the plan so the projections reflect my real situation.`;
+  const monteCarloPrompt = `Run a Monte Carlo simulation on my "${plan.name}" plan and tell me my real probability of reaching my retirement goal, including the best-case and worst-case range.`;
+  const askClaudePrompt = `I'm looking at my Lever financial plan called "${plan.name}" — projected ${fmtBalance(projectedBalance)} at retirement. What's one thing I should change to improve my outlook?`;
+
   return (
     <div className="flex flex-col gap-8 px-8 py-8 max-w-3xl mx-auto w-full">
 
@@ -150,20 +156,24 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
       {plan.context ? (
         <ContextPanel context={plan.context} />
       ) : (
-        <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex-1">
+        <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-6 py-5 flex flex-col gap-4">
+          <div>
             <p className="text-sm font-bold text-zinc-700">This plan has no personal context yet</p>
             <p className="text-xs text-zinc-400 mt-1">
-              Tell Claude your age, income, retirement income goal, and risk tolerance — it will set up this plan and recompute the projections for you.
+              Open Claude with the Lever connector, paste the prompt below, and Claude will personalise this plan for you.
             </p>
+          </div>
+          <div className="rounded-xl bg-white border border-zinc-200 px-4 py-3 flex items-start justify-between gap-3">
+            <p className="text-xs text-zinc-500 leading-relaxed flex-1 font-mono">{setupPrompt}</p>
+            <CopyPromptButton prompt={setupPrompt} />
           </div>
           <a
             href="https://claude.ai"
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 rounded-full bg-teal px-5 py-2 text-sm font-semibold text-white hover:bg-teal-dark transition-colors"
+            className="self-start rounded-full bg-teal px-5 py-2 text-sm font-semibold text-white hover:bg-teal-dark transition-colors"
           >
-            Set up with Claude →
+            Open Claude →
           </a>
         </div>
       )}
@@ -190,6 +200,29 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
           </div>
         ))}
       </div>
+
+      {/* Monte Carlo prompt — shown when no MC results yet */}
+      {!monteCarlo && (
+        <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
+          <div className="flex-1">
+            <p className="text-sm font-bold text-zinc-700">Run a real probability simulation</p>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              The {successProbability}% above is an estimate. Ask Claude to run 500 Monte Carlo scenarios for a real probability with best/worst-case range.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <CopyPromptButton prompt={monteCarloPrompt} label="Copy prompt" />
+            <a
+              href="https://claude.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-teal text-teal px-4 py-1.5 text-xs font-semibold hover:bg-teal hover:text-white transition-colors"
+            >
+              Open Claude
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Allocation + projection */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -231,20 +264,24 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
       </div>
 
       {/* Claude CTA */}
-      <div className="rounded-2xl bg-teal p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="rounded-2xl bg-teal p-6 flex flex-col gap-4">
         <div>
           <p className="font-bold text-white">Ask Claude about this plan</p>
           <p className="text-sm text-white/70 mt-1">
-            Open a Claude conversation with Lever connected to model new scenarios, update your plan, and get personalised insights.
+            Copy the prompt below, open Claude with the Lever connector, and paste it to get personalised insights on your plan.
           </p>
+        </div>
+        <div className="rounded-xl bg-white/10 border border-white/20 px-4 py-3 flex items-start justify-between gap-3">
+          <p className="text-xs text-white/80 leading-relaxed flex-1 font-mono">{askClaudePrompt}</p>
+          <CopyPromptButton prompt={askClaudePrompt} label="Copy" />
         </div>
         <a
           href="https://claude.ai"
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-teal hover:bg-zinc-100 transition-colors"
+          className="self-start rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-teal hover:bg-zinc-100 transition-colors"
         >
-          Open in Claude
+          Open Claude →
         </a>
       </div>
     </div>

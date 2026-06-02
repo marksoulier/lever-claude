@@ -7,8 +7,8 @@ Living document. Add new activities, findings, and status as they happen. Claude
 ## Product Readiness (prerequisites before pushing hard)
 
 Before serious outreach, these must be true:
-- [ ] Monte Carlo button visible on plan page (not just in Claude)
-- [ ] "Open in Claude" deep-links to a useful pre-filled prompt
+- [x] Monte Carlo prompt visible on plan page — "Run a real probability simulation" card with copyable prompt
+- [x] "Open in Claude" shows plan-specific copyable prompts at all three touch points
 - [ ] Onboarding to first aha moment under 5 minutes
 - [ ] No P0 bugs open in BUGS.md
 
