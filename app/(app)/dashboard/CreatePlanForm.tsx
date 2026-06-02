@@ -130,6 +130,10 @@ export default function CreatePlanForm() {
         </label>
       </div>
 
+      <p className="text-xs text-zinc-400">
+        This creates a baseline projection. For a personalized plan — income, tax, life events — open Claude and say <span className="font-semibold text-zinc-500">&ldquo;Help me build my financial plan.&rdquo;</span>
+      </p>
+
       {error && (
         <p className="text-xs font-semibold text-red-500">{error}</p>
       )}

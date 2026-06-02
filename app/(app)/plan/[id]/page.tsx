@@ -53,13 +53,26 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
     if (primaryData) primaryPlan = planFromRow(primaryData as DbPlanRow);
   }
 
-  const shortfall = plan.projectedBalance - plan.targetBalance;
+  // B-1: when event-based simulation results exist, use the last point as the source of
+  // truth for all derived metrics so the chart and metric cards always agree.
+  const simProjectedBalance = simulationPoints && simulationPoints.length > 0
+    ? simulationPoints[simulationPoints.length - 1].value
+    : null;
+  const projectedBalance = simProjectedBalance ?? plan.projectedBalance;
+  const monthlyIncomeAtRetirement = simProjectedBalance != null
+    ? Math.round((simProjectedBalance * 0.04) / 12)
+    : plan.monthlyIncomeAtRetirement;
+  const successProbability = simProjectedBalance != null
+    ? Math.min(99, Math.max(10, Math.round(50 + (simProjectedBalance / plan.targetBalance) * 40)))
+    : plan.successProbability;
+
+  const shortfall = projectedBalance - plan.targetBalance;
 
   const metrics = [
-    { label: "Projected balance",      subtitle: "at retirement",       value: fmtBalance(plan.projectedBalance) },
-    { label: "Monthly income",         subtitle: "in retirement",       value: `$${plan.monthlyIncomeAtRetirement.toLocaleString()}` },
+    { label: "Projected balance",      subtitle: "at retirement",       value: fmtBalance(projectedBalance) },
+    { label: "Monthly income",         subtitle: "in retirement",       value: `$${monthlyIncomeAtRetirement.toLocaleString()}` },
     { label: "Shortfall / surplus",    subtitle: "vs target balance",   value: `${shortfall >= 0 ? "+" : "-"}${fmtBalance(Math.abs(shortfall))}` },
-    { label: "Probability of success", subtitle: "of reaching goal",    value: `${plan.successProbability}%`,
+    { label: "Probability of success", subtitle: "of reaching goal",    value: `${successProbability}%`,
       tooltip: "Estimates how close your projected balance is to your retirement target. Not a Monte Carlo simulation." },
   ];
 

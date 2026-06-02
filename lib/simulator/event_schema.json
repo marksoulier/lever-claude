@@ -5158,6 +5158,187 @@
           "default_state": true
         }
       ]
+    },
+    {
+      "type": "existing_mortgage",
+      "display_type": "Existing Mortgage / Loan",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": false,
+      "weight": 100,
+      "category": "Debt",
+      "description": "Model an existing mortgage or loan you already carry. First declare the current remaining balance as a negative value on your mortgage/debt account, then set the monthly payment here. The simulation automatically ends when the debt is paid off.",
+      "default_title": "Existing Mortgage",
+      "icon": "credit-card",
+      "disclaimer": "Set the debt account balance to the negative of your remaining balance (e.g. -$320,000) via declare_accounts before adding this event. The simulation uses fixed monthly payments and will terminate when the debt reaches zero.",
+      "event_functions_parts": [
+        {
+          "type": "debt_payments",
+          "title": "Monthly Payments",
+          "description": "Deduct the monthly payment from your checking account and reduce the debt balance.",
+          "icon": "credit-card",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "First Payment Date",
+          "parameter_units": "date",
+          "description": "When your next mortgage payment is due (typically today or next month).",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "Estimated payoff date. The simulation ends payments automatically when the balance hits zero.",
+          "default": 10950,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Payment Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Days between payments. 30 = monthly.",
+          "default": 30,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "payment",
+          "display_name": "Monthly Payment ($)",
+          "parameter_units": "usd",
+          "description": "Your fixed monthly mortgage or loan payment (principal + interest, excluding escrow).",
+          "default": 1500,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "The checking or savings account your payment comes from.",
+          "default": "Checking",
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "to_key",
+          "display_name": "Mortgage / Debt Account",
+          "parameter_units": "envelope",
+          "description": "The debt account tracking your mortgage balance (must have a negative balance set via declare_accounts).",
+          "default": "Mortgage",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": []
+    },
+    {
+      "type": "childcare_expense",
+      "display_type": "Childcare / Dependent Care",
+      "onboarding_stage": "full",
+      "display_event": true,
+      "is_recurring": true,
+      "can_be_reocurring": true,
+      "weight": 100,
+      "category": "Living Expenses",
+      "description": "Recurring monthly childcare, daycare, preschool, after-school care, or other dependent care costs. Use an end date when care is expected to end (e.g. when child starts school).",
+      "default_title": "Childcare",
+      "icon": "baby",
+      "disclaimer": "This event models a fixed recurring cost. Childcare costs typically change at transitions (infant to toddler, daycare to preschool, preschool to K-12). Use updating_events to model cost changes at those transitions.",
+      "event_functions_parts": [
+        {
+          "type": "outflow",
+          "title": "Monthly Childcare Payment",
+          "description": "Deduct childcare costs from the source account each month.",
+          "icon": "arrow-down",
+          "default_state": true
+        }
+      ],
+      "parameters": [
+        {
+          "type": "start_time",
+          "display_name": "Start Date",
+          "parameter_units": "date",
+          "description": "When childcare costs begin.",
+          "default": 0,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "end_time",
+          "display_name": "End Date",
+          "parameter_units": "date",
+          "description": "When childcare costs end (e.g. when child starts school or becomes self-sufficient).",
+          "default": 1825,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "frequency_days",
+          "display_name": "Frequency (Days)",
+          "parameter_units": "days",
+          "description": "Days between payments. 30 = monthly.",
+          "default": 30,
+          "editable": true,
+          "advanced_option": true
+        },
+        {
+          "type": "amount",
+          "display_name": "Monthly Cost ($)",
+          "parameter_units": "usd",
+          "description": "Monthly childcare or dependent care cost.",
+          "default": 1800,
+          "editable": true,
+          "advanced_option": false
+        },
+        {
+          "type": "from_key",
+          "display_name": "From Account",
+          "parameter_units": "envelope",
+          "description": "Account the childcare cost is paid from.",
+          "default": "Checking",
+          "editable": true,
+          "advanced_option": false
+        }
+      ],
+      "updating_events": [
+        {
+          "type": "update_amount",
+          "display_type": "Update Childcare Cost",
+          "display_event": true,
+          "is_recurring": false,
+          "can_be_reocurring": false,
+          "icon": "baby",
+          "description": "Update the monthly childcare cost at a transition point (e.g. infant to toddler room, preschool starting).",
+          "parameters": [
+            {
+              "type": "start_time",
+              "display_name": "Change Date",
+              "parameter_units": "date",
+              "description": "When the cost changes.",
+              "default": 0,
+              "editable": true,
+              "advanced_option": false
+            },
+            {
+              "type": "amount",
+              "display_name": "New Monthly Cost ($)",
+              "parameter_units": "usd",
+              "description": "Updated monthly childcare cost.",
+              "default": 1500,
+              "editable": true,
+              "advanced_option": false
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -733,6 +733,8 @@ function applyEventsToDay(
       case 'monthly_budgeting': applyMonthlyBudgeting(day, event, accounts, queue); break;
       case 'buy_house':       applyBuyHouse(day, event, accounts, queue); break;
       case 'buy_car':         applyBuyCar(day, event, accounts, queue); break;
+      case 'existing_mortgage': applyPaymentSchedule(day, event, accounts, queue); break;
+      case 'childcare_expense': applyOutflow(day, event, accounts, queue); break;
       // Additional event types are added here as the library grows
     }
   }

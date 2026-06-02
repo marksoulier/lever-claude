@@ -50,6 +50,11 @@ export default function NetWorthGraph({ snapshots }: { snapshots: NetWorthSnapsh
 
   const latest = snapshots[snapshots.length - 1];
   const first = snapshots[0];
+
+  // Suppress chart when all snapshots share the same date — a single point renders
+  // as a spike from zero, which looks like a real wealth change.
+  const distinctDates = new Set(snapshots.map((s) => s.recordedAt.slice(0, 10))).size;
+  const hasHistory = distinctDates >= 2;
   const change = latest.netWorth - first.netWorth;
   const changePct = first.netWorth !== 0 ? ((change / Math.abs(first.netWorth)) * 100).toFixed(1) : null;
 
@@ -69,44 +74,51 @@ export default function NetWorthGraph({ snapshots }: { snapshots: NetWorthSnapsh
         )}
       </div>
 
-      <div className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={snapshots} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="netWorthGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4bbdc8" stopOpacity={0.18} />
-                <stop offset="95%" stopColor="#4bbdc8" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-            <XAxis
-              dataKey="recordedAt"
-              tickFormatter={fmtDate}
-              tick={{ fontSize: 11, fill: "#a1a1aa" }}
-              axisLine={false}
-              tickLine={false}
-              minTickGap={48}
-            />
-            <YAxis
-              tickFormatter={fmt}
-              tick={{ fontSize: 11, fill: "#a1a1aa" }}
-              axisLine={false}
-              tickLine={false}
-              width={56}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="netWorth"
-              stroke="#4bbdc8"
-              strokeWidth={2}
-              fill="url(#netWorthGradient)"
-              dot={snapshots.length <= 12 ? { r: 3, fill: "#4bbdc8", strokeWidth: 0 } : false}
-              activeDot={{ r: 5, fill: "#4bbdc8", strokeWidth: 0 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {hasHistory ? (
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={snapshots} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="netWorthGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4bbdc8" stopOpacity={0.18} />
+                  <stop offset="95%" stopColor="#4bbdc8" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <XAxis
+                dataKey="recordedAt"
+                tickFormatter={fmtDate}
+                tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                axisLine={false}
+                tickLine={false}
+                minTickGap={48}
+              />
+              <YAxis
+                tickFormatter={fmt}
+                tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                axisLine={false}
+                tickLine={false}
+                width={56}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="netWorth"
+                stroke="#4bbdc8"
+                strokeWidth={2}
+                fill="url(#netWorthGradient)"
+                dot={snapshots.length <= 12 ? { r: 3, fill: "#4bbdc8", strokeWidth: 0 } : false}
+                activeDot={{ r: 5, fill: "#4bbdc8", strokeWidth: 0 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-48 rounded-2xl bg-zinc-50 border border-zinc-100">
+          <p className="text-sm text-zinc-400 font-medium">Your chart will fill in over time</p>
+          <p className="text-xs text-zinc-300 mt-1">Come back tomorrow to see your first data point</p>
+        </div>
+      )}
     </div>
   );
 }
