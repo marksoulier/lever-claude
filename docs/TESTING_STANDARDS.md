@@ -10,10 +10,70 @@ Tests are not a formality — they are what make "this works" a real claim. A fe
 
 > **A change is complete when the affected code is tested at the right level, typed correctly, and documented clearly enough that a new contributor could understand it without asking.**
 
-Three rules that override everything else:
+Four rules that override everything else:
 1. Never ship a simulator change without a corresponding Vitest test
 2. Never ship a UI change without a passing `playwright-cli` visual check
 3. Never ship anything with TypeScript errors
+4. **Never close a bug without a regression test that would have caught it**
+
+---
+
+## Bug Fix Regression Testing
+
+When fixing a bug, the fix is not complete until a test exists that:
+1. **Fails on the unfixed code** — proving it would have caught the bug
+2. **Passes after the fix** — proving the fix works
+3. **Lives in the test suite permanently** — so the bug can never silently return
+
+### Workflow
+
+```
+1. Reproduce the bug in a test (it should fail)
+2. Fix the bug
+3. Confirm the test now passes
+4. Add the test to the right test file (unit, integration, or E2E)
+5. Update BUGS.md: add "Regression test: <file>:<line or describe block>"
+6. Run the full test suite — confirm nothing else broke
+```
+
+### What level of test to write
+
+| Bug type | Test layer | Example |
+|---|---|---|
+| Simulator math wrong | Unit test in `runner.test.ts` or `integration.test.ts` | Day-0 double-fire: assert rent fires exactly once on start day |
+| API returns wrong value | Unit test or curl assertion | `update_contribution` overwrites MC scalar — assert scalar survives a contribution update |
+| UI renders wrong state | Playwright check | Monte Carlo probability showing wrong subtitle |
+| Event handler no-ops silently | Unit test | `windfall` produces no balance change — assert deposit lands |
+
+### Where regression tests must NOT live
+
+- In your head ("I'll remember to check this")
+- In BUGS.md only (prose is not a test)
+- In a one-off script that isn't in the test suite
+
+### Example — correct regression test for day-0 double-fire (GAP-1)
+
+```typescript
+// In runner.test.ts, under describe('outflow')
+it('fires exactly once on start_time (not twice — regression for GAP-1)', async () => {
+  // GAP-1: recurring check fired on day 0 even when start_time === day,
+  // causing double-deduction. Fixed by adding else-if guard.
+  const plan = basePlan({ events: [
+    declareEvent({ Checking: 1000 }),
+    { id: 2, type: 'outflow', is_recurring: true,
+      parameters: [
+        { type: 'start_time', value: '1990-01-01' },
+        { type: 'amount',     value: 100 },
+        { type: 'frequency_days', value: 30 },
+        { type: 'from_key',  value: 'Checking' },
+      ], updating_events: [] }
+  ]});
+  const bal = await finalBalance(plan, 0, 'Checking');
+  expect(approx(bal, 900)).toBe(true); // exactly $100 deducted, not $200
+});
+```
+
+The comment names the bug (GAP-1), describes the original failure mode, and states the fix. A future reader can understand why this test exists without git blame.
 
 ---
 
