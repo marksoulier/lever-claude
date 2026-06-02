@@ -69,6 +69,16 @@ function validateEvent(
   return errors;
 }
 
+// Event types in the schema that have no registered handler in runner.ts.
+// Claude can add these to plans; they appear in the event list but produce
+// no simulation effect. Listed here so the validator can warn about them.
+const UNHANDLED_EVENT_TYPES = new Set([
+  'life_event', 'purchase', 'gift', 'marriage', 'divorce', 'pass_away',
+  'have_kid', 'moving_costs', 'buy_groceries', 'receive_government_aid',
+  'retirement', 'buy_life_insurance', 'buy_health_insurance',
+  'income_with_changing_parameters', 'start_business',
+]);
+
 // Validate the full plan_data structure. Returns an array of errors (empty = valid).
 export function validatePlan(planData: PlanData): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -88,6 +98,13 @@ export function validatePlan(planData: PlanData): ValidationError[] {
     if (!isValidEventType(event.type)) {
       errors.push({ severity: 'error', message: `Unknown event type "${event.type}" (event id ${event.id})` });
       continue;
+    }
+
+    if (UNHANDLED_EVENT_TYPES.has(event.type)) {
+      errors.push({
+        severity: 'warning',
+        message: `Event "${event.title ?? event.type}" (id ${event.id}): type "${event.type}" has no simulator handler — it will appear in the plan but produce no financial effect`,
+      });
     }
 
     const eventSchema = schemaMap[event.type];
