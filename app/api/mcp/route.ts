@@ -32,6 +32,7 @@ import { getHardErrors } from "@/lib/simulator/schema-checker";
 import { runSimulation, DEFAULT_ACCOUNTS } from "@/lib/simulator/runner";
 import { simulationToScalars, simulationBounds } from "@/lib/simulator/bridge";
 import { runMonteCarlo } from "@/lib/simulator/monte-carlo";
+import { track } from "@/lib/posthog";
 import type { PlanData, SimEvent, Parameter } from "@/lib/simulator/types";
 
 const PLAN_DASHBOARD_URI = "ui://lever/plan-dashboard";
@@ -373,8 +374,19 @@ async function handleMcp(request: Request) {
           }).select().single();
 
           if (error || !data) {
+            track(userId, "plan_create_failed", { error: error?.message });
             return { content: [{ type: "text" as const, text: `Failed to create plan: ${error?.message}` }] };
           }
+
+          track(userId, "plan_created", {
+            is_primary: makePrimary,
+            retirement_age,
+            monthly_contribution,
+            risk_tolerance: risk_tolerance ?? "medium",
+            has_context: hasContext,
+            projected_balance: projected,
+            success_probability: prob,
+          });
 
           const lines = [
             `Created plan "${name}"${makePrimary ? " (set as your primary plan)" : ""}.`,
@@ -482,6 +494,16 @@ async function handleMcp(request: Request) {
             monthly_income_at_retirement: income,
             allocation,
           }).eq("id", plan.id);
+
+          if (userId) track(userId, "plan_context_set", {
+            plan_id: plan.id,
+            risk_tolerance: merged.riskTolerance,
+            has_dob: !!merged.dateOfBirth,
+            has_income: !!merged.annualIncome,
+            has_target_income: !!merged.targetMonthlyIncome,
+            projected_balance: projected,
+            success_probability: prob,
+          });
 
           const lines = [
             `Updated context for "${plan.name}":`,
@@ -1081,6 +1103,15 @@ This is the moment Lever proves its value. Make it count.`,
               : `Setup ${Math.round(((plans.length > 0 ? 1 : 0) + (hasContext ? 1 : 0) + (accounts.length > 0 ? 1 : 0)) / 3 * 100)}% complete. Next: ${nextSteps[0]?.step ?? "done"}.`,
           };
 
+          track(userId, "onboarding_status_checked", {
+            is_complete: isComplete,
+            has_plan: plans.length > 0,
+            has_context: hasContext,
+            has_accounts: accounts.length > 0,
+            plan_count: plans.length,
+            next_step: nextSteps[0]?.step,
+          });
+
           return {
             content: [{ type: "text" as const, text: JSON.stringify(status, null, 2) }],
           };
@@ -1357,6 +1388,15 @@ Default accounts available in a new plan: Checking, Savings, 401k, Roth IRA, Inv
 
           // ── Response ──────────────────────────────────────────────────────
 
+          track(userId, "plan_updated", {
+            plan_id: plan.id,
+            operation: op,
+            event_count: planData.events.length,
+            simulation_ran: !!scalars,
+            projected_balance: scalars?.projected_balance,
+            success_probability: scalars?.success_probability,
+          });
+
           const eventCount = planData.events.length;
           const accountList = planData.accounts.map((a) => a.name).join(", ");
 
@@ -1448,6 +1488,16 @@ After calling this tool, always surface:
             plan_data: updatedPlanData,
             success_probability: mc.success_rate,
           }).eq("id", plan.id);
+
+          track(userId, "monte_carlo_run", {
+            plan_id: plan.id,
+            iterations: mc.iterations,
+            success_rate: mc.success_rate,
+            p50: mc.p50,
+            p10: mc.p10,
+            p90: mc.p90,
+            target_balance: targetBalance,
+          });
 
           const fmt = (n: number) => n >= 1_000_000
             ? `$${(n / 1_000_000).toFixed(2)}M`
