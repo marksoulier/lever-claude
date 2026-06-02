@@ -431,7 +431,7 @@ We are not there yet.
 
 ## Next priorities — active queue
 
-### 8. Proactive post-onboarding intelligence ← IN PROGRESS
+### ~~8. Proactive post-onboarding intelligence~~ ✅ Done (2026-06-02)
 
 When `get_onboarding_status` returns `isComplete: true`, Claude currently just says "you're done." It should instead immediately run an opportunity scan against the user's plan data and deliver 2-3 specific, numbered findings inline — without the user having to ask.
 
@@ -440,7 +440,7 @@ When `get_onboarding_status` returns `isComplete: true`, Claude currently just s
 - The scan uses the same prompt as the manual admin recommendation workflow, but delivered inline during onboarding
 - Output: 2-3 findings formatted as "Finding 1: [what it is]. [Why it applies to your numbers specifically]. [What to do.]"
 
-**Success looks like:** A user finishes onboarding and within the same conversation receives a specific finding they didn't know about, tied to their actual income/age/accounts. They say "I didn't know that" or "I should do that."
+**What was built:** Updated the `isComplete` action in `get_onboarding_status` (`app/api/mcp/route.ts`). When all three setup steps are done, Claude now receives explicit instructions to: (1) call `get_plan_data`, (2) run a web search for opportunities relevant to the user's income/age/accounts, (3) deliver 2-3 numbered findings with specific next actions. The summary line was also changed from "Ready to explore" to "Deliver proactive insights now — do not wait for the user to ask." Needs deployment to take effect for real Claude.ai connector users.
 
 ### 9. Anthropic connector directory submission
 

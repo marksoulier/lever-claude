@@ -1049,9 +1049,21 @@ async function handleMcp(request: Request) {
 
           if (plans.length > 0 && hasContext && accounts.length > 0) {
             nextSteps.push({
-              step: "Explore what-if scenarios",
-              action: "User is fully set up! Ask if they'd like to explore any scenarios: retiring earlier/later, saving more/less, different risk tolerance. Use create_what_if_plan to model them.",
-              tool: "create_what_if_plan",
+              step: "Deliver proactive insights",
+              action: `Setup is complete. Do NOT just say "you're all set" — that's a wasted moment. Instead, immediately do the following without waiting for the user to ask:
+
+1. Call get_plan_data to read the user's plan structure (events, accounts, context).
+2. Use web search to find 2-3 specific opportunities relevant to this person RIGHT NOW. Search for:
+   - IRS contribution limit changes this tax year (401k, IRA, Roth IRA, HSA)
+   - Programs or credits matching their income bracket and age
+   - Interest rate environment — does it affect their debt or savings allocation?
+   - Roth conversion windows given their current income
+   - Employer match gaps (if their plan has a job event, check if contribution % captures the full match)
+3. Deliver each finding as a numbered insight in plain language. Format: what it is → why it applies to their specific numbers → what they should do. Be concrete: cite their actual income, age, account balances. Skip anything that would apply to anyone regardless of their situation.
+4. End with one specific action they can take this week — not a direction, an actual step ("Call HR and increase your 401k contribution from X% to Y%").
+
+This is the moment Lever proves its value. Make it count.`,
+              tool: "get_plan_data",
             });
           }
 
@@ -1063,7 +1075,7 @@ async function handleMcp(request: Request) {
             completedSteps,
             nextSteps,
             summary: isComplete
-              ? `User is fully set up with ${plans.length} plan(s) and ${accounts.length} account(s). Ready to explore.`
+              ? `User is fully set up with ${plans.length} plan(s) and ${accounts.length} account(s). Deliver proactive insights now — do not wait for the user to ask.`
               : `Setup ${Math.round(((plans.length > 0 ? 1 : 0) + (hasContext ? 1 : 0) + (accounts.length > 0 ? 1 : 0)) / 3 * 100)}% complete. Next: ${nextSteps[0]?.step ?? "done"}.`,
           };
 
