@@ -497,3 +497,78 @@ Without these, the simulator runs but produces a flat zero line. The `get_event_
 - Dashboard visual design or UI component decisions → design spec (future)
 - Admin panel workflow → see `AGENTS.md`
 - Current sprint priorities → see `PROGRESS.md`
+
+---
+
+## Business direction
+
+This section is owned by Claude and updated as business signals and user feedback change strategic understanding. Last updated: 2026-06-02.
+
+### The core thesis
+
+Lever's moat is not the simulator. The simulator is the means. The moat is **proactive financial intelligence tied to a person's actual numbers** — finding things the user can't find on their own, surfacing them unprompted, and monitoring for changes while the user isn't looking.
+
+The competitor is a financial advisor, not another app. The differentiator is: no judgment, no minimum wealth requirement, always available, and genuinely smarter with your specific data than a generic search.
+
+### What the product must do to win
+
+Three things, in order of importance:
+
+1. **Be proactively smarter** — After onboarding, Claude must immediately surface 2-3 findings the user didn't ask for, tied to their actual numbers. Not "here's your plan." Instead: "You're contributing 4% but your match threshold is 6% — that's $1,200/year you're leaving behind. Want me to show you what it compounds to?" Users pay for the feeling that an expert is watching their back. They don't pay for a calculator.
+
+2. **Remove friction to get in** — The connector setup (Customize → Connectors → + → Add custom → paste URL) is 6 manual steps. One real user named the connector "finance tool" by accident. Until Lever is in the Anthropic connector directory (one-click "Connect"), every new user requires hand-holding. Submit the directory application now — it has a long approval lead time.
+
+3. **Keep users returning** — The monitoring loop (watch the market, alert the user when something changes) is the reason to come back. Without it, Lever is a one-time setup tool, not a recurring relationship. This is the long-term retention driver but must be earned — prove the proactive intelligence first, then automate it on a schedule.
+
+### ICP — what the real user data says
+
+**Original target:** Male 21-30, salaried, semi-technical, DIY-minded.
+
+**What the first real user showed us:** The ICP extends to entrepreneurs, freelancers, and variable-income earners — and they have *more* pain with financial planning, not less. The first tester had a stipend + business income mix and found the salaried-income assumption actively unhelpful. The product must handle non-standard income as a first-class case, not a workaround.
+
+**Refined ICP:** 22-40, income-earner of any type (salaried, hourly, freelance, mixed), has a Claude account or is willing to create one, enough financial anxiety to want a plan but enough confidence to want to build it themselves rather than pay an advisor. The entrepreneur segment may actually be higher-value because they have more complexity, more questions, and fewer existing solutions.
+
+### What "done" looks like for Phase 1
+
+Phase 1 is complete when:
+- 10+ non-test users have completed onboarding
+- At least 5 have received a proactive insight they found genuinely useful
+- At least 3 have returned to the app more than once without being prompted
+- At least 1 has paid for premium
+
+We are not at Phase 1 completion. We have 1 real external user, 0 organic signups in the last 7 days, and 1 active subscription (likely internal).
+
+### Distribution strategy
+
+| Channel | Status | Priority |
+|---|---|---|
+| Anthropic MCP connector directory | Not submitted | **Submit now** — long approval lead time, high impact |
+| Personal outreach (concierge onboarding) | Not started | **Start now** — fastest way to get real users |
+| Claude Desktop extension registry | Not submitted | Same submission process as connector directory |
+| Organic / word of mouth | Premature | No referral mechanic yet |
+| Paid acquisition | Premature | Product must prove retention first |
+
+### Known product gaps from real user feedback (2026-05-30)
+
+Sourced from marksoulier0@gmail.com (first external tester). These are the gaps between what the product promises and what it delivers:
+
+| Gap | What user experienced | What they expected |
+|---|---|---|
+| AI passivity | Claude asked 8 questions, built a plan, stopped | Claude to proactively tell them what to do with their money |
+| Non-standard income | Stipend + business income collapsed to a single salary estimate | A model that understood their actual income structure |
+| Trust in numbers | "AI is bad at math, it just texted out numbers" | Visible explanation of how projections are calculated |
+| Life context | Plan didn't account for family plans, unique trajectory | AI that asked about their life, not just their income |
+| Connector discovery | Had to find the Add custom connector button buried in Settings | One-click install from a directory |
+| Permission prompts | "It has me allow every time" | Auto-approved tools after first connection |
+
+The Claude tool permission prompt issue is Claude.ai UX, not Lever's. The others are Lever's to fix.
+
+### Strategic decisions made
+
+| Decision | Rationale | Date |
+|---|---|---|
+| Proactive insight delivery at end of onboarding | Most impactful fix per user feedback — changes "form-filling AI" to "expert watching my back" | 2026-06-02 |
+| Anthropic connector directory submission | Highest-impact distribution lever, long lead time | 2026-06-02 |
+| Concierge onboarding for next 10 users | Not enough signal with 1 user; need 10 before any patterns are reliable | 2026-06-02 |
+| Entrepreneur income as first-class ICP | First real user proved the use case; more pain, more value, less competition | 2026-06-02 |
+| Background monitoring cron — parked | Not enough users to know what to monitor; prove the intelligence manually first | 2026-06-02 |

@@ -377,22 +377,82 @@ B-15 ("Run what if" button does nothing) + B-16 (system prompt UX) are the P1 it
 
 ---
 
-## Next priorities — go-to-market cycle
+## Business health snapshot — 2026-06-02
 
-The product is feature-complete enough to put in front of real users. The focus now is: **get users → test with them → get feedback → iterate**. Background automation (cron-based monitoring) is parked until the core loop is proven with real usage.
+| Metric | Value | Signal |
+|---|---|---|
+| Total users | 6 | Mostly test accounts |
+| New signups (7 days) | 0 | No organic growth |
+| Active subscriptions | 1 | Likely internal |
+| Total plans created | 16 | Mostly test/synthetic |
+| Real external users | 1 (marksoulier0@gmail.com) | Only real signal we have |
+| Last external activity | 2026-05-29 | 4 days ago |
 
-### 7. Get the product to market
+**Verdict:** Pre-growth. Infrastructure works. Product doesn't yet deliver on its core promise.
 
-**Goal:** real users using the product, generating real feedback.
+---
 
-**Steps (in order):**
-1. **Polish and harden the onboarding** — the first 5 minutes must be smooth. Test the full flow with LLM personas and fix every friction point before inviting real users.
-2. **LLM user testing** — simulate realistic user personas (different ages, incomes, goals) end-to-end with playwright-cli + MCP tools. Capture where they get stuck or confused. Fix those issues before human testing.
-3. **Invite beta users** — share with a small set of real people (friends, target demographic). Use the manual recommendation workflow to deliver value to each one personally.
-4. **Collect and triage feedback** — UserJot is wired; direct users there. Review feedback in every session and address the highest-signal items.
-5. **Iterate** — fix what's broken, improve what's confusing, add what's missing based on real usage patterns. Repeat.
+## Strategic direction — 2026-06-02
 
-**What "done" looks like for this phase:** at least 3 non-test users have completed onboarding, created a plan, and received a notification they found useful.
+Full analysis in `docs/STEERING.md` → Business direction. Summary:
+
+**The core problem isn't bugs or polish — it's that the AI doesn't feel smarter with Lever.** The first real user said it plainly: "It should be telling me what the optimal decisions are, not asking me." Right now Claude becomes a form. The product must make Claude into an expert who proactively surfaces findings tied to the user's actual numbers.
+
+### Priority order going forward
+
+**1. Proactive post-onboarding intelligence** ← working on this now
+After setup completes, Claude must immediately deliver 2-3 specific findings without being asked. Not "here's your plan." Instead: "Here's what I noticed about your plan that you should know." This is the difference between a calculator and an advisor. Implement as an enriched `get_onboarding_status` completion response that triggers an opportunity scan inline.
+
+**2. Anthropic MCP connector directory submission**
+One-click "Connect" removes the 6-step manual connector setup. Long approval lead time — submit now in parallel with code work. Requirements: public MCP URL (live at lever-claude.vercel.app), name, logo, description, contact. Submit at anthropic.com/partners/mcp.
+
+**3. Concierge onboarding for 10 real users**
+With 1 external user, patterns aren't visible. Get 10 people from the target demographic (22-40, DIY-minded, has some financial anxiety) through onboarding personally. Be present for each session. The insight density from live observation is 10× higher than post-hoc feedback.
+
+**4. Polish backlog (do alongside #3, not instead of)**
+- B-13: Metric card context ("Monthly Income at retirement" not "Monthly Income")
+- B-10: Dashboard plan cards so new users see their plan without clicking the sidebar
+
+**Parked until #1-3 are proven:**
+- Background monitoring cron
+- Monte Carlo simulation
+- Additional event types
+- Mobile app features beyond current shell
+
+### What Phase 1 completion looks like
+- 10+ non-test users have completed onboarding
+- 5+ have received a proactive insight they described as genuinely useful
+- 3+ have returned without being prompted
+- 1+ has paid for premium who isn't the founder
+
+We are not there yet.
+
+---
+
+## Next priorities — active queue
+
+### 8. Proactive post-onboarding intelligence ← IN PROGRESS
+
+When `get_onboarding_status` returns `isComplete: true`, Claude currently just says "you're done." It should instead immediately run an opportunity scan against the user's plan data and deliver 2-3 specific, numbered findings inline — without the user having to ask.
+
+**What to build:**
+- Enrich the `get_onboarding_status` completion action to instruct Claude to run the web-search-based opportunity scan automatically
+- The scan uses the same prompt as the manual admin recommendation workflow, but delivered inline during onboarding
+- Output: 2-3 findings formatted as "Finding 1: [what it is]. [Why it applies to your numbers specifically]. [What to do.]"
+
+**Success looks like:** A user finishes onboarding and within the same conversation receives a specific finding they didn't know about, tied to their actual income/age/accounts. They say "I didn't know that" or "I should do that."
+
+### 9. Anthropic connector directory submission
+
+Submit Lever to the Anthropic MCP connector directory. No code required — this is a form submission. Long approval lead time so it should happen in parallel with code work.
+
+Requirements:
+- Public MCP URL: `https://lever-claude.vercel.app/api/mcp` ✓
+- Name: "Lever Financial Planning"
+- Description: 1-2 sentences
+- Logo: 512×512px
+- Contact: founder email
+- Submit at: https://anthropic.com/partners/mcp
 
 ---
 
