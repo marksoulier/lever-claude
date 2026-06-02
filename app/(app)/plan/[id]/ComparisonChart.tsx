@@ -25,8 +25,8 @@ type PlanSnapshot = {
 
 type DataPoint = {
   age: number;
-  whatif?: number;   // undefined before the what-if plan's current age — renders as gap
-  primary?: number;  // undefined before the primary plan's current age — renders as gap
+  whatif: number | null;   // null before the what-if plan's current age — recharts renders as gap
+  primary: number | null;  // null before the primary plan's current age — recharts renders as gap
 };
 
 function fmt(n: number): string {
@@ -45,9 +45,9 @@ function buildData(whatif: PlanSnapshot, primary: PlanSnapshot): DataPoint[] {
     const prYears = age - primary.currentAge;
     points.push({
       age,
-      // undefined before plan start → recharts renders a gap instead of a flat zero line (B-4)
-      whatif:  wiYears >= 0 ? projectBalance(whatif.currentBalance, whatif.monthlyContribution, whatif.assumedReturn, wiYears)  : undefined,
-      primary: prYears >= 0 ? projectBalance(primary.currentBalance, primary.monthlyContribution, primary.assumedReturn, prYears) : undefined,
+      // null before plan start → recharts connectNulls=false renders a gap, not a zero (B-4)
+      whatif:  wiYears >= 0 ? projectBalance(whatif.currentBalance, whatif.monthlyContribution, whatif.assumedReturn, wiYears)  : null,
+      primary: prYears >= 0 ? projectBalance(primary.currentBalance, primary.monthlyContribution, primary.assumedReturn, prYears) : null,
     });
   }
   return points;
@@ -153,6 +153,7 @@ export default function ComparisonChart({
               strokeDasharray="4 3"
               fill="url(#prGradient)"
               dot={false}
+              connectNulls={false}
               activeDot={{ r: 4, fill: "#4bbdc8", strokeWidth: 0 }}
             />
 
@@ -165,15 +166,16 @@ export default function ComparisonChart({
               strokeWidth={2.5}
               fill="url(#wiGradient)"
               dot={false}
+              connectNulls={false}
               activeDot={{ r: 5, fill: "#f59e0b", strokeWidth: 0 }}
             />
 
             {/* Endpoint dots */}
-            {wiEnd && (
+            {wiEnd?.whatif != null && (
               <ReferenceDot x={whatif.retirementAge} y={wiEnd.whatif}
                 r={5} fill="#f59e0b" stroke="white" strokeWidth={2} />
             )}
-            {prEnd && (
+            {prEnd?.primary != null && (
               <ReferenceDot x={primary.retirementAge} y={prEnd.primary}
                 r={5} fill="#4bbdc8" stroke="white" strokeWidth={2} />
             )}
