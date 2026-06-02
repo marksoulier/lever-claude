@@ -6,11 +6,30 @@ Living document. Add new activities, findings, and status as they happen. Claude
 
 ## Product Readiness (prerequisites before pushing hard)
 
-Before serious outreach, these must be true:
-- [x] Monte Carlo prompt visible on plan page — "Run a real probability simulation" card with copyable prompt
-- [x] "Open in Claude" shows plan-specific copyable prompts at all three touch points
-- [ ] Onboarding to first aha moment under 5 minutes
-- [ ] No P0 bugs open in BUGS.md
+The bar is: a real person who finds this through Reddit, signs up, connects Claude, and completes onboarding should arrive at a plan that reflects their actual situation — and come back. Not a demo. Not a polished screenshot. A working product that earns trust through the full loop.
+
+**Onboarding completeness (new user → first aha moment)**
+- [x] Monte Carlo prompt visible on plan page
+- [x] "Open in Claude" shows plan-specific copyable prompts
+- [ ] Onboarding flow validated end-to-end with a fresh account (not demo@lever.dev)
+- [ ] Claude asks the right questions in the right order (income type first, then amount)
+- [ ] Plan updates correctly after onboarding conversation — scalars + simulation results match
+- [ ] New user sees their real situation reflected within 10 minutes of sign-up
+- [ ] Events in this plan section on plan page — users can verify what's being simulated
+
+**Continuous use loop**
+- [ ] User can return the next day, open Claude, say "I got a raise" and see plan update
+- [ ] Dashboard net worth chart populates correctly after first real account entry
+- [ ] What-if scenarios reflect user's real contribution numbers (not hardcoded)
+- [ ] Monte Carlo result persists and shows "last run" date on return visits
+
+**Trust & polish**
+- [ ] Comparison chart hidden for users with only one plan (no confusing "vs Test Plan Alpha")
+- [ ] No P0 bugs open in BUGS.md (currently clear)
+- [ ] 0 console errors on dashboard and plan pages (confirmed via t-eval)
+- [ ] Font preload warnings eliminated (minor but signals polish)
+
+**The Reddit post gate:** ALL onboarding items must be checked before posting. Continuous use items should be mostly done. Trust items must be done. Post as a genuine builder sharing a working tool, not a WIP.
 
 ---
 
