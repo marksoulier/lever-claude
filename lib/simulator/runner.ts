@@ -76,10 +76,27 @@ function parseEventsForSimulation(planData: PlanData): ParsedEvent[] {
 
 // ── Growth application ─────────────────────────────────────────────────────
 
-function applyGrowth(accounts: Record<string, AccountState>): void {
+// Growth types that respond to market returns — used by year-by-year Monte Carlo.
+const MARKET_GROWTH_TYPES = new Set([
+  'Daily Compound', 'Monthly Compound', 'Yearly Compound', 'Appreciation',
+]);
+
+// currentSimDay: days elapsed since simulation start (for year-by-year return indexing).
+// yearlyReturns: when provided, overrides growth_rate for market-linked accounts each year.
+function applyGrowth(
+  accounts: Record<string, AccountState>,
+  currentSimDay?: number,
+  yearlyReturns?: number[],
+): void {
+  const yearIndex = (yearlyReturns && currentSimDay != null)
+    ? Math.min(Math.floor(currentSimDay / 365), yearlyReturns.length - 1)
+    : -1;
+
   for (const name in accounts) {
     const acc = accounts[name];
-    const annualRate = acc.growth_rate || 0;
+    const annualRate = (yearIndex >= 0 && MARKET_GROWTH_TYPES.has(acc.growth_type))
+      ? (yearlyReturns![yearIndex] ?? acc.growth_rate ?? 0)
+      : (acc.growth_rate || 0);
     const dailyRate = annualRate / 365;
     acc._days_elapsed = (acc._days_elapsed ?? 0) + 1;
 
@@ -119,8 +136,10 @@ function applyGrowth(accounts: Record<string, AccountState>): void {
       }
 
       case 'Depreciation': {
-        if (acc.balance !== 0 && dailyRate !== 0) {
-          acc.balance -= acc.balance * dailyRate;
+        // Depreciation uses the account's own rate, not market overrides
+        const deprRate = (acc.growth_rate || 0) / 365;
+        if (acc.balance !== 0 && deprRate !== 0) {
+          acc.balance -= acc.balance * deprRate;
         }
         break;
       }
@@ -183,7 +202,7 @@ function applyInflow(
       case 'increment_amount': {
         const up = ue.parameters;
         if (up.start_time === day) p.amount += up.amount;
-        if (ue.is_recurring && day <= up.end_time && (day - up.start_time) % Math.round(up.frequency_days) === 0) {
+        else if (ue.is_recurring && day <= up.end_time && (day - up.start_time) % Math.round(up.frequency_days) === 0) {
           p.amount += up.amount;
         }
         break;
@@ -193,7 +212,7 @@ function applyInflow(
         const target = accounts[p.to_key];
         if (!target) break;
         if (up.start_time === day) target.balance += up.amount;
-        if (ue.is_recurring && day <= up.end_time && (day - up.start_time) % Math.round(up.frequency_days) === 0) {
+        else if (ue.is_recurring && day <= up.end_time && (day - up.start_time) % Math.round(up.frequency_days) === 0) {
           target.balance += up.amount;
         }
         break;
@@ -205,7 +224,7 @@ function applyInflow(
   if (!target) return;
 
   if (p.start_time === day) target.balance += p.amount;
-  if (event.is_recurring && day <= p.end_time && (day - p.start_time) % Math.round(p.frequency_days) === 0) {
+  else if (event.is_recurring && day <= p.end_time && (day - p.start_time) % Math.round(p.frequency_days) === 0) {
     target.balance += p.amount;
   }
 }
@@ -228,7 +247,7 @@ function applyOutflow(
   if (!source) return;
 
   if (p.start_time === day) source.balance -= p.amount;
-  if (event.is_recurring && day <= p.end_time && (day - p.start_time) % Math.round(p.frequency_days) === 0) {
+  else if (event.is_recurring && day <= p.end_time && (day - p.start_time) % Math.round(p.frequency_days) === 0) {
     source.balance -= p.amount;
   }
 }
@@ -274,7 +293,7 @@ function applyTransferMoney(
   if (!source || !target) return;
 
   if (p.start_time === day) { source.balance -= p.amount; target.balance += p.amount; }
-  if (event.is_recurring && day <= p.end_time && (day - p.start_time) % Math.round(p.frequency_days) === 0) {
+  else if (event.is_recurring && day <= p.end_time && (day - p.start_time) % Math.round(p.frequency_days) === 0) {
     source.balance -= p.amount;
     target.balance += p.amount;
   }
@@ -710,6 +729,41 @@ function applyBuyHouse(
   }
 }
 
+// ── Additional event handlers ──────────────────────────────────────────────
+
+// windfall: one-time deposit — same as a non-recurring inflow
+function applyWindfall(day: number, event: ParsedEvent, accounts: Record<string, AccountState>, _queue: QueueFn): void {
+  if (event.parameters.start_time !== day) return;
+  const target = accounts[event.parameters.to_key];
+  if (target) target.balance += event.parameters.amount;
+}
+
+// roth_ira_contribution: recurring transfer from checking to Roth account
+function applyRothIra(day: number, event: ParsedEvent, accounts: Record<string, AccountState>, _queue: QueueFn): void {
+  const p = event.parameters;
+  const amount = p.monthly_contribution ?? p.amount ?? 0;
+  const source = accounts[p.from_key];
+  const target = accounts[p.to_key];
+  if (!source || !target) return;
+  if (p.start_time === day) { source.balance -= amount; target.balance += amount; }
+  else if (event.is_recurring && day <= p.end_time && (day - p.start_time) % Math.round(p.frequency_days ?? 30) === 0) {
+    source.balance -= amount; target.balance += amount;
+  }
+}
+
+// invest_money: recurring transfer to an investment account (alias to transfer_money)
+function applyInvestMoney(day: number, event: ParsedEvent, accounts: Record<string, AccountState>, queue: QueueFn): void {
+  applyTransferMoney(day, event, accounts, queue);
+}
+
+// career_break: marks a period of no work. Income pause must be configured by
+// setting the job event's end_time = career break start. This handler is a
+// display-only marker — it records the break in the event timeline but does not
+// directly modify account balances.
+function applyCareerBreak(_day: number, _event: ParsedEvent, _accounts: Record<string, AccountState>, _queue: QueueFn): void {
+  // no-op: income stops when the job event's end_time is reached
+}
+
 // ── Event dispatch ─────────────────────────────────────────────────────────
 
 function applyEventsToDay(
@@ -735,6 +789,12 @@ function applyEventsToDay(
       case 'buy_car':         applyBuyCar(day, event, accounts, queue); break;
       case 'existing_mortgage': applyPaymentSchedule(day, event, accounts, queue); break;
       case 'childcare_expense': applyOutflow(day, event, accounts, queue); break;
+      case 'rent_payment':      applyOutflow(day, event, accounts, queue); break;
+      case 'freelance_income':  applyInflow(day, event, accounts, queue); break;
+      case 'windfall':          applyWindfall(day, event, accounts, queue); break;
+      case 'roth_ira_contribution': applyRothIra(day, event, accounts, queue); break;
+      case 'invest_money':      applyInvestMoney(day, event, accounts, queue); break;
+      case 'career_break':      applyCareerBreak(day, event, accounts, queue); break;
       // Additional event types are added here as the library grows
     }
   }
@@ -745,10 +805,14 @@ function applyEventsToDay(
 // Run the full simulation for a plan. Returns a time series of daily snapshots.
 // planData is deep-cloned before simulation to avoid mutating stored data.
 // startDay and endDay are in days-since-birth (day 0 = birth).
+// yearlyReturns: optional array of annual return rates (one per simulation year).
+// When provided, market-linked accounts use the year-specific rate instead of their
+// static growth_rate — enabling sequence-of-returns modeling in Monte Carlo.
 export async function runSimulation(
   planData: PlanData,
   startDay: number,
   endDay: number,
+  yearlyReturns?: number[],
 ): Promise<SimulationResult[]> {
   // Deep clone so event handler mutations (e.g. _mortgage_state) don't pollute plan_data
   const clone = JSON.parse(JSON.stringify(planData)) as PlanData;
@@ -779,7 +843,7 @@ export async function runSimulation(
   let day = startDay;
 
   while (day <= endDay) {
-    applyGrowth(accounts);
+    applyGrowth(accounts, day - startDay, yearlyReturns);
     applyEventsToDay(day, events, accounts, queue);
 
     const parts: Record<string, number> = {};

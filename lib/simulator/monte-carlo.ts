@@ -1,6 +1,8 @@
 // Monte Carlo simulation for Lever financial plans.
-// Runs the deterministic simulator N times with randomized annual returns to
-// produce a probability distribution of outcomes at retirement.
+// Runs the deterministic simulator N times with year-by-year randomized returns
+// to produce a probability distribution of outcomes at retirement.
+// Year-by-year sampling captures sequence-of-returns risk — the dominant risk
+// factor for retirement planning.
 // See STEERING.md → Monte Carlo: AI-triggered, not system-triggered.
 
 import { runSimulation } from './runner';
@@ -9,25 +11,20 @@ import type { PlanData, MonteCarloResults } from './types';
 
 // Historical US blended portfolio assumptions (60/40 stock/bond equivalent).
 // Mean and std dev are annualized. Source: long-run US market data.
-const HISTORICAL_MEAN   = 0.07;   // 7% mean annual return
-const HISTORICAL_STD    = 0.12;   // 12% standard deviation
+const HISTORICAL_MEAN = 0.07;   // 7% mean annual return
+const HISTORICAL_STD  = 0.12;   // 12% standard deviation
 
-// Growth types that represent market-linked returns and should be varied.
-// Cash, Debt, Depreciation accounts are deterministic — they don't participate
-// in market randomization.
-const VARIABLE_GROWTH_TYPES = new Set([
-  'Daily Compound',
-  'Monthly Compound',
-  'Yearly Compound',
-  'Appreciation',
-]);
-
-// Box-Muller transform — produces a standard normal sample with no dependencies.
+// Box-Muller transform — standard normal sample with no external dependencies.
 function sampleNormal(mean: number, std: number): number {
   const u1 = Math.random();
   const u2 = Math.random();
   const z  = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
   return mean + std * z;
+}
+
+// Sample one year's return, clamped to realistic bounds.
+function sampleYearReturn(mean: number, std: number): number {
+  return Math.max(-0.5, Math.min(0.8, sampleNormal(mean, std)));
 }
 
 function percentile(sorted: number[], p: number): number {
@@ -54,34 +51,32 @@ export async function runMonteCarlo({
 }: MonteCarloInput): Promise<MonteCarloResults> {
   const { startDay, endDay } = simulationBounds(planData, retirementAge);
 
-  // Compute the retirement day for extracting the balance at retirement.
+  // Compute the retirement day for extracting balance at retirement.
   const birth          = new Date(planData.birth_date);
   const retirementDate = new Date(birth);
   retirementDate.setFullYear(birth.getFullYear() + retirementAge);
   const retirementDay  = Math.floor((retirementDate.getTime() - birth.getTime()) / 86_400_000);
 
+  // Number of simulation years determines how many year returns to sample.
+  const simYears = Math.ceil((endDay - startDay) / 365) + 1;
+
   const balancesAtRetirement: number[] = [];
 
   for (let i = 0; i < iterations; i++) {
-    // Sample one annual return for this iteration.
-    // Floor at -50% to prevent extreme blow-ups; cap at +80% to stay realistic.
-    const sampledReturn = Math.max(-0.5, Math.min(0.8, sampleNormal(meanReturn, stdDev)));
+    // Sample a distinct annual return for each year of the simulation.
+    // This captures sequence-of-returns risk — a bad decade at the start of
+    // retirement is modeled differently from a bad decade during accumulation.
+    const yearlyReturns: number[] = Array.from({ length: simYears }, () =>
+      sampleYearReturn(meanReturn, stdDev),
+    );
 
-    // Clone plan and apply sampled return to all variable-growth accounts.
-    const clone = JSON.parse(JSON.stringify(planData)) as PlanData;
-    for (const account of clone.accounts) {
-      if (VARIABLE_GROWTH_TYPES.has(account.growth) && account.rate !== undefined) {
-        account.rate = sampledReturn;
-      }
-    }
+    const results = await runSimulation(planData, startDay, endDay, yearlyReturns);
 
-    const results = await runSimulation(clone, startDay, endDay);
-
-    // Find the balance closest to retirement day.
     if (results.length === 0) {
       balancesAtRetirement.push(0);
       continue;
     }
+
     const retirementResult = results.reduce((best, r) =>
       Math.abs(r.date - retirementDay) < Math.abs(best.date - retirementDay) ? r : best,
       results[0],

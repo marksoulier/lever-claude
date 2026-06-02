@@ -104,10 +104,9 @@ describe('outflow', () => {
   });
 
   it('deducts correct total for recurring monthly payments of $750 over 330 days', async () => {
-    // Simulator design: on start_time (day 0), BOTH the one-time start check AND the
-    // recurring check (0 % 30 === 0) fire, producing a double deduction on day 0.
-    // Then fires again on days 30, 60, 90 ... 330 = 11 more. Total: 13 deductions.
-    // This matches the original modal-canvas-flow simulator behavior.
+    // Day 0: start_time fires once. Recurring check uses else-if so it does NOT fire.
+    // Days 30, 60, 90, ..., 330: recurring fires. That is 11 more deductions.
+    // Total: 12 deductions.
     const plan = basePlan({
       events: [
         {
@@ -135,9 +134,9 @@ describe('outflow', () => {
       ],
     });
 
-    // 13 deductions total: double on day 0 + 11 recurring (days 30, 60 ... 330)
+    // 12 deductions: 1 on day 0 (start) + 11 recurring (days 30, 60 ... 330)
     const bal = await finalBalance(plan, 330, 'Checking');
-    expect(approx(bal, 20000 - 750 * 13, 5)).toBe(true);
+    expect(approx(bal, 20000 - 750 * 12, 5)).toBe(true);
   });
 });
 
@@ -145,8 +144,7 @@ describe('outflow', () => {
 
 describe('inflow', () => {
   it('deposits a recurring amount correctly over 6 months', async () => {
-    // Same double-fire on day 0 as outflow: start_time check + recurring check both hit.
-    // Days 0 (×2), 30, 60, 90, 120, 150 = 7 deposits → $14,000 over 150 days
+    // Day 0 fires once (start). Days 30, 60, 90, 120, 150 = 5 more. Total: 6 deposits.
     const plan = basePlan({
       events: [{
         id: 1, type: 'inflow', title: 'Rental income',
@@ -163,7 +161,7 @@ describe('inflow', () => {
     });
 
     const bal = await finalBalance(plan, 150, 'Checking');
-    expect(approx(bal, 14000, 5)).toBe(true);
+    expect(approx(bal, 12000, 5)).toBe(true); // 6 deposits × $2,000
   });
 });
 
