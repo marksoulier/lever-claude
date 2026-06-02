@@ -1026,9 +1026,10 @@ async function handleMcp(request: Request) {
               tool: "create_plan",
             });
           } else if (!hasContext) {
+            const planName = primary?.name ?? plans[0]?.name ?? "your plan";
             nextSteps.push({
               step: "Set personal context",
-              action: `The primary plan "${primary?.name ?? plans[0]?.name}" has no personal context. Ask for: date of birth, annual income, desired monthly retirement income, risk tolerance. Then call update_plan_context.`,
+              action: `The primary plan "${planName}" was created but has no personal context yet — the projections are using defaults, not the user's real numbers. Greet the user warmly: tell them the plan is ready but needs a few personal details to make the projections accurate. Say: "I'll ask you a few quick questions — one at a time — so your plan reflects your actual situation. Takes about 5 minutes." Then ask each question one at a time, waiting for each answer before the next: (1) date of birth (YYYY-MM-DD)? (2) how would you describe your income — salaried, hourly, freelance/business, or a mix? (3) based on their answer: approximate total annual income this year? (4) how much monthly income do you want in retirement? (5) risk tolerance — low (conservative, ~5% growth), medium (balanced, ~7%), or high (aggressive, ~9%)? (6) target retirement age? (7) current monthly savings amount? (8) current total retirement savings balance? Then call update_plan_context with all collected values. After updating, show the new projected balance and probability and briefly explain what changed.`,
               tool: "update_plan_context",
             });
           }
