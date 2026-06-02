@@ -42,7 +42,7 @@ Before serious outreach, these must be true:
 - Use Mark's voice from FOUNDER.md — DIY, builder-to-builder, no corporate language
 - Best time: weekdays 8–10am EST (peak r/fi traffic)
 - Target post title: *"I built a financial planning tool where Claude builds your retirement plan through conversation — here's what I learned"*
-- [ ] Draft post ready
+- [x] Draft post ready — see REDDIT_DRAFT.md
 - [ ] Post submitted
 - [ ] Follow-up comments answered
 
