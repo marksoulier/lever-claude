@@ -43,7 +43,15 @@ export default function PlanWidget() {
 
   const openScenario = async () => {
     if (!plan || !appRef.current) return;
-    await appRef.current.callServerTool({ name: "run_what_if", arguments: { plan_id: plan.id } });
+    try {
+      await appRef.current.sendMessage({
+        role: "user",
+        content: [{ type: "text", text: `Open the what-if scenario modeler for my "${plan.name}" plan.` }],
+      });
+    } catch {
+      // sendMessage requires an active Claude.ai host — not available in standalone preview
+      console.warn("[plan-widget] sendMessage unavailable — widget requires a Claude.ai host");
+    }
   };
 
   if (!plan) {

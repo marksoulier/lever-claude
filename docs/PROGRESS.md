@@ -341,6 +341,42 @@ exp://rn1aos8-marksoulier-8081.exp.direct
 
 ---
 
+## First real user test — 2026-05-30
+
+User: marksoulier0@gmail.com (first external tester). Completed onboarding end-to-end and submitted detailed feedback via UserJot. Key findings (full raw feedback in UserJot request `cmprm344u14xe0ipjcluo5lpx`):
+
+### What worked
+- Got through onboarding and created a plan
+- Simulator ran and produced numbers quickly ("really fast though")
+- Allocation breakdown was visible and somewhat interesting
+
+### Critical issues (new bugs filed)
+| New bug | One-line summary |
+|---|---|
+| B-15 | "Run what if" button on plan widget does nothing |
+| B-16 | Onboarding system prompt is visible and confusing; connector name not given upfront |
+| B-17 | AI doesn't explain Lever's value or what it's doing during onboarding |
+| B-18 | Onboarding assumes salaried income; entrepreneur/variable income badly handled |
+| B-19 | Widget renders dark regardless of browser theme |
+| B-20 | No progress indicator during onboarding; user got bored halfway |
+| B-21 | UserJot requires account to leave feedback — real friction in the feedback loop |
+
+### Confirmed existing bugs
+- B-13: Metric cards bare numbers with no context ("not sure how I trust it")
+- B-8: Plan is unnamed / auto-named poorly ("it should take my name and name my plan")
+
+### Themes from this session
+1. **Connector discovery is too hard.** User named it "finance tool" first. The path (Customize → Connectors → + → Add custom) is buried and not explained.
+2. **The AI doesn't feel smarter with Lever.** User expected proactive guidance ("it should be telling me what the optimal decisions are, not asking me"). The value proposition of the MCP connection isn't obvious in the conversation.
+3. **Non-standard income is a real use case.** Entrepreneur with variable/stipend income — the model forced a single salary figure and the simulation produced a confusing warning. This demographic is likely a core ICP.
+4. **Trust gap in the numbers.** "I thought AI was bad at math and it literally just texted out the numbers." Users need a brief explanation of how the math works or a visible citation.
+5. **Claude tool permission prompts are friction.** "It has me allow every time." This is Claude.ai UX, not Lever's — but worth noting as a blocker for less technical users.
+
+### Decision: highest-leverage next fix
+B-15 ("Run what if" button does nothing) + B-16 (system prompt UX) are the P1 items to fix next. B-15 is a broken core feature. B-16 is the biggest onboarding friction point confirmed by a real user.
+
+---
+
 ## Next priorities — go-to-market cycle
 
 The product is feature-complete enough to put in front of real users. The focus now is: **get users → test with them → get feedback → iterate**. Background automation (cron-based monitoring) is parked until the core loop is proven with real usage.

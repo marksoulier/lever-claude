@@ -164,7 +164,7 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
             <span className="text-2xl font-black text-zinc-900">{m.value}</span>
             <span className="text-[10px] text-zinc-400">{m.subtitle}</span>
             {"tooltip" in m && (
-              <span className="text-[10px] text-zinc-300 mt-1 leading-tight">{(m as any).tooltip}</span>
+              <span className="text-[10px] text-zinc-400 mt-1 leading-tight">{(m as any).tooltip}</span>
             )}
           </div>
         ))}

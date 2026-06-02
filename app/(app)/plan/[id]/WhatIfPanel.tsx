@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type Scenario = { label: string; description: string; delta: string; positive: boolean };
 
-function UpgradeCTA() {
+function UpgradeCTA({ scenarios }: { scenarios: Scenario[] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
@@ -22,15 +22,14 @@ function UpgradeCTA() {
     }
   };
 
+  // Show up to 3 real scenarios in the blurred preview so the numbers match the user's plan
+  const preview = scenarios.slice(0, 3);
+
   return (
     <div className="rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden">
-      {/* blurred preview of locked scenarios */}
+      {/* blurred preview of locked scenarios — real plan numbers */}
       <div className="select-none pointer-events-none blur-sm p-6 flex flex-col gap-3">
-        {[
-          { label: "Increase monthly savings by $500", delta: "+$124K", positive: true },
-          { label: "Market downturn of 30% in 2030",   delta: "-$89K",  positive: false },
-          { label: "Retire two years earlier",          delta: "-$201K", positive: false },
-        ].map((s) => (
+        {preview.map((s) => (
           <div key={s.label} className="flex items-center justify-between rounded-xl border border-zinc-100 px-5 py-3">
             <p className="text-sm font-bold text-zinc-900">{s.label}</p>
             <span className={`text-sm font-bold ${s.positive ? "text-teal-dark" : "text-red-400"}`}>{s.delta}</span>
@@ -64,7 +63,7 @@ export default function WhatIfPanel({
   isPremium: boolean;
   scenarios: Scenario[];
 }) {
-  if (!isPremium) return <UpgradeCTA />;
+  if (!isPremium) return <UpgradeCTA scenarios={scenarios} />;
 
   if (scenarios.length === 0) {
     return (

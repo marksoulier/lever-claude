@@ -1,3 +1,1 @@
 @AGENTS.md
-@STEERING.md
-@BUGS.md

@@ -3,11 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
-const ONBOARDING_PROMPT = `I just connected Lever to this conversation. I'm setting up my financial plan for the first time.
-
-Please start by calling get_onboarding_status to see where I am in setup, then guide me through the rest step by step. Ask me one thing at a time — don't overwhelm me with a long list of questions. Be conversational.
-
-The goal is to set up my retirement plan with real numbers: my age, income, what I want in retirement, how I want to invest, and my current accounts.`;
+const ONBOARDING_PROMPT = `Help me set up my Lever financial plan.`;
 
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false);
@@ -127,9 +123,11 @@ export default function OnboardingGate() {
               {tab === "web" && (
                 <div className="flex flex-col gap-2 text-xs text-zinc-500">
                   <p>
-                    Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="font-bold text-teal hover:underline">claude.ai</a> → <span className="font-bold text-zinc-700">Settings → Integrations → Add integration</span>
+                    Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="font-bold text-teal hover:underline">claude.ai</a> → left sidebar → <span className="font-bold text-zinc-700">Customize → Connectors → + → Add custom</span>
                   </p>
-                  <p>Paste this URL and name it <span className="font-semibold text-zinc-600">"Lever"</span>:</p>
+                  <p>
+                    Name it <span className="font-semibold text-zinc-700">Lever</span> and paste this into the <span className="font-semibold text-zinc-700">Integration URL</span> field:
+                  </p>
                   <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2">
                     <code className="flex-1 text-[11px] text-zinc-600 break-all">
                       {mcpDisplayUrl}
@@ -137,7 +135,7 @@ export default function OnboardingGate() {
                     {mcpUrl && <CopyButton text={mcpUrl} label="Copy URL" />}
                   </div>
                   <p className="text-zinc-400">
-                    No password or auth fields needed — just the URL.
+                    No password or other fields needed — just the URL.
                   </p>
                 </div>
               )}
@@ -168,18 +166,19 @@ export default function OnboardingGate() {
           {/* Divider */}
           <div className="border-t border-zinc-100" />
 
-          {/* Step 2 — paste prompt */}
+          {/* Step 2 — send first message */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <StepNumber n={2} />
-              <p className="text-sm font-bold text-zinc-800">Start a new Claude conversation and paste this</p>
+              <p className="text-sm font-bold text-zinc-800">Start a new Claude conversation and send this</p>
             </div>
-            <div className="ml-8 flex items-start gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5">
-              <p className="flex-1 text-xs text-zinc-500 italic leading-relaxed">
-                &ldquo;I just connected Lever to this conversation. I&apos;m setting up my financial plan…&rdquo;
+            <div className="ml-8 flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5">
+              <p className="flex-1 text-xs text-zinc-700 font-medium">
+                &ldquo;{ONBOARDING_PROMPT}&rdquo;
               </p>
-              <CopyButton text={ONBOARDING_PROMPT} label="Copy prompt" />
+              <CopyButton text={ONBOARDING_PROMPT} label="Copy" />
             </div>
+            <p className="ml-8 text-xs text-zinc-400">Claude will take it from there — no other setup needed.</p>
           </div>
 
           {/* Divider */}
@@ -217,13 +216,15 @@ export default function OnboardingGate() {
           <p className="text-xs text-zinc-400 text-center">
             Questions or feedback?{" "}
             <a
-              href="https://lever.userjot.com"
+              href="https://lever.userjot.com/b/features"
               target="_blank"
               rel="noopener noreferrer"
               className="text-teal hover:underline font-medium"
             >
               Share it here
             </a>
+            {" "}
+            <span className="text-zinc-300">(free account required)</span>
           </p>
         </div>
       </div>
