@@ -11,6 +11,8 @@ export async function GET() {
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const admin = createAdminClient();
+  // Upsert ensures a profile row exists for new users (trigger was removed).
+  await admin.from("profiles").upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
   const { data: profile } = await admin
     .from("profiles")
     .select("api_token")

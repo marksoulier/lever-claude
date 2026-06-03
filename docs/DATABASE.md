@@ -70,3 +70,13 @@ Declared in `.mcp.json`:
 **Security:** the Bearer token grants access to all Supabase projects under the account. Never commit it. Keep in `~/.claude/mcp.json` (user-level), not in the project `.mcp.json`.
 
 **VSCode note:** `mcp__supabase__*` tools don't load in VSCode extension sessions. Use the Supabase Management REST API as fallback: `POST https://api.supabase.com/v1/projects/avzhlaxhopzmrjnmregc/database/query` with the PAT.
+
+## profiles table — how user tokens are created
+
+The `profiles` table (`id`, `api_token uuid default gen_random_uuid()`, `created_at`) stores each user's MCP connector token. **There is no trigger** — the row is created on-demand by the first route the user hits that needs their token (`/api/mcp-url` or `/api/mcp-extension`), via:
+
+```ts
+await admin.from("profiles").upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+```
+
+**Do not add a trigger on `auth.users` to create profiles.** GoTrue runs trigger functions with `search_path = ''`, so an unqualified `insert into profiles` fails with `relation "profiles" does not exist`. If a trigger is ever needed again, qualify the table name as `public.profiles`. The original `on_auth_user_created` trigger was dropped in migration `drop_orphaned_profiles_trigger` (2026-06-03) because it caused all Google OAuth signups to crash with "Database error saving new user".

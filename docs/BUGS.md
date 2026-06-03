@@ -50,6 +50,7 @@ Every fixed bug must have a regression test before being marked **Fixed**. See `
 | B-21 | **UserJot requires account creation to submit feedback** | **Fixed** | Changed feedback links to `lever.userjot.com/b/features` and added "free account required" label. Guest posting enabled in UserJot Dashboard → Settings → Boards (paid plan feature, enabled 2026-06-02). |
 | B-22 | **Events section shows blank amounts for rent_payment, payment_schedule with real DB parameter names** | **Fixed** | `event-summary.ts` now reads `monthly_rent` for rent_payment, `payment_amount ?? payment` for payment_schedule, and includes `other` in the monthly_budgeting sum. 3 regression tests added. |
 | B-23 | **Onboarding gate "I'm done →" button never dismisses the gate** | **Fixed** | `router.refresh()` doesn't re-run the parent's `useEffect`, so `hasPlans` stayed false. Fixed by passing `onComplete` callback from `DashboardPage` to `OnboardingGate`; gate calls `onComplete()` immediately when plans are found so `hasPlans` flips to `true` directly. |
+| B-24 | **Google OAuth signup crashes: "Database error saving new user"** | **Fixed** | Leftover Supabase template trigger `on_auth_user_created` → `create_profile_for_user()` ran `insert into profiles` without schema prefix. GoTrue executes triggers with `search_path=''` so the unqualified table name fails. Trigger and function dropped via migration `drop_orphaned_profiles_trigger`. Profile rows now created on-demand in `/api/mcp-url` and `/api/mcp-extension` via upsert. See DATABASE.md. |
 
 ---
 
