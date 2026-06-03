@@ -81,7 +81,71 @@ Never leave external configuration documented only in chat.
 
 ---
 
-## 5. Production database sync — required before any deploy with a schema change
+## 5. Fresh signup smoke test — required before every deploy
+
+This test catches GoTrue trigger failures, profile-creation bugs, and anything that breaks the new-user path. `/api/test-auth` bypasses OAuth entirely — it does not catch these. Run this every time.
+
+```bash
+ANON=$(grep NEXT_PUBLIC_SUPABASE_ANON_KEY .env.local | cut -d= -f2)
+TS=$(date +%s)
+curl -s -X POST "https://avzhlaxhopzmrjnmregc.supabase.co/auth/v1/signup" \
+  -H "Content-Type: application/json" \
+  -H "apikey: $ANON" \
+  -d "{\"email\":\"smoke-$TS@lever.dev\",\"password\":\"Smoke123!\"}" \
+  | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+uid = (d.get('user') or {}).get('id') or d.get('id')
+if uid:
+    print('PASS — user created:', uid)
+else:
+    print('FAIL —', d.get('msg') or d.get('error_description') or d)
+    sys.exit(1)
+"
+```
+
+Expected: `PASS — user created: <uuid>`. Any FAIL is a P0 — do not deploy until resolved.
+
+After confirming PASS, delete the smoke-test user:
+```
+mcp__supabase__execute_sql
+  query: "delete from auth.users where email like 'smoke-%@lever.dev'"
+```
+
+**What this catches:** broken triggers on `auth.users` (B-24), missing tables referenced by trigger functions, profile-creation failures, GoTrue schema errors.
+
+**Critical note:** `/api/test-auth` is a dev-only shortcut that signs in an existing user via server-side exchange. It never touches the signup code path. Never use it as a substitute for this test.
+
+---
+
+## 6. Post-deploy production check — required after every deploy to Vercel
+
+Run within 2 minutes of the Vercel build going green. If anything fails, the deploy is broken.
+
+```bash
+PROD="https://lever-claude.vercel.app"
+
+# Health endpoint
+curl -s "$PROD/api/health" | python3 -c "import json,sys; d=json.load(sys.stdin); print('health OK' if d.get('status')=='ok' else 'FAIL:', d)"
+
+# MCP tool count
+curl -s -X POST "$PROD/api/mcp" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
+  | grep -o '"name":"[^"]*"' | wc -l \
+  | xargs -I{} sh -c 'echo "MCP tools: {} (expected 19)"'
+```
+
+Then check auth logs for any errors in the `/callback` path:
+```
+mcp__supabase__get_logs  service=auth
+```
+Scan output for `"level":"error"` and `"path":"/callback"`. Any 500 errors mean signup is broken — roll back or hotfix before sharing the URL.
+
+---
+
+## 7. Production database sync — required before any deploy with a schema change
 
 **Step 1 — audit for dev policies:**
 ```sql
@@ -106,3 +170,15 @@ mcp__supabase__list_tables  schemas=["public"]  verbose=true
 mcp__supabase__get_advisors
 ```
 Fix any critical advisories before deploying.
+
+**Step 5 — audit auth triggers:**
+```sql
+select t.tgname, p.proname, p.prosrc
+from pg_trigger t
+join pg_class c on c.oid = t.tgrelid
+join pg_namespace n on n.oid = c.relnamespace
+join pg_proc p on p.oid = t.tgfoid
+where n.nspname = 'auth' and c.relname = 'users'
+  and t.tgname not like 'RI_ConstraintTrigger%';
+```
+Any row here is a custom trigger on `auth.users`. Verify it uses fully-qualified table names (`public.profiles`, not `profiles`) — GoTrue runs triggers with `search_path=''` so unqualified names fail silently with "Database error saving new user" (B-24). If in doubt, drop it.

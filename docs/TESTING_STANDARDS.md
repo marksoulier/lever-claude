@@ -317,6 +317,46 @@ it('runs 30-year simulation in under 100ms', async () => {
 
 ---
 
+## Layer 4 — Auth / fresh-user path
+
+**When required:** any change to auth flow, profiles table, DB triggers, onboarding gate, `/api/mcp-url`, `/api/mcp-extension`, or signup routes.
+
+**The `/api/test-auth` shortcut bypasses OAuth and signs in an existing user. It proves nothing about the new-user path.** B-24 (Google OAuth crash from bad trigger) was invisible to all three layers above because every test used `/api/test-auth`. This layer exists specifically to catch that class of bug.
+
+**Fresh signup test (run against localhost and prod):**
+```bash
+ANON=$(grep NEXT_PUBLIC_SUPABASE_ANON_KEY .env.local | cut -d= -f2)
+TS=$(date +%s)
+curl -s -X POST "https://avzhlaxhopzmrjnmregc.supabase.co/auth/v1/signup" \
+  -H "Content-Type: application/json" -H "apikey: $ANON" \
+  -d "{\"email\":\"smoke-$TS@lever.dev\",\"password\":\"Smoke123!\"}" \
+  | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+uid=(d.get('user') or {}).get('id') or d.get('id')
+print('PASS:', uid) if uid else (print('FAIL:', d.get('msg') or d.get('error_description') or d), sys.exit(1))"
+```
+
+Expected: `PASS: <uuid>`. Clean up after:
+```
+mcp__supabase__execute_sql query="delete from auth.users where email like 'smoke-%@lever.dev'"
+```
+
+**After signup, verify profile was created:**
+```bash
+# Replace <uuid> with the id from the PASS output above
+mcp__supabase__execute_sql query="select id, api_token from profiles where id = '<uuid>'"
+```
+Expected: one row with a non-null `api_token`. If no row, the on-demand upsert in `/api/mcp-url` is broken.
+
+**Auth log check after any signup-touching deploy:**
+```
+mcp__supabase__get_logs  service=auth
+```
+Scan for `"level":"error"` entries on the `/callback` path. Any 500 is a P0.
+
+---
+
 ## Pre-commit Checklist
 
 Run this before every commit. Do not skip steps.
@@ -334,10 +374,15 @@ npm test -- --reporter=verbose lib/simulator
 # 4. If UI changed: playwright visual check (0 console errors)
 # [run playwright-cli as described in Layer 3 above]
 
-# 5. Secrets check before staging
+# 5. If auth / profiles / triggers / onboarding changed: fresh signup test (Layer 4)
+# [run the curl signup test above — PASS required before commit]
+
+# 6. Secrets check before staging
 git diff --staged | grep -iE "(service_role|sbp_|sk_test_|sk_live_|whsec_|phc_)"
 # Must return nothing
 ```
+
+**Rule: never treat a passing playwright check on `demo@lever.dev` as proof that signup works.** They test different code paths. Signup = GoTrue + triggers + profiles upsert. `/api/test-auth` = none of those.
 
 ---
 
