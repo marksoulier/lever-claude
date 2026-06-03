@@ -54,6 +54,10 @@ Every fixed bug must have a regression test before being marked **Fixed**. See `
 
 ---
 
+| B-25 | **LLM parses dollar amounts incorrectly during create_plan: "$80,000" passed as 8000000** | **Fixed** | `create_plan` MCP tool now returns an error when `current_balance > annual_income × 50`, forcing Claude to confirm before proceeding. Onboarding prompt updated to instruct Claude to: (a) specify "no commas or letters" in Q8, (b) read back all key numbers for user confirmation before calling create_plan. Affected plan for marksoulier0@gmail.com corrected in DB. | Needs test: create_plan with current_balance=8000000, annual_income=40000 — expect error response |
+
+---
+
 ## Previously tracked (pre-persona-testing)
 
 | # | Bug | Status | Notes | Regression test |

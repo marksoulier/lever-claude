@@ -442,6 +442,22 @@ When `get_onboarding_status` returns `isComplete: true`, Claude currently just s
 
 **What was built:** Updated the `isComplete` action in `get_onboarding_status` (`app/api/mcp/route.ts`). When all three setup steps are done, Claude now receives explicit instructions to: (1) call `get_plan_data`, (2) run a web search for opportunities relevant to the user's income/age/accounts, (3) deliver 2-3 numbered findings with specific next actions. The summary line was also changed from "Ready to explore" to "Deliver proactive insights now — do not wait for the user to ask." Needs deployment to take effect for real Claude.ai connector users.
 
+---
+
+## Business health snapshot — 2026-06-03
+
+| Metric | Value | Signal |
+|---|---|---|
+| Total users | 6 | Flat |
+| New signups (7 days) | 1 | marksoulier0@gmail.com returned — signed in and created new plan today |
+| Active subscriptions | 1 | Unchanged |
+| Total plans | 13 | marksoulier0 created "Retire at 55" today |
+| External user activity | marksoulier0@gmail.com active 01:04–01:23 UTC today | **Return visit — this is the signal we want** |
+
+**Key finding:** B-25 discovered and fixed this session. When creating the new plan, Claude passed current_balance=8000000 instead of 80000 (misparse of "$80,000"). This would have shown the user a $132M projected balance and $443K/month retirement income — wildly unrealistic and trust-destroying. Corrected in DB and added tool-level sanity check.
+
+---
+
 ### 9. Anthropic connector directory submission
 
 Submit Lever to the Anthropic MCP connector directory. No code required — this is a form submission. Long approval lead time so it should happen in parallel with code work.
