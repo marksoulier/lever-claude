@@ -81,12 +81,10 @@ export default function OnboardingGate({ onComplete }: { onComplete: () => void 
         <div className="px-7 pt-7 pb-5 border-b border-zinc-100">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xl font-black tracking-tight text-zinc-900 lowercase">lever</span>
-            <span className="text-zinc-300">×</span>
-            <span className="text-sm font-bold text-zinc-500">Claude</span>
           </div>
           <h1 className="text-xl font-black text-zinc-900">Set up your financial plan</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Lever runs inside Claude — give Claude access to your data once, then it walks you through everything.
+            Lever runs inside Claude — connect it once and Claude becomes your personal financial advisor.
           </p>
         </div>
 
@@ -217,15 +215,13 @@ export default function OnboardingGate({ onComplete }: { onComplete: () => void 
           <p className="text-xs text-zinc-400 text-center">
             Questions or feedback?{" "}
             <a
-              href="https://lever.userjot.com/b/features"
+              href="https://lever.userjot.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-teal hover:underline font-medium"
             >
               Share it here
             </a>
-            {" "}
-            <span className="text-zinc-300">(free account required)</span>
           </p>
         </div>
       </div>

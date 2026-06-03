@@ -38,7 +38,7 @@ curl -s -X POST http://localhost:3000/api/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
-  | grep -o '"name":"[^"]*"' | wc -l | xargs -I{} sh -c '[ {} -eq 11 ] && echo "MCP tools ✓ ({} tools)" || echo "MCP tools ✗ ({} tools — expected 11, dev server may need restart)"'
+  | grep -o '"name":"[^"]*"' | wc -l | xargs -I{} sh -c '[ {} -eq 19 ] && echo "MCP tools ✓ ({} tools)" || echo "MCP tools ✗ ({} tools — expected 19, dev server may need restart)"'
 
 echo ""
 echo "── Git state ──────────────────────────────────────"
@@ -48,65 +48,44 @@ git status --short | head -5
 
 ---
 
-## Business health snapshot (run after quick check)
+## Business health snapshot (periodic — not every session)
 
-After verifying the environment is healthy, run these checks to understand the current state of the business. Use the results together with `PROGRESS.md` to decide what to work on next.
+**While total users are under ~50, running the full business health check every session wastes time on numbers that won't have changed.** Instead:
 
-### User activity — Supabase
+- **Check the snapshot when:** it's been more than a week since the last snapshot, or a user reports something unexpected, or you just deployed a major change.
+- **Every session:** read the most recent snapshot already recorded in `PROGRESS.md`. That's your baseline.
+- **Flag immediately:** if `list_users` (available as `mcp__claude_ai_Lever_Business__list_users`) shows a user who hasn't been in `PROGRESS.md`, note them and investigate.
 
-```sql
--- Total signed-up users
-select count(*) as total_users from auth.users;
+### When you do run a health snapshot (copy-paste)
 
--- New signups in the last 7 days
-select count(*) as new_users_7d from auth.users
-where created_at > now() - interval '7 days';
-
--- Total plans created
-select count(*) as total_plans from plans;
-
--- Active premium subscriptions
-select count(*) as active_subscriptions from subscriptions
-where status = 'active';
-
--- Most recently active users (last login)
-select email, last_sign_in_at from auth.users
-order by last_sign_in_at desc nulls last limit 10;
+**User activity — Supabase REST:**
+```bash
+PAT=$(python3 -c "import json; print(json.load(open('.mcp.json'))['mcpServers']['supabase']['headers']['Authorization'].replace('Bearer ',''))" 2>/dev/null)
+curl -s -X POST "https://api.supabase.com/v1/projects/avzhlaxhopzmrjnmregc/database/query" \
+  -H "Authorization: Bearer $PAT" -H "Content-Type: application/json" \
+  -d '{"query":"select (select count(*) from auth.users) as total_users, (select count(*) from auth.users where created_at > now() - interval '\''7 days'\'') as new_7d, (select count(*) from plans) as total_plans, (select count(*) from subscriptions where status='\''active'\'') as active_subs"}' \
+  | python3 -c "import json,sys; r=json.load(sys.stdin); print(r[0] if r else r)"
 ```
 
-Run each via `mcp__supabase__execute_sql` or the Supabase REST API fallback.
+Or call `mcp__claude_ai_Lever_Business__list_users` — it gives user count, plan count, and last-active date for every user in one call.
 
-### Revenue — Stripe MCP
+**Revenue:** call `mcp__stripe__list_subscriptions` (status=active) and `mcp__stripe__list_payment_intents` (limit=5).
 
-Call these tools and summarise the results:
+**Feedback:** call UserJot MCP tools at `https://api.userjot.com/v1/mcp` to surface new feedback since last check.
 
-| Tool | What to check |
-|---|---|
-| `mcp__stripe__retrieve_balance` | Current available + pending balance |
-| `mcp__stripe__list_subscriptions` (status=active) | Count of active paid subscribers |
-| `mcp__stripe__list_payment_intents` (limit=10) | Recent payments — amounts and dates |
-
-### User feedback — UserJot MCP
-
-UserJot is connected at `https://api.userjot.com/v1/mcp`. Call whatever list/read tools it exposes to surface:
-- Most-requested features
-- Bug reports or complaints
-- Themes across recent feedback
-
-Note: UserJot currently has placeholder/fake feedback. Treat it as a template — the structure and workflow are valid even before real feedback arrives.
+**After pulling numbers:** record them in `PROGRESS.md` under a dated "Business health snapshot" section. Don't keep the numbers only in the conversation.
 
 ---
 
 ## Deciding next steps
 
-After running the business health snapshot, Claude should propose the highest-leverage next task without waiting for the user to choose. Weigh:
+Read `PROGRESS.md` → "Next priorities" section. The last recorded snapshot and priority order are already there. Weigh:
 
-1. **User feedback** — what are users asking for or reporting as broken?
-2. **Revenue signals** — are subscriptions growing, flat, or churning?
-3. **User activity** — are users returning, or dropping off after signup?
-4. **PROGRESS.md priority order** — what is the documented next step?
+1. **User feedback** — anything new since last snapshot?
+2. **PROGRESS.md priority order** — what is the documented next step?
+3. **Revenue signals** — only relevant once there are multiple paying users.
 
-Offer a single recommendation with a one-sentence rationale. Example: _"Based on 3 users being stuck at the onboarding gate and no plans created, the highest-leverage next task is fixing the onboarding experience."_ Then ask for confirmation before starting.
+Offer a single recommendation with a one-sentence rationale. Then ask for confirmation before starting.
 
 ---
 
@@ -121,12 +100,12 @@ Offer a single recommendation with a one-sentence rationale. Example: _"Based on
 | Dev server | `{"status":"ok"}` | `npm run dev` in a separate terminal |
 | `.mcp.json` | File exists, 3 servers present (lever, supabase, userjot) | Copy `.mcp.json.example`, fill in Supabase PAT and project ref. PAT from: [Supabase Dashboard → Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
 | Supabase REST | HTTP 200/201 | Check PAT is valid and not expired. Project ref: `avzhlaxhopzmrjnmregc` |
-| Lever MCP tools | 11 tools listed | Restart dev server (`npm run dev`). If tools are missing, check `app/api/mcp/route.ts` for compile errors |
+| Lever MCP tools | 19 tools listed | Restart dev server (`npm run dev`). If tools are missing, check `app/api/mcp/route.ts` for compile errors |
 | Git branch | `main` or feature branch | Normal — just know what branch you're on before making changes |
 
 ---
 
-## MCP tools that must be present (11 total)
+## MCP tools that must be present (19 total)
 
 If any of these are missing after the server starts, the feature that depends on them is broken:
 
@@ -134,6 +113,7 @@ If any of these are missing after the server starts, the feature that depends on
 |---|---|
 | `show_financial_plan` | Claude renders the plan dashboard iframe |
 | `run_what_if` | Claude opens the scenario modeler iframe |
+| `show_cash_flow` | Claude shows year-by-year net worth growth chart |
 | `create_plan` | Onboarding — Claude creates user's first plan |
 | `update_plan_context` | Sets DOB, income, risk tolerance, goals on a plan |
 | `update_contribution` | Recalculates projection for a new monthly savings amount |
@@ -141,8 +121,15 @@ If any of these are missing after the server starts, the feature that depends on
 | `update_account_balance` | Claude updates an existing account balance |
 | `create_what_if_plan` | Claude clones a plan with changed parameters for comparison |
 | `get_document_summaries` | Claude reads stored summaries of all uploaded financial docs for plan context |
-| `read_document` | Claude re-reads a specific document in full to answer detailed questions; refreshes expired Anthropic file_id automatically |
+| `read_document` | Claude re-reads a specific document in full; refreshes expired Anthropic file_id automatically |
 | `get_onboarding_status` | Claude checks setup progress; drives the onboarding flow |
+| `get_event_schema` | Browse the 20-event library; get parameter spec before adding an event |
+| `get_plan_data` | Read the full plan_data JSON — events, accounts, simulation results |
+| `update_plan` | Add/remove/edit events in plan_data; triggers simulation re-run |
+| `run_monte_carlo` | Run probability simulation; powers confidence-band widget |
+| `list_users` | Admin — list all users with setup status and plan metrics |
+| `get_user_context` | Admin — full financial context for a specific user |
+| `queue_recommendation` | Admin — save a draft notification for review in the admin panel |
 
 ---
 

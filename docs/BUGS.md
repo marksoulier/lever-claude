@@ -18,6 +18,7 @@ Every fixed bug must have a regression test before being marked **Fixed**. See `
 |---|---|---|---|---|
 | B-1 | **Projected balance inconsistency: UI chart vs event simulation** | **Fixed** | `update_plan` handler calls `simulationToScalars` and writes the result to scalar columns. Plan page now derives metrics from `simulation_results` when available, so `update_contribution` cannot overwrite event-based values. | Needs test: assert that projected_balance from simulation_results survives a contribution update |
 | B-2 | **"Probability of success" label is misleading** | **Fixed (short-term)** | Tooltip now legible; short-term fix. Long-term: replaced with real Monte Carlo result when available. | `monte-carlo.test.ts` — success_rate within 0–100, p10 < p50 < p90 |
+| B-26 | **MCP URL shows "Could not load — refresh the page" in Claude.ai when user pastes it** | **Fixed** | `mcp-handler` returns 405 on plain GET. Intercepted GET requests without `Accept: text/event-stream` before reaching the handler and return `200 {"name":"Lever","version":"1.0","protocol":"mcp"}`. SSE and POST paths unchanged. | `curl GET /api/mcp` → HTTP 200 |
 
 ---
 
@@ -25,6 +26,8 @@ Every fixed bug must have a regression test before being marked **Fixed**. See `
 
 | # | Bug | Status | Root cause | Regression test |
 |---|---|---|---|---|
+| B-27 | **Onboarding is "too managerial" — feels like a form, not a conversation** | **Fixed** | Rewrote `get_onboarding_status` new-user action. Claude now leads with open curiosity ("Tell me about where you're at right now"), listens to the person's full situation, and derives the required data naturally — no numbered questions, no form structure. | Manual: onboarding session should feel like a conversation, not an intake form |
+| B-28 | **Claude says "Lever connects your real financial data" — misleading copy** | **Fixed** | Removed "real financial data" and bank-connection language from both the new-user and set-context action strings. Lever is now described accurately as a planning sandbox that works from what the user tells Claude. | `get_onboarding_status` action text no longer contains "real financial data" |
 | B-3 | **What-if scenario panel shows hardcoded wrong dollar amounts** | **Fixed** | `buildScenarios()` now dynamic — passes real plan numbers to the locked preview. | Needs test: snapshot test asserting scenario deltas change when contribution changes |
 | B-4 | **Comparison chart flat zero line before what-if plan's current age** | **Fixed** | Changed `whatif?: number` to `whatif: number \| null`; `connectNulls={false}`. | Needs test: assert null values produce gaps not zeros in chart data |
 | B-5 | **No event type for existing mortgage** | **Fixed** | Added `existing_mortgage` handler → `applyPaymentSchedule`. | `integration.test.ts` — mortgage reaches zero by year 30 |
@@ -40,6 +43,9 @@ Every fixed bug must have a regression test before being marked **Fixed**. See `
 
 | # | Bug | Status | Root cause | Regression test |
 |---|---|---|---|---|
+| B-29 | **Logo "lever×Claude" looks weird** | **Fixed** | Removed `×Claude` suffix from `OnboardingGate.tsx` header — now renders just `lever`. | Visual — playwright snapshot check |
+| B-30 | **Feedback page 404s when trying to submit feedback** | **Fixed** | Both `OnboardingGate.tsx` and `Sidebar.tsx` feedback links were pointing to `lever.userjot.com/b/features` (404). Changed to `lever.userjot.com` (root, works). | Navigate to feedback link — must not 404 |
+| B-31 | **"(free account required)" label shown on feedback even when it isn't** | **Fixed** | Removed `(free account required)` span and title suffix from `Sidebar.tsx` feedback link. Guest posting is enabled; the label was stale and incorrect. | Feedback link must not show "free account required" if guest posting is on |
 | B-7 | **Mousewheel doesn't scroll naturally** | **Fixed** | `<main>` already had `overflow-y-auto`; confirmed correct. | N/A — layout-only, no regression risk |
 | B-8 | **New plan modal captures no context** | **Fixed** | Nudge text added pointing to Claude personalization. | Needs test: assert nudge text present in CreatePlanForm snapshot |
 | B-9 | **No childcare events in event library** | **Fixed** | Added `childcare_expense` → `applyOutflow`. | `integration.test.ts > childcare_expense handler` |

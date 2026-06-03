@@ -76,6 +76,7 @@ This version has breaking changes. Read the relevant guide in `node_modules/next
 
 | File | Purpose | Access |
 |---|---|---|
+| `docs/HARNESS.md` | All tools, services, tokens, and skills Claude needs — verify before working | Read |
 | `docs/STARTUP.md` | Session startup checklist — run at the start of every session | Read |
 | `docs/PROGRESS.md` | Build log, business health, and next priorities — update every session | Read + Write |
 | `docs/BUGS.md` | Bug tracker by priority — update status when fixing; add new bugs as found | Read + Write |
@@ -86,6 +87,7 @@ This version has breaking changes. Read the relevant guide in `node_modules/next
 | `docs/ENV.md` | Environment variable safety rules | Read |
 | `docs/DATABASE.md` | Supabase MCP tools reference, patterns | Read |
 | `docs/MCP.md` | MCP server testing at three levels | Read |
+| `docs/CONVERSATION.md` | MCP experience design — how to write action strings so users have meaningful experiences; revisit whenever onboarding feels off | Read + Write |
 | `docs/DATA-FETCHING.md` | Required patterns for every fetch + useEffect | Read |
 | `docs/FEEDBACK.md` | How to capture and act on user feedback | Read |
 | `docs/LAUNCH.md` | Soft launch v0.1 details and GTM context | Read |

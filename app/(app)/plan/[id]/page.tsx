@@ -281,27 +281,17 @@ export default async function PlanPage(props: PageProps<"/plan/[id]">) {
         </div>
       ) : null}
 
-      {/* Claude CTA */}
-      <div className="rounded-2xl bg-teal p-6 flex flex-col gap-4">
-        <div>
-          <p className="font-bold text-white">Ask Claude about this plan</p>
-          <p className="text-sm text-white/70 mt-1">
-            Copy the prompt below, open Claude with the Lever connector, and paste it to get personalised insights on your plan.
-          </p>
-        </div>
-        <div className="rounded-xl bg-white/10 border border-white/20 px-4 py-3 flex items-start justify-between gap-3">
-          <p className="text-xs text-white/80 leading-relaxed flex-1 font-mono">{askClaudePrompt}</p>
-          <CopyPromptButton prompt={askClaudePrompt} label="Copy" />
-        </div>
-        <a
-          href="https://claude.ai"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="self-start rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-teal hover:bg-zinc-100 transition-colors"
-        >
-          Open Claude →
-        </a>
-      </div>
+      {/* What to explore next */}
+      <NowWhat
+        planName={plan.name}
+        projectedBalance={projectedBalance}
+        targetBalance={plan.targetBalance}
+        successProbability={successProbability}
+        shortfall={shortfall}
+        monthlyContribution={plan.monthlyContribution}
+        retirementAge={plan.retirementAge}
+        hasEvents={!!(planData?.events && planData.events.filter(e => !e.hide).length > 0)}
+      />
     </div>
   );
 }
@@ -381,6 +371,91 @@ function EventsSummary({ events }: { events: { id: number; type: string; title: 
         <p className="text-xs text-zinc-400">To add or change events, ask Claude to update your plan.</p>
       </div>
     </details>
+  );
+}
+
+function NowWhat({
+  planName, projectedBalance, targetBalance, successProbability, shortfall,
+  monthlyContribution, retirementAge, hasEvents,
+}: {
+  planName: string;
+  projectedBalance: number;
+  targetBalance: number;
+  successProbability: number;
+  shortfall: number;
+  monthlyContribution: number;
+  retirementAge: number;
+  hasEvents: boolean;
+}) {
+  const fmt = (n: number) =>
+    n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : `$${Math.round(n / 1000)}K`;
+
+  type Nudge = { label: string; explanation: string; prompt: string };
+  const nudges: Nudge[] = [];
+
+  if (shortfall < 0) {
+    // Behind on goal
+    nudges.push({
+      label: "Close the gap",
+      explanation: `Your plan is ${fmt(Math.abs(shortfall))} short of your retirement target. Ask Claude what moves would close it fastest.`,
+      prompt: `I'm looking at my Lever plan "${planName}". My projected balance is ${fmt(projectedBalance)} but my target is ${fmt(targetBalance)} — I'm ${fmt(Math.abs(shortfall))} short. What are the 2-3 most impactful changes I can make to close that gap?`,
+    });
+  } else {
+    // On track — explore retiring earlier
+    nudges.push({
+      label: "Could you retire earlier?",
+      explanation: `You're on track for ${fmt(projectedBalance)} at ${retirementAge}. Ask Claude what retiring ${Math.min(5, retirementAge - 55)} years earlier would look like.`,
+      prompt: `My Lever plan "${planName}" shows I'm on track for ${fmt(projectedBalance)} at retirement age ${retirementAge}. What would retiring at age ${retirementAge - Math.min(5, retirementAge - 55)} look like — what would I need to change?`,
+    });
+  }
+
+  // Savings lever — only show if contribution is modest or there's a shortfall
+  if (monthlyContribution < 3000 || shortfall < 0) {
+    const bump = monthlyContribution < 500 ? 200 : monthlyContribution < 1500 ? 300 : 500;
+    nudges.push({
+      label: `What does $${bump} more per month do?`,
+      explanation: `Small increases compound significantly over time. See what adding $${bump}/month to your ${fmt(monthlyContribution * 12)}/year savings rate changes.`,
+      prompt: `I'm saving $${monthlyContribution.toLocaleString()}/month in my Lever plan "${planName}". Show me what adding $${bump} more per month would do to my projected balance and retirement timeline.`,
+    });
+  }
+
+  // Richer model nudge — if no events yet
+  if (!hasEvents) {
+    nudges.push({
+      label: "Make your model more accurate",
+      explanation: "Your plan uses a simple projection. Add real life events — salary, rent, mortgage, raises — for a simulation that reflects your actual finances.",
+      prompt: `My Lever plan "${planName}" uses a simple projection with no life events modeled yet. Can you help me build my full event model — starting with my income, housing costs, and any major expenses — so the simulation reflects my real financial life?`,
+    });
+  }
+
+  const shown = nudges.slice(0, 3);
+
+  return (
+    <div className="rounded-2xl border border-zinc-100 bg-white shadow-sm px-6 py-5 flex flex-col gap-4">
+      <div>
+        <p className="text-sm font-black text-zinc-900">What to explore next</p>
+        <p className="text-xs text-zinc-400 mt-0.5">Copy a prompt and paste it into Claude with the Lever connector active.</p>
+      </div>
+      <div className="flex flex-col gap-3">
+        {shown.map((n) => (
+          <div key={n.label} className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="text-xs font-bold text-zinc-700">{n.label}</span>
+              <span className="text-xs text-zinc-500 leading-snug">{n.explanation}</span>
+            </div>
+            <CopyPromptButton prompt={n.prompt} label="Copy" />
+          </div>
+        ))}
+      </div>
+      <a
+        href="https://claude.ai"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="self-start rounded-full bg-teal px-5 py-2 text-sm font-semibold text-white hover:bg-teal-dark transition-colors"
+      >
+        Open Claude →
+      </a>
+    </div>
   );
 }
 

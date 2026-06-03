@@ -255,21 +255,16 @@ export default function Sidebar() {
         {/* Feedback */}
         <div className="px-2 py-2 border-t border-zinc-200">
           <a
-            href="https://lever.userjot.com/b/features"
+            href="https://lever.userjot.com"
             target="_blank"
             rel="noopener noreferrer"
-            title={collapsed ? "Give feedback (free account required)" : undefined}
+            title={collapsed ? "Give feedback" : undefined}
             className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200 transition-colors ${
               collapsed ? "justify-center" : ""
             }`}
           >
             <FeedbackIcon />
-            {!collapsed && (
-              <span className="flex flex-col leading-tight">
-                <span>Give feedback</span>
-                <span className="text-[10px] text-zinc-400">free account required</span>
-              </span>
-            )}
+            {!collapsed && <span>Give feedback</span>}
           </a>
         </div>
 

@@ -50,6 +50,16 @@ async function fetchWidgetHtml(path: string): Promise<string> {
 // On Vercel each serverless invocation is already isolated, so there is no
 // shared state concern from creating a new handler per call.
 async function handleMcp(request: Request) {
+  // Claude.ai pings the URL with a plain GET to validate it before connecting.
+  // mcp-handler returns 405 for GET, which Claude.ai shows as "Could not load."
+  // Return a 200 probe response so the URL passes validation.
+  if (request.method === "GET") {
+    const accept = request.headers.get("accept") ?? "";
+    if (!accept.includes("text/event-stream")) {
+      return Response.json({ name: "Lever", version: "1.0", protocol: "mcp" });
+    }
+  }
+
   const token = new URL(request.url).searchParams.get("token");
 
   const admin = createAdminClient();
@@ -1038,7 +1048,7 @@ async function handleMcp(request: Request) {
           }
 
           const [plansResult, accountsResult, documentsResult] = await Promise.all([
-            admin.from("plans").select("id, name, is_primary, context").eq("user_id", userId),
+            admin.from("plans").select("id, name, is_primary, context, created_at").eq("user_id", userId),
             admin.from("accounts").select("id").eq("user_id", userId),
             admin.from("documents").select("id").eq("user_id", userId),
           ]);
@@ -1046,7 +1056,7 @@ async function handleMcp(request: Request) {
           const plans     = plansResult.data ?? [];
           const accounts  = accountsResult.data ?? [];
           const documents = documentsResult.data ?? [];
-          const primary   = plans.find((p: { is_primary: boolean }) => p.is_primary);
+          const primary   = plans.find((p: { is_primary: boolean; created_at?: string }) => p.is_primary) as { id: string; name: string; is_primary: boolean; context: unknown; created_at?: string } | undefined;
           const hasContext = primary && (primary as { context: unknown }).context !== null;
 
           type Step = {
@@ -1074,14 +1084,45 @@ async function handleMcp(request: Request) {
           if (plans.length === 0) {
             nextSteps.push({
               step: "Create first plan",
-              action: "Start by welcoming the user to Lever warmly. In 2-3 sentences explain the value: Lever connects your real financial data to this conversation so we can build a retirement plan around your actual income, goals, and accounts — not a generic estimate. Unlike a calculator you fill out once, this plan lives here and I can flag opportunities specific to your numbers as life changes. Then say: 'I'll ask you 8 quick questions — one at a time. Takes about 10 minutes. You can pause anytime and come back later — just say where you left off.' Then ask each question one at a time, prefixing each with its number: '**1 of 8:**', '**2 of 8:**', etc. Wait for each answer before asking the next. After question 4, acknowledge halfway: 'Halfway there — you're doing great.' Questions: (1) date of birth (YYYY-MM-DD)? (2) how would you describe your income — salaried, hourly, freelance/business, or a mix? (3) based on their answer: approximate total annual income this year (for variable earners, a rough total is fine)? (4) how much monthly income do you want in retirement? (5) risk tolerance — low (conservative, ~5% growth), medium (balanced, ~7%), or high (aggressive, ~9%)? (6) target retirement age? (7) monthly savings amount? (8) current total retirement savings balance (enter as a plain number, e.g. 80000 for $80,000 — no commas or letters)? After collecting all 8 answers, briefly read them back: 'Just to confirm: [list key numbers]. Sound right?' Wait for confirmation, then call create_plan. Do NOT ask the user to go to a website.",
+              action: `Welcome the user warmly — one sentence. Lever is their personal financial planning space, a sandbox where they can model their life and see what the numbers look like. It's not connected to their bank. It works from what they tell you.
+
+OPEN WITH THE CONCERN QUESTION — before asking anything about income or savings:
+'What's the biggest financial thing on your mind right now?'
+
+Let them answer fully. Do not interrupt. Whatever they say — debt, retirement anxiety, a job change, not knowing where to start — that is the thread to follow. Acknowledge it genuinely before moving forward. This is the most important moment: if they feel heard, they'll trust the rest.
+
+Then build the picture naturally. Never ask more than one thing at a time. Never use numbered questions or bullet-point prompts. Weave in what you need as the conversation flows:
+- Their age or birth year
+- How they earn money and roughly how much (a range is fine for variable earners — don't force a single salary figure)
+- What financial freedom looks like to them — when, and what would life look like?
+- Whether they're planning solo or with a partner
+- Their gut reaction to risk: 'When markets drop, do you tend to stay calm or does it stress you out?'
+- How much they're setting aside each month right now
+- Rough total saved so far, across everything
+
+JOINT FINANCES: If the user mentions a partner or spouse, treat the household as one plan. Use combined household income as annual_income. In the narrative, note both people — their names if given, their individual incomes, and any relevant differences (e.g. one has a pension, one is self-employed). The plan belongs to both of them; model it that way.
+
+When you have enough, reflect the full picture back before doing anything:
+'Before I build this, let me make sure I've got it right — [2–3 sentence portrait: who they are, what they earn, what they're worried about, what they're aiming for]. Does that sound right?'
+
+Wait for confirmation. Then call create_plan. Name the plan after them if they've shared their name.
+
+NARRATIVE — this is the memory of the person, not a bullet list. Write it as a rich paragraph capturing everything that matters: who they are, how they earn money, their key constraints (debt, dependents, housing costs), what worries them, and what they're aiming for. If they're a couple, name both people. If they mentioned a specific behavior (e.g. "moved things around in 2022"), include it — that context shapes every future recommendation. A thin narrative means future conversations start cold. Write it like you're briefing a colleague who will advise this person next time.
+
+After create_plan runs, do two things:
+1. Show the initial projection in plain language ('Based on what you told me, here's where your money ends up if nothing changes...')
+2. Immediately surface one specific observation tied to their actual numbers — something they didn't ask for. That's the moment Lever proves it's smarter than a calculator.
+
+Close the setup with: 'Here's what we set up: [one sentence summary]. Here's the one thing worth doing this week: [specific action, not a direction].'
+
+Rules: never claim Lever connects to bank accounts or real-time data; never ask for something they've already told you; do NOT ask the user to go to a website.`,
               tool: "create_plan",
             });
           } else if (!hasContext) {
             const planName = primary?.name ?? plans[0]?.name ?? "your plan";
             nextSteps.push({
               step: "Set personal context",
-              action: `The primary plan "${planName}" was created but has no personal context yet — the projections are using defaults, not the user's real numbers. Greet the user warmly: tell them the plan is ready but needs a few personal details to make the projections accurate. Say: "I'll ask you a few quick questions — one at a time — so your plan reflects your actual situation. Takes about 5 minutes." Then ask each question one at a time, waiting for each answer before the next: (1) date of birth (YYYY-MM-DD)? (2) how would you describe your income — salaried, hourly, freelance/business, or a mix? (3) based on their answer: approximate total annual income this year? (4) how much monthly income do you want in retirement? (5) risk tolerance — low (conservative, ~5% growth), medium (balanced, ~7%), or high (aggressive, ~9%)? (6) target retirement age? (7) current monthly savings amount? (8) current total retirement savings balance? Then call update_plan_context with all collected values. After updating, show the new projected balance and probability and briefly explain what changed.`,
+              action: `The primary plan "${planName}" exists but is using default projections — no personal context has been set yet. Greet the user warmly and tell them the plan is ready but needs a few real details to make the numbers meaningful. Don't use a numbered list. Have a short conversation: ask about their income situation, what retirement looks like for them, their rough savings today, and how they feel about risk. Ask one thing at a time, listen to what they share, and follow up naturally. Once you have the picture, confirm the key numbers and call update_plan_context. After updating, show the new projected balance and briefly explain what changed.`,
               tool: "update_plan_context",
             });
           }
@@ -1089,7 +1130,7 @@ async function handleMcp(request: Request) {
           if (accounts.length === 0) {
             nextSteps.push({
               step: "Add financial accounts",
-              action: "Ask the user to list their key accounts: checking/savings, retirement accounts (401k, IRA, Roth IRA), investments, real estate, and any significant debts (mortgage, loans). For each, ask the approximate current balance. Call add_account for each one. Balances are always positive — debt type handles the sign.",
+              action: "Tell the user their plan is built — now let's make the numbers real. Ask: 'What's the first account that comes to mind when you think about where your money lives?' Let them start wherever feels natural. For each account they mention, ask the rough current balance. When they seem to have covered the main ones, gently check: 'Anything else — retirement accounts, debts, a house?' Add each with add_account. Balances are always positive — the account type handles sign for debt. After adding accounts, confirm: 'Got it — that gives me a real picture of where you stand today.'",
               tool: "add_account",
             });
           }
@@ -1102,9 +1143,34 @@ async function handleMcp(request: Request) {
           }
 
           if (plans.length > 0 && hasContext && accounts.length > 0) {
-            nextSteps.push({
-              step: "Deliver proactive insights",
-              action: `Setup is complete. Do NOT just say "you're all set" — that's a wasted moment. Instead, immediately do the following without waiting for the user to ask:
+            const primaryPlanAge = primary?.created_at
+              ? Date.now() - new Date(primary.created_at).getTime()
+              : Infinity;
+            const isReturningUser = primaryPlanAge > 24 * 60 * 60 * 1000; // plan older than 24h
+
+            if (isReturningUser) {
+              nextSteps.push({
+                step: "Returning user — pick up where you left off",
+                action: `This user has been here before. They are returning to an existing plan.
+
+Do NOT launch into an opportunity scan or say "here's what I found." That's cold and impersonal.
+
+Instead:
+1. Call get_plan_data to read their current plan — narrative, accounts, events, context.
+2. Greet them like you remember them. Reference something specific from their narrative: their name if it's there, their situation, or their goal. Example: "Good to see you again — last time we built out your plan around retiring at 55. How are things going?"
+3. Let them tell you what's on their mind. Ask: "Anything change since we last talked — new job, raise, big expense, or just want to check in on the numbers?"
+4. Listen to what they say. If something changed, update the plan (update_plan_context, add_account, update_account_balance, or update_plan as appropriate).
+5. Once you understand what they came for — whether it's a check-in, a specific question, or a life change — help them with that. Then offer one proactive observation if their plan has a clear gap or opportunity tied to their numbers.
+
+If they say nothing has changed and just want to review: show them where they stand today vs their goal, note any movement since their plan was created, and ask what's on their mind.
+
+The goal is continuity. They should feel like they're talking to someone who knows them, not starting over.`,
+                tool: "get_plan_data",
+              });
+            } else {
+              nextSteps.push({
+                step: "Deliver proactive insights",
+                action: `Setup is complete. Do NOT just say "you're all set" — that's a wasted moment. Instead, immediately do the following without waiting for the user to ask:
 
 1. Call get_plan_data to read the user's plan structure (events, accounts, context).
 2. Use web search to find 2-3 specific opportunities relevant to this person RIGHT NOW. Search for:
@@ -1115,10 +1181,12 @@ async function handleMcp(request: Request) {
    - Employer match gaps (if their plan has a job event, check if contribution % captures the full match)
 3. Deliver each finding as a numbered insight in plain language. Format: what it is → why it applies to their specific numbers → what they should do. Be concrete: cite their actual income, age, account balances. Skip anything that would apply to anyone regardless of their situation.
 4. End with one specific action they can take this week — not a direction, an actual step ("Call HR and increase your 401k contribution from X% to Y%").
+5. Close with: 'Come back any time something changes — a new job, a raise, a big purchase, or just wanting a second opinion. I'll pick up right where we left off.'
 
 This is the moment Lever proves its value. Make it count.`,
-              tool: "get_plan_data",
-            });
+                tool: "get_plan_data",
+              });
+            }
           }
 
           const isComplete = plans.length > 0 && hasContext && accounts.length > 0;
@@ -1129,7 +1197,10 @@ This is the moment Lever proves its value. Make it count.`,
             completedSteps,
             nextSteps,
             summary: isComplete
-              ? `User is fully set up with ${plans.length} plan(s) and ${accounts.length} account(s). Deliver proactive insights now — do not wait for the user to ask.`
+              ? (plans.length > 0 && primary?.created_at && Date.now() - new Date(primary.created_at).getTime() > 24 * 60 * 60 * 1000
+                  ? `Returning user. Plan "${primary?.name}" created ${Math.floor((Date.now() - new Date(primary.created_at).getTime()) / (1000 * 60 * 60 * 24))} day(s) ago. Read their narrative and greet them personally — do not start cold.`
+                  : `Setup just completed. ${plans.length} plan(s), ${accounts.length} account(s). Deliver proactive insights now.`)
+
               : `Setup ${Math.round(((plans.length > 0 ? 1 : 0) + (hasContext ? 1 : 0) + (accounts.length > 0 ? 1 : 0)) / 3 * 100)}% complete. Next: ${nextSteps[0]?.step ?? "done"}.`,
           };
 

@@ -2,6 +2,8 @@
 
 A task is not finished until all checks below pass. Do not report work as complete or ask what to do next until you have run them.
 
+**Test efficiency rule:** Only run the Vitest/Jest test files that cover the code you changed. Do not run the full suite (`npm test`) unless explicitly asked. Example: changed `lib/simulator/runner.ts` → run `npx vitest run tests/runner.test.ts` only. Changed a UI component with no test file → skip Vitest entirely and do the visual check only.
+
 ---
 
 ## 1. MCP tools — required after any change to `app/api/mcp/route.ts` or `lib/store.ts`

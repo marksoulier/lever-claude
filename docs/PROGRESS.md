@@ -456,6 +456,50 @@ When `get_onboarding_status` returns `isComplete: true`, Claude currently just s
 
 **Key finding:** B-25 discovered and fixed this session. When creating the new plan, Claude passed current_balance=8000000 instead of 80000 (misparse of "$80,000"). This would have shown the user a $132M projected balance and $443K/month retirement income — wildly unrealistic and trust-destroying. Corrected in DB and added tool-level sanity check.
 
+**Note:** All 19 MCP tools verified working 2026-06-03. Business vitals held stable — next snapshot due when user count changes materially or after the connector directory submission goes live.
+
+---
+
+### ~~10. Financial advisor onboarding research + MCP instruction upgrade~~ ✅ Done (2026-06-03)
+
+Reviewed UserJot feedback alongside research into how real financial advisors structure first meetings and ongoing relationships. Key finding: the advisor's #1 differentiator is opening with "what's your biggest financial concern right now?" before collecting any data. Clients who feel heard trust the rest of the conversation. Lever's old onboarding was data-led; the new version is concern-led.
+
+**Changes to `get_onboarding_status` action strings in `app/api/mcp/route.ts`:**
+- **Create first plan**: Opens with concern question before any data collection. Adds explicit joint-finances rule (treat household as one plan, combine incomes, name both partners in narrative). Adds narrative quality instruction: "write it like you're briefing a colleague who will advise this person next time" — prevents thin bullet-point summaries.
+- **Add accounts**: Rewritten from intake checklist to conversational opener ("What's the first account that comes to mind?").
+- **Proactive insights close**: Adds forward-looking relationship statement so users know to come back when things change.
+
+**Tested with two persona simulations (Jordan 24, Maria 34)** against local dev server. Verified narratives stored in DB:
+- Old Maria narrative: only her $95k, no husband, no 2022 behavior
+- New Maria narrative: combined $200k household, David named, mortgage rate/balance, childcare timeline, 2022 sell behavior, match gap explicitly called out
+- Old Jordan narrative: salary only, no student debt, plan created as "Retire at 65" despite Jordan saying 60
+- New Jordan narrative: $28k student debt at 5-7%, emotional context ("feeling behind"), retirement target 60, employer match gap flagged
+
+**Decision: joint finances as one plan.** When a user mentions a partner, combine household income into one plan and document both people in the narrative. Do not create separate plans per person.
+
+---
+
+### ~~11. Returning user continuity~~ ✅ Done (2026-06-03)
+
+`get_onboarding_status` now distinguishes returning users from fresh completions by checking plan age (> 24h = returning). Returning users get a different action string that tells Claude to: read the narrative first, greet them by name/situation, ask what's changed, and only then offer a proactive observation. The summary line also changes to "Returning user. Plan created X day(s) ago. Read their narrative and greet them personally — do not start cold."
+
+Fixed a missing `created_at` field in the plans select query (was selecting only `id, name, is_primary, context`).
+
+Documented in `docs/CONVERSATION.md` under principle 9.
+
+---
+
+### ~~12. "What to explore next" — contextual nudges on plan page~~ ✅ Done (2026-06-03)
+
+Replaced the generic "Ask Claude about this plan" teal CTA at the bottom of the plan page with a `NowWhat` component that generates 2–3 contextual nudges based on the user's actual numbers:
+
+- **Behind on goal** (shortfall < 0): "Close the gap — your plan is $Xk short, ask Claude what moves would close it fastest"
+- **On track** (surplus > 0): "Could you retire earlier? You're on track for $X at age N — what would retiring 5 years earlier look like?"
+- **Low/moderate savings**: "What does $X more per month do?" — sized to their actual contribution
+- **No events modeled**: "Make your model more accurate — add real life events for a simulation that reflects your actual finances"
+
+Each nudge has a pre-written Claude prompt with their real numbers. Copy button + Open Claude link. Max 3 shown. Addresses UserJot item #6 ("Great, 85% — now what?"). 0 console errors.
+
 ---
 
 ### 9. Anthropic connector directory submission
