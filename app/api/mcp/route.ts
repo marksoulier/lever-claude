@@ -1541,17 +1541,7 @@ Default accounts available in a new plan: Checking, Savings, 401k, Roth IRA, Inv
 
       server.tool(
         "run_monte_carlo",
-        `Run a Monte Carlo simulation on the user's primary plan (or a specified plan) to estimate the probability distribution of outcomes at retirement.
-
-Call this when the user asks questions like "what are my chances of retiring comfortably?", "how bad could it get in a downturn?", or "what's my real probability of success?". Do NOT call it for routine plan updates — it's compute-intensive and is only meaningful for uncertainty questions.
-
-The simulation runs 500 iterations, each with an annual return rate sampled from a historical distribution (mean 7%, σ 12% for a balanced portfolio). Returns real probability percentiles — not the simplified linear estimate shown on the plan page.
-
-After calling this tool, always surface:
-• The success_rate (% of scenarios where the user hits their target)
-• The p10 and p90 range (the likely spread of outcomes)
-• The p5 worst case (what a bad market decade looks like)
-• Compare to the current projected_balance (p50 ≈ deterministic result)`,
+        "Run a Monte Carlo simulation on the user's primary plan (or a specified plan) to estimate the probability distribution of outcomes at retirement.\n\nCall this when the user asks questions like \"what are my chances of retiring comfortably?\", \"how bad could it get in a downturn?\", or \"what's my real probability of success?\". Do NOT call it for routine plan updates -- it's compute-intensive and is only meaningful for uncertainty questions.\n\nThe simulation runs 500 iterations, each with an annual return rate sampled from a historical distribution (mean 7%, std 12% for a balanced portfolio). Returns real probability percentiles -- not the simplified linear estimate shown on the plan page.\n\nAfter calling this tool, always surface: the success_rate (% of scenarios where the user hits their target), the p10 and p90 range (the likely spread of outcomes), the p5 worst case (what a bad market decade looks like), and compare to the current projected_balance (p50 is approx deterministic result).",
         {
           plan_id: z.string().optional().describe("UUID of the plan to simulate. Omit to use the primary plan."),
           iterations: z.number().int().min(100).max(2000).optional().describe("Number of Monte Carlo iterations. Default 500. Use 1000+ for more precise tail estimates."),
