@@ -12,7 +12,13 @@ export async function GET() {
 
   const admin = createAdminClient();
   // Upsert ensures a profile row exists for new users (trigger was removed).
-  await admin.from("profiles").upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+  const { error: upsertError } = await admin
+    .from("profiles")
+    .upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+  if (upsertError) {
+    console.error("[mcp-extension] profile upsert failed:", upsertError.message);
+    return new Response("Failed to create profile: " + upsertError.message, { status: 500 });
+  }
   const { data: profile } = await admin
     .from("profiles")
     .select("api_token")

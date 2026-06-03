@@ -13,7 +13,14 @@ export async function GET() {
   const admin = createAdminClient();
   // Upsert ensures a profile row exists for new users (trigger was removed).
   // ignoreDuplicates means existing rows are untouched.
-  await admin.from("profiles").upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+  const { error: upsertError } = await admin
+    .from("profiles")
+    .upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+  if (upsertError) {
+    console.error("[mcp-url] profile upsert failed:", upsertError.message);
+    return Response.json({ error: "Failed to create profile", detail: upsertError.message }, { status: 500 });
+  }
+
   const { data: profile } = await admin
     .from("profiles")
     .select("api_token")

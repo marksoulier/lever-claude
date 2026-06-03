@@ -10,17 +10,13 @@ type SubscriptionStatus = "free" | "premium" | "loading";
 function useSubscription(): SubscriptionStatus {
   const [status, setStatus] = useState<SubscriptionStatus>("loading");
   useEffect(() => {
-    fetch("/api/stripe/checkout")
-      .then(() => {}) // we just want to know if premium; poll plans table indirectly
-      .catch(() => {});
-    // read subscription from supabase directly
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { setStatus("free"); return; }
       const { data } = await supabase
         .from("subscriptions")
         .select("status")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       setStatus(data?.status === "active" ? "premium" : "free");
     });
   }, []);
