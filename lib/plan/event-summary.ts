@@ -42,18 +42,21 @@ export function getEventSummary(event: EventForSummary): string {
     case "get_job": case "get_wage_job": case "income_with_changing_parameters":
       return [fmtMoney(p.salary ?? p.annual_salary), "salary"].filter(Boolean).join(" ");
 
-    case "inflow": case "rent_payment": case "outflow":
+    case "inflow": case "outflow":
     case "childcare_expense": case "buy_groceries": case "freelance_income":
       return [fmtMoney(p.amount ?? p.monthly_cost), fmtFreq(p.frequency_days)].filter(Boolean).join(" ");
 
+    case "rent_payment":
+      return [fmtMoney(p.amount ?? p.monthly_rent ?? p.monthly_cost), fmtFreq(p.frequency_days) ?? "monthly"].filter(Boolean).join(" ");
+
     case "payment_schedule": case "existing_mortgage":
       // Regression for BUGS.md B — payment_schedule previously fell through to default (no amount shown)
-      return [fmtMoney(p.payment), "monthly"].filter(Boolean).join(" ");
+      return [fmtMoney(p.payment ?? p.payment_amount), "monthly"].filter(Boolean).join(" ");
 
     case "monthly_budgeting": {
       // Regression for BUGS.md B — monthly_budgeting has no single `amount`; sum all category fields
       const cats = ["groceries","utilities","rent","transportation","insurance",
-                    "healthcare","dining_out","entertainment","personal_care","miscellaneous"];
+                    "healthcare","dining_out","entertainment","personal_care","miscellaneous","other"];
       const total = cats.reduce((sum, k) => sum + (Number(p[k]) || 0), 0);
       return total > 0 ? `$${total.toLocaleString()} monthly` : "";
     }

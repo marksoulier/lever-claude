@@ -11,11 +11,11 @@ The bar is: a real person who finds this through Reddit, signs up, connects Clau
 **Onboarding completeness (new user → first aha moment)**
 - [x] Monte Carlo prompt visible on plan page
 - [x] "Open in Claude" shows plan-specific copyable prompts
-- [ ] Onboarding flow validated end-to-end with a fresh account (not demo@lever.dev)
+- [x] Onboarding flow validated end-to-end with a fresh account (not demo@lever.dev)
 - [x] Claude asks the right questions in the right order — new-user path: 8 structured questions, numbered, income type before amount, halfway acknowledgment. Web-form user path (has plan, no context): same structured 8-question flow, now fixed in get_onboarding_status action string.
 - [ ] Plan updates correctly after onboarding conversation — scalars + simulation results match
 - [ ] New user sees their real situation reflected within 10 minutes of sign-up
-- [ ] Events in this plan section on plan page — users can verify what's being simulated
+- [x] Events in this plan section on plan page — users can verify what's being simulated
 
 **Continuous use loop**
 - [ ] User can return the next day, open Claude, say "I got a raise" and see plan update
@@ -25,7 +25,7 @@ The bar is: a real person who finds this through Reddit, signs up, connects Clau
 
 **Trust & polish**
 - [x] Comparison chart — only shows for real what-if plans vs user's own primary. "Test Plan Alpha" confusion was a demo-account artifact, not a real user issue.
-- [ ] No P0 bugs open in BUGS.md (currently clear)
+- [x] No P0 bugs open in BUGS.md (currently clear)
 - [ ] 0 console errors on dashboard and plan pages (confirmed via t-eval)
 - [ ] Font preload warnings eliminated (minor but signals polish)
 

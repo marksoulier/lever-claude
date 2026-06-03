@@ -34,7 +34,7 @@ function StepNumber({ n }: { n: number }) {
   );
 }
 
-export default function OnboardingGate() {
+export default function OnboardingGate({ onComplete }: { onComplete: () => void }) {
   const router = useRouter();
   const [mcpUrl, setMcpUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState(true);
@@ -57,6 +57,7 @@ export default function OnboardingGate() {
       const res = await fetch("/api/plans");
       const plans = await res.json();
       if (Array.isArray(plans) && plans.length > 0) {
+        onComplete();
         router.refresh();
       } else {
         setCheckError(true);

@@ -175,6 +175,70 @@ describe('getEventSummary — other event types', () => {
   });
 });
 
+// ── Regression: payment_schedule with payment_amount (real DB schema) ────────
+
+describe('getEventSummary — payment_schedule with payment_amount param', () => {
+  it('returns monthly amount when param is payment_amount (real DB uses this name)', () => {
+    const event = {
+      type: 'payment_schedule',
+      parameters: [
+        param('start_time', '2026-06-01'),
+        param('end_time', '2035-06-01'),
+        param('payment_amount', 1650),
+        param('payment_frequency_days', 30),
+        param('from_key', 'Checking'),
+      ],
+    };
+    expect(getEventSummary(event)).toBe('$1,650 monthly');
+  });
+});
+
+// ── Regression: rent_payment with monthly_rent (real DB schema) ──────────────
+
+describe('getEventSummary — rent_payment', () => {
+  it('returns amount monthly when param is monthly_rent (real DB uses this name)', () => {
+    const event = {
+      type: 'rent_payment',
+      parameters: [
+        param('start_time', '2026-06-01'),
+        param('end_time', '2036-01-01'),
+        param('monthly_rent', 950),
+      ],
+    };
+    expect(getEventSummary(event)).toBe('$950 monthly');
+  });
+
+  it('falls back to amount param if monthly_rent is absent', () => {
+    const event = {
+      type: 'rent_payment',
+      parameters: [param('amount', 1200), param('frequency_days', 30)],
+    };
+    expect(getEventSummary(event)).toBe('$1,200 monthly');
+  });
+});
+
+// ── Regression: monthly_budgeting includes other field ───────────────────────
+
+describe('getEventSummary — monthly_budgeting includes other', () => {
+  it('includes other field in total (real DB uses this name)', () => {
+    const event = {
+      type: 'monthly_budgeting',
+      parameters: [
+        param('start_time', '2026-06-01'),
+        param('groceries',      800),
+        param('utilities',      250),
+        param('transportation', 400),
+        param('insurance',      500),
+        param('entertainment',  200),
+        param('other',         1800),
+        param('from_key', 'Checking'),
+      ],
+    };
+    // 800+250+400+500+200+1800 = 3,950
+    expect(getEventSummary(event)).toBe('$3,950 monthly');
+  });
+});
+
 // ── EVENT_LABELS coverage ──────────────────────────────────────────────────
 
 describe('EVENT_LABELS', () => {
