@@ -14,6 +14,7 @@ playwright-cli --version 2>/dev/null && echo "playwright-cli ✓" || echo "playw
 node --version 2>/dev/null && echo "node ✓" || echo "node ✗  →  nvm install --lts"
 npx tsc --version 2>/dev/null && echo "tsc ✓" || echo "tsc ✗  →  npm install"
 supabase --version 2>/dev/null && echo "supabase CLI ✓" || echo "supabase CLI ✗  →  see install instructions in HARNESS.md"
+vercel --version 2>/dev/null && echo "vercel CLI ✓" || echo "vercel CLI ✗  →  npm install -g vercel  (needed for prod logs)"
 
 echo ""
 echo "── Supabase CLI — linked & authenticated ──────────────────────"
@@ -226,7 +227,55 @@ curl -s "https://api.anthropic.com/v1/models" \
 
 ---
 
-### 5. PostHog (product analytics)
+### 5. Vercel (deployment, function logs)
+
+**Why this is needed:** Diagnosing production-only bugs (e.g. a tool that works locally but not on Vercel) requires reading serverless function logs. Without the CLI, there's no way to see `console.error` output from production handlers — the only option is blind workarounds.
+
+| Item | Value |
+|---|---|
+| Install | `npm install -g vercel` |
+| Dashboard | `https://vercel.com/mark-souliers-projects/lever-claude` |
+| CLI docs | `vercel --help` |
+
+**Install and link:**
+```bash
+npm install -g vercel
+vercel login                              # opens browser OAuth — use GitHub
+vercel link                               # link to lever-claude project (prompts for org/project)
+vercel whoami                             # verify: should print your username
+```
+
+**Common operations:**
+```bash
+# Tail live function logs (most important for debugging)
+vercel logs lever-claude.vercel.app --follow
+
+# Read recent logs without streaming
+vercel logs lever-claude.vercel.app
+
+# List recent deployments
+vercel ls lever-claude
+
+# Inspect a specific deployment
+vercel inspect <deployment-url>
+
+# Show current env vars (redacted)
+vercel env ls
+```
+
+**What I can diagnose with this:**
+- `[MCP] run_monte_carlo registration failed: <error>` — the exact error causing the tool to be missing from production
+- Any `console.error` from serverless handlers
+- Cold-start failures, module import errors, initialization timeouts
+
+**Verify:**
+```bash
+vercel whoami && vercel ls lever-claude --limit 3 && echo "Vercel CLI ✓"
+```
+
+---
+
+### 6. PostHog (product analytics)
 
 | Item | Value |
 |---|---|
@@ -382,7 +431,12 @@ supabase link --project-ref avzhlaxhopzmrjnmregc
 npm install -g @playwright/cli@latest
 # If not on PATH: add to ~/.zshrc → export PATH="/Users/mark/.hermes/node/bin:$PATH"
 
-# 7. Start dev server
+# 7. Install Vercel CLI and link to project
+npm install -g vercel
+vercel login                              # browser OAuth
+vercel link                               # select lever-claude project
+
+# 8. Start dev server
 npm run dev
 
 # 8. Run the harness check (block at top of this file)
@@ -404,3 +458,4 @@ npm run dev
 | Stripe tools missing | Use REST API — Stripe MCP not connected at Claude.ai account level |
 | UserJot MCP tools missing | Check `.mcp.json` has the correct `uj_live_...` Bearer token; restart Claude Code |
 | Dev server MCP tool count wrong | Restart dev server; check `app/api/mcp/route.ts` for TypeScript errors |
+| Production-only bug, can't see error | Install Vercel CLI: `npm install -g vercel && vercel login && vercel link` — then `vercel logs lever-claude.vercel.app` |
